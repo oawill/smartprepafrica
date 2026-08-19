@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SmartPrepAfrica + EduCom
 
-## Getting Started
+Nigerian exam-prep platform (WAEC, NECO, UTME, Post-UTME) combined with
+EduCom, a Coursera-style learning ecosystem for career, technology, and
+life-skills courses.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js (App Router) + TypeScript
+- Tailwind CSS
+- Prisma + PostgreSQL
+- NextAuth v5 (Credentials provider, JWT sessions)
+- Paystack (subscription payments)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. Copy the env file and fill in a real database URL:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   cp .env.example .env
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Point `DATABASE_URL` at a running Postgres instance, then push the schema:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run db:push
+   npm run db:seed
+   ```
 
-## Deploy on Vercel
+   (Use `npm run db:migrate` instead of `db:push` once you want versioned
+   migrations.)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Add Paystack test keys to `.env` (`PAYSTACK_SECRET_KEY`,
+   `PAYSTACK_PUBLIC_KEY`) if you want checkout to work — get them from
+   [the Paystack dashboard](https://dashboard.paystack.com/#/settings/developer).
+   Without them, `/pricing` still renders but checkout fails gracefully.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. Start the dev server:
+
+   ```bash
+   npm run dev
+   ```
+
+## Project structure
+
+- `src/app/` — routes (marketing site, `/login`, `/register`,
+  `/dashboard/*` role shells, `/educom`, `/practice`, `/pricing`)
+- `src/app/dashboard/` — auth-gated dashboards, one per role (student,
+  parent, school, sponsor, admin)
+- `src/app/practice/` — CBT engine: exam/subject/mode picker
+  (`/practice/[exam]`), the session runner (`/practice/session/[attemptId]`),
+  and scored results with explanations (`/practice/results/[attemptId]`)
+- `src/app/educom/` — course catalog, course overview with enrollment, and
+  the lesson player (`/educom/[courseId]/lessons/[lessonId]`) with progress
+  tracking and certificate issuance on completion
+- `src/app/pricing/` + `src/lib/paystack.ts` — plan pricing, Paystack
+  checkout initiation, and the `/api/payments/callback` +
+  `/api/webhooks/paystack` routes that verify payment and activate a
+  subscription
+- `src/lib/auth.ts` — NextAuth config (Credentials + Prisma adapter)
+- `src/lib/prisma.ts` — shared Prisma client singleton
+- `prisma/schema.prisma` — domain model: users/roles, exams/questions/
+  attempts, EduCom courses/lessons/enrollments/certificates, subscriptions/
+  payments/vouchers/referrals
+- `prisma/seed.ts` — sample question bank (WAEC/UTME, 5 subjects) and two
+  full EduCom courses with modules and lessons
+
+## Roles
+
+`STUDENT`, `PARENT`, `SCHOOL_ADMIN`, `SPONSOR`, `PARTNER`, `ADMIN` — each has
+its own dashboard under `/dashboard/*`, routed via `src/lib/roles.ts`.
+
+## Status
+
+Working end-to-end: auth, the CBT practice/mock-exam engine (scored, with
+per-question explanations), the EduCom course player (enrollment, lesson
+progress, certificates), and Paystack subscription checkout. Not yet built:
+parent/school/sponsor data views (currently placeholder dashboards), admin
+tooling, referrals/vouchers, and AI-powered recommendations.

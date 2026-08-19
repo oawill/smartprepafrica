@@ -1,0 +1,1573 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Identity & roles ----------
+
+enum Role {
+  STUDENT
+  PARENT
+  SCHOOL_ADMIN
+  TEACHER
+  SPONSOR
+  PARTNER
+  ADMIN
+}
+
+// ---------- Unified Admin Portal: RBAC & account security ----------
+
+// Only meaningful when Role = ADMIN. Null on an ADMIN user means "not yet
+// assigned a sub-role" (treated as no permissions until a Super Admin sets one).
+enum AdminRole {
+  SUPER_ADMIN
+  PLATFORM_ADMIN
+  CONTENT_ADMIN
+  CONTENT_REVIEWER
+  SCHOOL_SUPPORT_ADMIN
+  USER_SUPPORT_ADMIN
+  FINANCE_ADMIN
+  PARTNER_ADMIN
+  SECURITY_ADMIN
+  ANALYST
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  LOCKED
+  PENDING_VERIFICATION
+  CLOSED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  name         String
+  role         Role     @default(STUDENT)
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Only set (and only meaningful) when role = ADMIN. Governs fine-grained
+  // permissions via src/lib/admin/permissions.ts — assignable only by a
+  // Super Admin (see src/app/dashboard/admin/admins).
+  adminRole AdminRole?
+
+  // Account security state, applicable to any role. Suspending/locking a
+  // user does not delete any of their data.
+  status            AccountStatus @default(ACTIVE)
+  statusReason      String?
+  // Bare id reference (no FK), same pattern as Partner.approvedById — the
+  // actor who last changed this account's status.
+  statusChangedById String?
+  statusChangedAt   DateTime?
+
+  // Bumped to force sign-out on every device: the jwt callback compares the
+  // token's embedded version against this column on each request and
+  // rejects stale tokens. This is how "revoke session" works without a
+  // database session strategy.
+  sessionVersion Int @default(0)
+
+  // Permanent human-readable reference, e.g. STU-00012345. Only assigned to
+  // STUDENT accounts (see src/lib/admin/ids.ts), lazily backfilled for
+  // accounts that existed before this field was added.
+  studentNumber String? @unique
+
+  studentProfile StudentProfile?
+  parentLinks    ParentStudentLink[] @relation("ParentLinks")
+  schoolAdminOf  School[]            @relation("SchoolAdmins")
+  teacherProfile TeacherProfile?
+  sponsorProfile SponsorProfile?
+
+  enrollments            CourseEnrollment[]
+  examAttempts           ExamAttempt[]
+  certificates           Certificate[]
+  badges                 UserBadge[]
+  subscriptions          Subscription[]
+  purchasedSubscriptions Subscription[]         @relation("PurchasedSubscriptions")
+  payments               Payment[]
+  assignmentSubmissions  AssignmentSubmission[]
+  teacherFollows         TeacherFollow[]
+  courseReviews          CourseReview[]
+
+  aiConversations AiConversation[]
+  topicMastery    StudentTopicMastery[]
+  aiInsights      AiLearningInsight[]
+  aiUsageLogs     AiUsageLog[]
+
+  referralsSent    Referral[] @relation("Referrer")
+  referralReceived Referral?  @relation("Referred")
+
+  createdVouchers  Voucher[]           @relation("VoucherIssuer")
+  redeemedVouchers VoucherRedemption[]
+
+  legalAcceptances           LegalAcceptance[]
+  contactSubmissions         ContactSubmission[]     @relation("ContactSubmitter")
+  assignedContactSubmissions ContactSubmission[]     @relation("ContactAssignee")
+
+  // Set when this user IS an approved partner (role=PARTNER).
+  partnerProfile Partner?
+
+  // Set ONCE at registration time by the attribution service, from a valid
+  // partner referral click/code. Never editable afterward by any user-facing
+  // action — the only writer is the registration transaction itself.
+  referredByPartner    Partner? @relation("PartnerReferredUsers", fields: [referredByPartnerId], references: [id])
+  referredByPartnerId  String?
+  referredByCampaign   PartnerCampaign? @relation(fields: [referredByCampaignId], references: [id])
+  referredByCampaignId String?
+  referralCapturedAt   DateTime?
+
+  // The specific click record this registration fulfilled, if any.
+  partnerReferralClick PartnerReferral? @relation("ReferralClickUser")
+
+  partnerCommissionsAsSource PartnerCommission[] @relation("CommissionSourceUser")
+  partnerAuditActions        PartnerAuditLog[]   @relation("AuditActor")
+
+  adminAuditActions AuditLog[]      @relation("AdminAuditActor")
+  loginActivity     LoginActivity[] @relation("LoginActivityUser")
+
+  @@index([status])
+  @@index([role])
+}
+
+model StudentProfile {
+  id          String              @id @default(cuid())
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String              @unique
+  school      School?             @relation(fields: [schoolId], references: [id])
+  schoolId    String?
+  class       Class?              @relation(fields: [classId], references: [id])
+  classId     String?
+  gradeLevel  String?
+  targetExams ExamType[]
+  parentLinks ParentStudentLink[] @relation("StudentLinks")
+}
+
+model ParentStudentLink {
+  id        String         @id @default(cuid())
+  parent    User           @relation("ParentLinks", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId  String
+  student   StudentProfile @relation("StudentLinks", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+  createdAt DateTime       @default(now())
+
+  @@unique([parentId, studentId])
+}
+
+model School {
+  id            String           @id @default(cuid())
+  name          String
+  address       String?
+  // Plain string for now (Nigeria-only marketplace) rather than a full
+  // countries/states relation — easy to migrate to a relation later if
+  // Educom expands beyond Nigeria.
+  state         String?
+  country       String           @default("Nigeria")
+  logoUrl       String?
+  coverImageUrl String?
+  description   String?
+  verified      Boolean          @default(false)
+  // Permanent human-readable reference, e.g. SCH-000045. Backfilled for
+  // schools that existed before this field was added.
+  schoolNumber  String?          @unique
+  status        SchoolStatus     @default(PENDING)
+  statusReason  String?
+  statusChangedById String?
+  statusChangedAt   DateTime?
+  admins        User[]           @relation("SchoolAdmins")
+  students      StudentProfile[]
+  teachers      TeacherProfile[]
+  classes       Class[]
+  courses       Course[]
+  createdAt     DateTime         @default(now())
+
+  sponsorshipPrograms SponsorshipProgram[]
+
+  // A school may be pursued by multiple partners before it registers; only
+  // one of these leads (if any) becomes the authoritative attribution.
+  partnerSchoolLeads PartnerSchoolLead[]
+  partnerAttribution PartnerSchoolAttribution?
+  partnerSchoolDisputes PartnerSchoolDispute[]
+
+  @@index([status])
+}
+
+enum SchoolStatus {
+  PENDING
+  VERIFICATION_REQUIRED
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+model TeacherProfile {
+  id              String  @id @default(cuid())
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String  @unique
+  school          School? @relation(fields: [schoolId], references: [id])
+  schoolId        String?
+  bio             String?
+  photoUrl        String?
+  qualifications  String?
+  yearsExperience Int?
+
+  classes   Class[]         @relation("TeacherClasses")
+  courses   Course[]
+  followers TeacherFollow[]
+}
+
+model TeacherFollow {
+  id        String         @id @default(cuid())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId String
+  createdAt DateTime       @default(now())
+
+  @@unique([userId, teacherId])
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId  String
+  name      String
+  createdAt DateTime @default(now())
+
+  teachers TeacherProfile[] @relation("TeacherClasses")
+  students StudentProfile[]
+}
+
+model SponsorProfile {
+  id           String    @id @default(cuid())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String    @unique
+  organization String?
+  vouchers     Voucher[]
+
+  programs SponsorshipProgram[]
+}
+
+// ---------- Exam prep ----------
+
+enum ExamType {
+  WAEC
+  NECO
+  UTME
+  POST_UTME
+}
+
+model Subject {
+  id                  String               @id @default(cuid())
+  name                String               @unique
+  questions           Question[]
+  examAttempts        ExamAttempt[]
+  courses             Course[]
+  sponsorshipPrograms SponsorshipProgram[]
+
+  aiConversations AiConversation[]
+  topicMastery    StudentTopicMastery[]
+  aiInsights      AiLearningInsight[]
+}
+
+model Question {
+  id            String     @id @default(cuid())
+  exam          ExamType
+  subject       Subject    @relation(fields: [subjectId], references: [id])
+  subjectId     String
+  topic         String?
+  subtopic      String?
+  grade         String?
+  year          Int?
+  difficulty    Difficulty @default(MEDIUM)
+  prompt        String
+  imageUrl      String?
+  options       Json // [{ key: "A", text: "..." }, ...]
+  correctOption String
+  explanation   String?
+  createdAt     DateTime   @default(now())
+
+  // Permanent human-readable reference, e.g. QUE-00098765. Backfilled for
+  // rows that existed before this field was added.
+  questionNumber String? @unique
+
+  // Existing seeded/legacy questions default to PUBLISHED so nothing that
+  // already worked stops working; new questions created through the admin
+  // portal are created explicitly as DRAFT and must go through review.
+  status     QuestionStatus     @default(PUBLISHED)
+  sourceType QuestionSourceType @default(ORIGINAL_SMARTPREP_QUESTION)
+
+  // Bare id references (no FK), same pattern as Partner.approvedById.
+  createdById  String?
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  // Set when another question was flagged as a likely duplicate of this one
+  // during bulk import or manual save. Never auto-deleted — a reviewer
+  // decides.
+  duplicateOfId String?
+
+  responses QuestionResponse[]
+
+  @@index([status])
+  @@index([subjectId])
+  @@index([exam])
+}
+
+enum QuestionStatus {
+  DRAFT
+  NEEDS_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionSourceType {
+  OFFICIAL_PAST_QUESTION
+  LICENSED_QUESTION
+  ORIGINAL_SMARTPREP_QUESTION
+  TEACHER_CREATED
+  AI_GENERATED
+  IMPORTED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum AttemptMode {
+  STUDY_DRILL
+  MOCK_EXAM
+  CBT_PRACTICE
+}
+
+model ExamAttempt {
+  id          String      @id @default(cuid())
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  exam        ExamType
+  mode        AttemptMode
+  subjects    Subject[]
+  startedAt   DateTime    @default(now())
+  submittedAt DateTime?
+  score       Float?
+  totalItems  Int         @default(0)
+
+  responses QuestionResponse[]
+}
+
+model QuestionResponse {
+  id             String      @id @default(cuid())
+  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptId      String
+  question       Question    @relation(fields: [questionId], references: [id])
+  questionId     String
+  order          Int         @default(0)
+  selectedOption String?
+  isCorrect      Boolean?
+  timeSpentSecs  Int?
+
+  @@unique([attemptId, questionId])
+}
+
+// ---------- EduCom (learning ecosystem) ----------
+
+enum CourseCategory {
+  ACADEMIC
+  CAREER_DEVELOPMENT
+  TECHNOLOGY
+  AI
+  CODING
+  FINANCIAL_LITERACY
+  COMMUNICATION
+  LEADERSHIP
+  MINDSET
+  DISCIPLINE
+  LIFE_SKILLS
+}
+
+enum CourseModerationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  PUBLISHED
+  REJECTED
+  NEEDS_CHANGES
+  SUSPENDED
+}
+
+model Course {
+  id            String         @id @default(cuid())
+  title         String
+  description   String
+  category      CourseCategory
+  partnerSchool String?
+  coverImageUrl String?
+  published     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+
+  // Moderation workflow, layered on top of the existing `published` gate
+  // (which remains the actual visibility switch so nothing regresses).
+  // Legacy rows default to DRAFT here and are backfilled from `published`
+  // right after this column is added.
+  moderationStatus CourseModerationStatus @default(DRAFT)
+  moderationReason String?
+  moderatedById    String?
+  moderatedAt      DateTime?
+  featured         Boolean                @default(false)
+
+  instructorName     String?
+  difficulty         Difficulty?
+  estimatedMinutes   Int?
+  learningObjectives String[]
+  // In kobo; null or 0 means free.
+  priceKobo          Int?
+
+  // Set when this course belongs to the "Core Secondary School" or "Exam
+  // Preparation" catalog sections rather than the general "Skills" one.
+  subject   Subject?  @relation(fields: [subjectId], references: [id])
+  subjectId String?
+  examType  ExamType?
+
+  // Set when a school or teacher created this course on-platform, as
+  // opposed to a centrally seeded/curated course (both stay null for those).
+  school    School?         @relation(fields: [schoolId], references: [id])
+  schoolId  String?
+  teacher   TeacherProfile? @relation(fields: [teacherId], references: [id])
+  teacherId String?
+
+  modules      Module[]
+  enrollments  CourseEnrollment[]
+  certificates Certificate[]
+  assignments  Assignment[]
+  reviews      CourseReview[]
+  liveClasses  LiveClass[]
+
+  aiConversations AiConversation[]
+}
+
+model CourseReview {
+  id        String   @id @default(cuid())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, userId])
+}
+
+model LiveClass {
+  id              String   @id @default(cuid())
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId        String
+  title           String
+  scheduledAt     DateTime
+  durationMinutes Int
+  meetingUrl      String
+  createdAt       DateTime @default(now())
+}
+
+model Module {
+  id       String @id @default(cuid())
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  title    String
+  order    Int
+
+  lessons Lesson[]
+}
+
+enum LessonType {
+  VIDEO
+  TEXT
+  QUIZ
+}
+
+model Lesson {
+  id       String     @id @default(cuid())
+  module   Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId String
+  title    String
+  type     LessonType
+  content  String?
+  videoUrl String?
+  order    Int
+  // Matches Question.topic for the same subject, letting this lesson link
+  // to SmartPrepAfrica practice questions on the same concept.
+  topic    String?
+
+  progress      LessonProgress[]
+  quizQuestions QuizQuestion[]
+
+  aiConversations AiConversation[]
+}
+
+model QuizQuestion {
+  id            String @id @default(cuid())
+  lesson        Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId      String
+  order         Int
+  prompt        String
+  options       Json // [{ key: "A", text: "..." }, ...]
+  correctOption String
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+model CourseEnrollment {
+  id          String           @id @default(cuid())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String
+  status      EnrollmentStatus @default(ACTIVE)
+  enrolledAt  DateTime         @default(now())
+  completedAt DateTime?
+
+  lessonProgress LessonProgress[]
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id           String           @id @default(cuid())
+  enrollment   CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  lesson       Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId     String
+  completedAt  DateTime?
+  // Set for QUIZ-type lessons: percentage score of the student's attempt.
+  score        Float?
+
+  @@unique([enrollmentId, lessonId])
+}
+
+model Assignment {
+  id           String    @id @default(cuid())
+  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId     String
+  title        String
+  instructions String
+  dueAt        DateTime?
+  createdAt    DateTime  @default(now())
+
+  submissions AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id           String     @id @default(cuid())
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  content      String
+  submittedAt  DateTime   @default(now())
+  grade        Float?
+  feedback     String?
+  gradedAt     DateTime?
+
+  @@unique([assignmentId, userId])
+}
+
+model Certificate {
+  id       String   @id @default(cuid())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  course   Course   @relation(fields: [courseId], references: [id])
+  courseId String
+  issuedAt DateTime @default(now())
+  certUrl  String?
+
+  @@unique([userId, courseId])
+}
+
+model Badge {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String
+  iconUrl     String?
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+// ---------- Commerce: subscriptions, payments, vouchers, referrals ----------
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+  SCHOOL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model Subscription {
+  id     String @id @default(cuid())
+  // The person whose access this subscription grants (used everywhere
+  // entitlement is checked). Equal to purchasedByUserId for self-purchases.
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  // Set when someone else paid for this subscription on the user's behalf
+  // (e.g. a parent subscribing their child). Null means self-purchased.
+  purchasedBy       User?   @relation("PurchasedSubscriptions", fields: [purchasedByUserId], references: [id])
+  purchasedByUserId String?
+
+  plan      SubscriptionPlan
+  status    SubscriptionStatus @default(ACTIVE)
+  startedAt DateTime           @default(now())
+  expiresAt DateTime?
+
+  payments Payment[]
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String?
+  amountKobo     Int
+  currency       String        @default("NGN")
+  provider       String
+  reference      String        @unique
+  status         PaymentStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+
+  // Permanent human-readable reference, e.g. TXN-000023456. Backfilled for
+  // payments that existed before this field was added.
+  transactionNumber String?     @unique
+  kind               PaymentKind @default(CHARGE)
+  // Set on a REFUND row: the original CHARGE row it reverses. Historical
+  // charge rows are never edited in place — a refund is a new row.
+  reversalOfId       String?
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum PaymentKind {
+  CHARGE
+  REFUND
+}
+
+enum VoucherStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+}
+
+model SponsorshipProgram {
+  id        String         @id @default(cuid())
+  sponsor   SponsorProfile @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  sponsorId String
+
+  name         String
+  plan         SubscriptionPlan
+  // When set, this program's seats are earmarked for one school; when
+  // null, the codes can be redeemed by any student.
+  school       School?          @relation(fields: [schoolId], references: [id])
+  schoolId     String?
+  // Informational targeting (e.g. "sponsor Mathematics learning") — does
+  // not restrict what a redeemed seat grants, which is always the plan.
+  subject      Subject?         @relation(fields: [subjectId], references: [id])
+  subjectId    String?
+  totalSeats   Int
+  durationDays Int
+  createdAt    DateTime         @default(now())
+
+  vouchers Voucher[]
+}
+
+model Voucher {
+  id         String              @id @default(cuid())
+  code       String              @unique
+  sponsor    SponsorProfile?     @relation(fields: [sponsorId], references: [id])
+  sponsorId  String?
+  program    SponsorshipProgram? @relation(fields: [programId], references: [id])
+  programId  String?
+  issuedBy   User                @relation("VoucherIssuer", fields: [issuedById], references: [id])
+  issuedById String
+  plan       SubscriptionPlan
+  status     VoucherStatus       @default(ACTIVE)
+  expiresAt  DateTime?
+  createdAt  DateTime            @default(now())
+
+  redemption VoucherRedemption?
+}
+
+model VoucherRedemption {
+  id         String   @id @default(cuid())
+  voucher    Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  voucherId  String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  redeemedAt DateTime @default(now())
+}
+
+enum ReferralStatus {
+  PENDING
+  REWARDED
+}
+
+model Referral {
+  id             String         @id @default(cuid())
+  referrer       User           @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referrerId     String
+  referredUser   User?          @relation("Referred", fields: [referredUserId], references: [id])
+  referredUserId String?        @unique
+  code           String         @unique
+  status         ReferralStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+}
+
+// ---------- AI Study Coach ----------
+
+enum AiCoachMode {
+  ASK
+  EXPLAIN
+  PRACTICE
+  QUIZ_ME
+  STUDY_PLAN
+  EXAM_PREP
+}
+
+enum AiMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model AiConversation {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  // Context the conversation was launched from — all optional, since a
+  // conversation started from the dashboard has no course/lesson yet.
+  course    Course?  @relation(fields: [courseId], references: [id])
+  courseId  String?
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id])
+  lessonId  String?
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+  subjectId String?
+
+  mode      AiCoachMode @default(ASK)
+  // Auto-generated from the first exchange (e.g. "Quadratic Equation Help"),
+  // never a placeholder like "New Chat 1".
+  title     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  messages AiMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  role           AiMessageRole
+  content        String
+  // Freeform extras: quick-action used, source question/attempt id for a
+  // "why was this wrong" prompt, thumbs rating, etc. Never the full lesson
+  // text or other bulky context — only small pointers.
+  metadata       Json?
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model StudentTopicMastery {
+  id      String  @id @default(cuid())
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  subject Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+  // Plain string, matching the existing Question.topic / Lesson.topic
+  // convention rather than introducing a new normalized Topic entity.
+  topic   String
+
+  // 0-100 estimate of how well the student knows this topic.
+  masteryScore    Float @default(0)
+  // 0-1 estimate of how reliable masteryScore is (grows with attempts).
+  confidenceScore Float @default(0)
+
+  questionsAttempted Int       @default(0)
+  questionsCorrect   Int       @default(0)
+  lastPracticedAt    DateTime?
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([userId, subjectId, topic])
+  @@index([userId, masteryScore])
+}
+
+enum AiInsightType {
+  WEAK_TOPIC
+  STRONG_TOPIC
+  COMMON_MISTAKE
+  RECOMMENDED_TOPIC
+  READINESS_SUMMARY
+}
+
+model AiLearningInsight {
+  id          String        @id @default(cuid())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  subject     Subject?      @relation(fields: [subjectId], references: [id])
+  subjectId   String?
+  topic       String?
+  insightType AiInsightType
+  insight     String
+  confidence  Float         @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId, insightType])
+}
+
+model AiUsageLog {
+  id       String @id @default(cuid())
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  // e.g. "coach_chat", "practice_generate", "mistake_explain"
+  feature  String
+  model    String
+  inputTokens       Int @default(0)
+  outputTokens      Int @default(0)
+  // Rough estimate, in kobo, for admin cost visibility — not a billing record.
+  estimatedCostKobo Int @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+// Per-plan daily AI message allowance, editable by platform admins.
+model AiPlanLimit {
+  plan              SubscriptionPlan @id
+  dailyMessageLimit Int
+  updatedAt         DateTime         @updatedAt
+}
+
+// ---------- Partner / Affiliate Program ----------
+
+enum PartnerType {
+  INDIVIDUAL_AFFILIATE
+  TEACHER
+  EDUCATION_CONSULTANT
+  SCHOOL_REPRESENTATIVE
+  INFLUENCER
+  COMMUNITY_AMBASSADOR
+  CORPORATE_NGO
+  MARKETING_AGENCY
+  OTHER
+}
+
+enum PartnerStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  REJECTED
+  CLOSED
+}
+
+model Partner {
+  id            String @id @default(cuid())
+  // Permanent, human-readable, never reused — e.g. EDP-00001245. Assigned
+  // only at approval time (pending applicants don't have one yet). The
+  // cuid above stays the actual FK/primary key everywhere else.
+  partnerNumber String? @unique
+  // Same value with no punctuation, used in ?ref= URLs (EDP00001245).
+  referralCode  String? @unique
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  firstName    String
+  lastName     String
+  phone        String
+  country      String  @default("Nigeria")
+  state        String?
+  city         String?
+  organization String?
+  partnerType  PartnerType
+
+  status          PartnerStatus @default(PENDING)
+  approvedAt      DateTime?
+  approvedById    String?
+  rejectedReason  String?
+  suspendedReason String?
+  adminNotes      String?
+
+  preferredPaymentMethod String? // BANK_TRANSFER | PAYSTACK | OTHER
+  bankName               String?
+  bankAccountName        String?
+  bankAccountNumber      String?
+
+  promotionPlan   String? // "how they plan to promote Educom"
+  referralSource  String? // how they heard about the program
+  termsAcceptedAt DateTime?
+
+  // Opts a partner out of the public leaderboard (admin can also disable it
+  // platform-wide via PartnerSettings).
+  hideFromLeaderboard Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaigns          PartnerCampaign[]
+  referrals          PartnerReferral[]
+  schoolLeads        PartnerSchoolLead[]
+  schoolAttributions PartnerSchoolAttribution[]
+  commissions        PartnerCommission[]
+  payouts            PartnerPayout[]
+  notifications      PartnerNotification[]
+  fraudFlags         PartnerFraudFlag[]
+  referredUsers      User[]                     @relation("PartnerReferredUsers")
+  disputesAsIncumbent  PartnerSchoolDispute[] @relation("DisputeIncumbent")
+  disputesAsChallenger PartnerSchoolDispute[] @relation("DisputeChallenger")
+
+  @@index([status])
+}
+
+model PartnerCampaign {
+  id        String  @id @default(cuid())
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+
+  slug String // used in ?campaign=lagos-schools
+  name String
+
+  createdAt DateTime @default(now())
+
+  referrals    PartnerReferral[]
+  referredUsers User[]
+
+  @@unique([partnerId, slug])
+}
+
+enum PartnerReferralStatus {
+  CLICKED
+  REGISTERED
+  FLAGGED
+}
+
+// One row per distinct link click — clicks are never counted as students.
+// A click optionally graduates to a registered user (userId set) and,
+// separately, may correlate to a school lead when the click came from a
+// partner's school-invitation flow.
+model PartnerReferral {
+  id        String  @id @default(cuid())
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+
+  campaign   PartnerCampaign? @relation(fields: [campaignId], references: [id])
+  campaignId String?
+
+  // Opaque token carried through the URL/hidden form field as a fallback so
+  // attribution does not depend solely on cookies (see attribution.ts).
+  clickToken String @unique
+
+  landingPage String?
+  // "STUDENT" | "SCHOOL" — which registration flow the click was aimed at.
+  intent      String?
+  ipHash      String? // hashed, never the raw IP
+  userAgent   String?
+
+  clickedAt    DateTime  @default(now())
+  registeredAt DateTime?
+
+  user   User?   @relation("ReferralClickUser", fields: [userId], references: [id])
+  userId String? @unique
+
+  schoolLead   PartnerSchoolLead? @relation(fields: [schoolLeadId], references: [id])
+  schoolLeadId String?
+
+  status        PartnerReferralStatus @default(CLICKED)
+  flaggedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([partnerId, createdAt])
+  @@index([clickToken])
+}
+
+enum SchoolLeadStatus {
+  NEW_LEAD
+  CONTACTED
+  DEMO_SCHEDULED
+  NEGOTIATING
+  SCHOOL_REGISTERED
+  ACTIVATED
+  PAYING_SCHOOL
+  LOST
+}
+
+model PartnerSchoolLead {
+  id         String  @id @default(cuid())
+  leadNumber String  @unique // SCH-LEAD-000234
+  partner    Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId  String
+
+  schoolName        String
+  contactName       String
+  phone             String
+  email             String?
+  state             String?
+  city              String?
+  estimatedStudents Int?
+  estimatedTeachers Int?
+  notes             String?
+
+  status SchoolLeadStatus @default(NEW_LEAD)
+
+  // Set once this lead's school actually registers on the platform.
+  // Preserved permanently — a later click from a different partner never
+  // overwrites it (see PartnerSchoolAttribution for dispute handling).
+  school   School? @relation(fields: [schoolId], references: [id])
+  schoolId String?
+
+  invitationToken     String?   @unique
+  invitationExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statusHistory  PartnerSchoolLeadStatusChange[]
+  referralClicks PartnerReferral[]
+  attributionsWon PartnerSchoolAttribution[] @relation("WinningLead")
+  disputeAsChallenger PartnerSchoolDispute?
+
+  @@index([partnerId, status])
+  @@index([schoolId])
+}
+
+model PartnerSchoolLeadStatusChange {
+  id          String             @id @default(cuid())
+  lead        PartnerSchoolLead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId      String
+  fromStatus  SchoolLeadStatus?
+  toStatus    SchoolLeadStatus
+  changedById String?
+  note        String?
+  createdAt   DateTime           @default(now())
+
+  @@index([leadId])
+}
+
+// The single authoritative "who gets school-referral credit" record for a
+// school. Created from the first lead that reaches SCHOOL_REGISTERED;
+// competing leads from other partners remain on file (never deleted) and
+// can only be reassigned here by an explicit, audit-logged admin decision.
+model PartnerSchoolAttribution {
+  id     String @id @default(cuid())
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId String @unique
+
+  partner   Partner @relation(fields: [partnerId], references: [id])
+  partnerId String
+
+  winningLead   PartnerSchoolLead? @relation("WinningLead", fields: [winningLeadId], references: [id])
+  winningLeadId String?
+
+  decidedById   String?
+  decisionNote  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED_INCUMBENT
+  RESOLVED_CHALLENGER
+  DISMISSED
+}
+
+// Raised automatically when a second partner's lead reaches
+// SCHOOL_REGISTERED for a school that already has a PartnerSchoolAttribution
+// from a different partner. The incumbent attribution is never silently
+// overwritten — only an admin decision (recorded here) can change it.
+model PartnerSchoolDispute {
+  id       String @id @default(cuid())
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId String
+
+  challengerLead   PartnerSchoolLead @relation(fields: [challengerLeadId], references: [id])
+  challengerLeadId String            @unique
+
+  incumbentPartner    Partner @relation("DisputeIncumbent", fields: [incumbentPartnerId], references: [id])
+  incumbentPartnerId  String
+  challengerPartner   Partner @relation("DisputeChallenger", fields: [challengerPartnerId], references: [id])
+  challengerPartnerId String
+
+  status       DisputeStatus @default(OPEN)
+  resolution   String?
+  resolvedById String?
+  resolvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId, status])
+}
+
+enum CommissionEventType {
+  STUDENT_FIRST_SUBSCRIPTION
+  STUDENT_RECURRING_SUBSCRIPTION
+  SCHOOL_ACTIVATION
+  SCHOOL_STUDENT_ACTIVATION
+  CAMPAIGN_BONUS
+  MILESTONE_BONUS
+}
+
+enum CommissionCalcType {
+  FIXED
+  PERCENTAGE
+}
+
+// A versioned compensation rule. Editing a rule NEVER mutates an existing
+// row — it creates a new row with version+1 and flips the previous version's
+// isActive to false. Every PartnerCommission points at the exact rule
+// version that produced it, so past commissions are structurally immune to
+// later admin rate changes.
+model PartnerCommissionRule {
+  id       String  @id @default(cuid())
+  ruleKey  String // stable id grouping versions, e.g. "student_first_subscription"
+  version  Int
+  isActive Boolean @default(true)
+
+  name        String
+  description String?
+
+  eventType CommissionEventType
+  calcType  CommissionCalcType
+
+  fixedAmountKobo Int?
+  percentage      Float? // 10 == 10%
+  isRecurring     Boolean @default(false)
+  recurringMonths Int?
+
+  // Optional tiered brackets overriding the flat fixed/percentage above:
+  // [{ "minCount": 0, "maxCount": 100, "amountKobo": 50000 }, ...]
+  tierBrackets Json?
+
+  maxAmountKobo         Int? // optional cap (e.g. per-school student bonus cap)
+  qualificationHoldDays Int  @default(14)
+
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  commissions PartnerCommission[]
+
+  @@unique([ruleKey, version])
+  @@index([ruleKey, isActive])
+}
+
+enum CommissionStatus {
+  PENDING
+  QUALIFIED
+  APPROVED
+  AVAILABLE
+  PAID
+  REVERSED
+  CANCELLED
+}
+
+model PartnerCommission {
+  id               String @id @default(cuid())
+  commissionNumber String @unique // COM-0009342
+
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+
+  rule   PartnerCommissionRule @relation(fields: [ruleId], references: [id])
+  ruleId String
+
+  eventType CommissionEventType
+
+  // Internal references only — never resolved to PII beyond what the
+  // partner is already entitled to see in their own referral tables.
+  sourceUser     User?   @relation("CommissionSourceUser", fields: [sourceUserId], references: [id])
+  sourceUserId   String?
+  sourceSchoolId String?
+  sourcePaymentId String?
+  sourceSubscriptionId String?
+  sourceSchoolLeadId String?
+
+  // Immutable once created — status/timestamps change, this does not.
+  amountKobo Int
+  status     CommissionStatus @default(PENDING)
+
+  qualifiesAt    DateTime? // hold-period expiry; auto-qualify after this
+  qualifiedAt    DateTime?
+  approvedAt     DateTime?
+  availableAt    DateTime?
+  paidAt         DateTime?
+  reversedAt     DateTime?
+  reversalReason String?
+
+  payout   PartnerPayout? @relation(fields: [payoutId], references: [id])
+  payoutId String?
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([partnerId, status])
+  @@index([sourcePaymentId])
+  @@index([qualifiesAt])
+}
+
+enum PayoutStatus {
+  REQUESTED
+  APPROVED
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+model PartnerPayout {
+  id          String  @id @default(cuid())
+  payoutNumber String @unique // PAY-000123
+  partner     Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId   String
+
+  amountKobo Int
+  method     String // BANK_TRANSFER | PAYSTACK | OTHER
+  destinationSnapshot Json? // bank details as they were at request time
+
+  status         PayoutStatus @default(REQUESTED)
+  requestedAt    DateTime     @default(now())
+  approvedAt     DateTime?
+  approvedById   String?
+  paidAt         DateTime?
+  rejectedReason String?
+  adminNotes     String?
+
+  commissions PartnerCommission[]
+
+  @@index([partnerId, status])
+}
+
+// Admin-configurable tier thresholds — tier is always computed live from a
+// partner's current qualified-paid-student count against these rows, never
+// stored on Partner, so changing a threshold never leaves stale data.
+model PartnerTier {
+  id              String  @id @default(cuid())
+  name            String  @unique
+  minPaidStudents Int
+  sortOrder       Int
+  perks           String?
+  bonusPercentage Float   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum MarketingAssetType {
+  LOGO
+  BANNER
+  SOCIAL_GRAPHIC
+  WHATSAPP_GRAPHIC
+  BROCHURE
+  FLYER
+  QR_CODE
+  SAMPLE_MESSAGE
+  VIDEO
+  OTHER
+}
+
+model PartnerMarketingAsset {
+  id          String             @id @default(cuid())
+  title       String
+  description String?
+  assetType   MarketingAssetType
+  url         String?
+  content     String? // for SAMPLE_MESSAGE — the actual suggested text
+  isPublished Boolean            @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Unified Admin Portal: audit trail & login activity ----------
+// General-purpose complement to PartnerAuditLog (which stays scoped to the
+// Partner program). The Audit Log viewer reads from both tables.
+
+model AuditLog {
+  id          String  @id @default(cuid())
+  actor       User?   @relation("AdminAuditActor", fields: [actorUserId], references: [id])
+  actorUserId String?
+  actorRole   Role?
+
+  action       String // e.g. "QUESTION_PUBLISHED", "USER_SUSPENDED", "ADMIN_ROLE_CHANGED"
+  resourceType String // e.g. "Question", "User", "School", "Payment"
+  resourceId   String?
+  result       String // "SUCCESS" | "DENIED" | "FAILURE"
+
+  before Json?
+  after  Json?
+
+  ipHash    String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([resourceType, resourceId])
+  @@index([actorUserId])
+  @@index([createdAt])
+}
+
+model LoginActivity {
+  id     String  @id @default(cuid())
+  user   User?   @relation("LoginActivityUser", fields: [userId], references: [id])
+  userId String?
+  email  String
+
+  success       Boolean
+  failureReason String?
+
+  ipHash    String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model PartnerAuditLog {
+  id     String  @id @default(cuid())
+  actor  User?   @relation("AuditActor", fields: [actorUserId], references: [id])
+  actorUserId String?
+
+  action     String // e.g. "PARTNER_APPROVED", "SCHOOL_ATTRIBUTION_REASSIGNED"
+  entityType String
+  entityId   String
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+enum PartnerNotificationType {
+  APPLICATION_APPROVED
+  NEW_STUDENT
+  SCHOOL_LEAD_STATUS_CHANGED
+  SCHOOL_ACTIVATED
+  COMMISSION_EARNED
+  COMMISSION_AVAILABLE
+  PAYOUT_APPROVED
+  PAYOUT_COMPLETED
+  TIER_UPGRADED
+}
+
+model PartnerNotification {
+  id        String                  @id @default(cuid())
+  partner   Partner                 @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+  type      PartnerNotificationType
+  message   String
+  readAt    DateTime?
+  createdAt DateTime                @default(now())
+
+  @@index([partnerId, readAt])
+}
+
+enum FraudFlagStatus {
+  OPEN
+  REVIEWING
+  CONFIRMED
+  DISMISSED
+}
+
+model PartnerFraudFlag {
+  id        String  @id @default(cuid())
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+
+  reason               String // SELF_REFERRAL | DUPLICATE_ACCOUNT | ...
+  details              String?
+  relatedReferralId    String?
+  relatedCommissionId  String?
+
+  status       FraudFlagStatus @default(OPEN)
+  reviewedById String?
+  reviewNote   String?
+
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([partnerId, status])
+}
+
+// Singleton config row (id is always 1) — attribution window, payout
+// minimum, and program-wide toggles, editable by admins without a deploy.
+model PartnerSettings {
+  id                    Int      @id @default(1)
+  attributionWindowDays Int      @default(30)
+  minimumPayoutKobo     Int      @default(1000000) // ₦10,000
+  requireAdminApproval  Boolean  @default(true)
+  leaderboardEnabled    Boolean  @default(true)
+  updatedAt             DateTime @updatedAt
+}
+
+// ---------- Branding, Legal & Support ----------
+
+// Singleton config row (id is always 1) — official support contact details.
+// All fields are nullable and stay null until an admin actually configures
+// them; pages must never display a fabricated address/phone/email.
+model PlatformSettings {
+  id               Int      @id @default(1)
+  companyLegalName String?
+  supportEmail     String?
+  supportPhone     String?
+  companyAddress   String?
+  supportHours     String?
+  updatedAt        DateTime @updatedAt
+}
+
+enum LegalDocumentType {
+  TERMS
+  PRIVACY
+  PARTNER_PROGRAM
+}
+
+// A versioned legal document. Editing NEVER mutates an existing row — it
+// creates version+1 and flips the previous version's isActive to false, so
+// a LegalAcceptance always points at the exact text a user agreed to,
+// immune to later edits. Mirrors PartnerCommissionRule's versioning.
+model LegalDocument {
+  id          String            @id @default(cuid())
+  type        LegalDocumentType
+  version     Int
+  isActive    Boolean           @default(true)
+  title       String
+  content     String // Markdown
+  effectiveAt DateTime          @default(now())
+  createdById String?
+  createdAt   DateTime          @default(now())
+
+  acceptances LegalAcceptance[]
+
+  @@unique([type, version])
+  @@index([type, isActive])
+}
+
+// Audit trail of who accepted which exact document version, when, in what
+// context, and (where legally permitted) from which hashed IP — never the
+// raw IP. Rows are never updated or deleted once created.
+model LegalAcceptance {
+  id         String   @id @default(cuid())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId     String?
+  document   LegalDocument @relation(fields: [documentId], references: [id])
+  documentId String
+  context    String // "REGISTRATION" | "PARTNER_APPLICATION"
+  ipHash     String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([documentId])
+}
+
+enum ContactAccountType {
+  STUDENT
+  PARENT
+  TEACHER
+  SCHOOL
+  SPONSOR
+  PARTNER
+  OTHER
+}
+
+enum ContactTopic {
+  GENERAL_INQUIRY
+  ACCOUNT_SUPPORT
+  BILLING
+  COURSE_SUPPORT
+  SCHOOL_REGISTRATION
+  PARTNER_PROGRAM
+  AI_STUDY_COACH
+  TECHNICAL_PROBLEM
+  REPORT_ISSUE
+  OTHER
+}
+
+enum ContactStatus {
+  NEW
+  IN_REVIEW
+  RESPONDED
+  RESOLVED
+  CLOSED
+}
+
+model ContactSubmission {
+  id          String             @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  accountType ContactAccountType
+  topic       ContactTopic
+  message     String
+
+  user   User?   @relation("ContactSubmitter", fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+
+  status       ContactStatus @default(NEW)
+  assignedTo   User?         @relation("ContactAssignee", fields: [assignedToId], references: [id])
+  assignedToId String?
+
+  ipHash    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Permanent human-readable reference, e.g. SUP-000432. Backfilled for
+  // submissions that existed before this field was added.
+  submissionNumber String? @unique
+
+  @@index([status, createdAt])
+  @@index([ipHash, createdAt])
+}
