@@ -20,17 +20,16 @@ export default function Home() {
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-6 py-20 text-center">
           <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
-            180,000+ students preparing with SmartPrepAfrica
+            180,000+ students preparing with SmartPrepAfrica.com
           </span>
           <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">
             Prepare smarter. Pass better.{" "}
             <span className="text-green-400">Achieve more.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-slate-400">
-            SmartPrepAfrica helps Nigerian students master WAEC, NECO, UTME and
-            Post-UTME with an AI study coach — and now, EduCom: a learning
-            ecosystem for the skills and career readiness that come after the
-            exam.
+            SmartPrepAfrica.com helps Nigerian students master WAEC, NECO, UTME
+            and Post-UTME with an AI study coach, plus a course marketplace for
+            the skills and career readiness that come after the exam.
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
@@ -43,7 +42,7 @@ export default function Home() {
               href="/educom"
               className="rounded-full border border-slate-700 px-6 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
             >
-              Explore EduCom
+              Explore Courses
             </Link>
           </div>
         </section>
@@ -67,7 +66,7 @@ export default function Home() {
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
-            <span className="text-xs font-medium text-green-400">EduCom</span>
+            <span className="text-xs font-medium text-green-400">Courses</span>
             <h2 className="mx-auto mt-2 max-w-2xl text-3xl font-semibold">
               Learn From Great Schools.{" "}
               <span className="text-green-400">Wherever You Are.</span>
@@ -93,7 +92,7 @@ export default function Home() {
             </div>
             <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-slate-500">
               <Link href="/register" className="hover:text-slate-300">
-                Teach on Educom →
+                Teach on SmartPrepAfrica.com →
               </Link>
               <Link href="/register" className="hover:text-slate-300">
                 Sponsor a Student →
@@ -139,13 +138,13 @@ export default function Home() {
         </section>
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
-            <span className="text-xs font-medium text-orange-400">Educom Partners</span>
+            <span className="text-xs font-medium text-orange-400">SmartPrepAfrica.com Partners</span>
             <h2 className="mx-auto mt-2 max-w-2xl text-3xl font-semibold">
-              Become an Educom Partner
+              Become a SmartPrepAfrica.com Partner
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-slate-400">
-              Earn while helping students learn. Refer students and schools to Educom and get
-              rewarded for the ones who stick around.
+              Earn while helping students learn. Refer students and schools to SmartPrepAfrica.com
+              and get rewarded for the ones who stick around.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link

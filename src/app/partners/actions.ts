@@ -44,7 +44,7 @@ const applySchema = z.object({
     message: "You must agree to the Terms & Conditions and Privacy Policy.",
   }),
   termsAccepted: z.literal("on", {
-    message: "You must agree to the Educom Partner Program Terms.",
+    message: "You must agree to the SmartPrepAfrica.com Partner Program Terms.",
   }),
 });
 

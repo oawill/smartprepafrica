@@ -38,7 +38,7 @@ export default async function AdminCoursesPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Courses</h1>
-          <p className="mt-1 text-sm text-slate-400">Moderate Educom courses — approve, reject, suspend, or feature.</p>
+          <p className="mt-1 text-sm text-slate-400">Moderate SmartPrepAfrica.com courses — approve, reject, suspend, or feature.</p>
         </div>
         <form className="flex gap-2">
           <select

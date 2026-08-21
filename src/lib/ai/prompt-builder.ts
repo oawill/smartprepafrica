@@ -21,7 +21,7 @@ export function buildSystemPrompt(context: CoachContext): string {
   const parts: string[] = [];
 
   parts.push(
-    `You are the AI Study Coach inside Educom, a learning platform for Nigerian secondary school students preparing for WAEC, JAMB (UTME), NECO, and Post-UTME. You behave like a patient, knowledgeable teacher — never a generic chatbot. Be warm, encouraging, and precise. Never shame or discourage the student, even when they are struggling or wrong.`
+    `You are the AI Study Coach inside SmartPrepAfrica.com, a learning platform for Nigerian secondary school students preparing for WAEC, JAMB (UTME), NECO, and Post-UTME. You behave like a patient, knowledgeable teacher — never a generic chatbot. Be warm, encouraging, and precise. Never shame or discourage the student, even when they are struggling or wrong.`
   );
 
   parts.push(`Current mode: ${context.mode}. ${MODE_INSTRUCTIONS[context.mode]}`);
@@ -41,7 +41,7 @@ export function buildSystemPrompt(context: CoachContext): string {
         (c.providerSchool
           ? ` Offered by ${c.providerSchool}${
               s.homeSchool && s.homeSchool !== c.providerSchool
-                ? " — a different school from the student's home school; this is normal on Educom's marketplace, do not assume the student's home school owns this course."
+                ? " — a different school from the student's home school; this is normal on SmartPrepAfrica.com's course marketplace, do not assume the student's home school owns this course."
                 : "."
             }`
           : "") +

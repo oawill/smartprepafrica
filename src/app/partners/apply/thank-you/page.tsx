@@ -6,7 +6,7 @@ export default function PartnerApplyThankYouPage() {
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
         <h1 className="text-xl font-semibold">Application received 🎉</h1>
         <p className="mt-3 text-sm text-slate-400">
-          Thanks for applying to become an Educom Partner. We&apos;ll review your application and
+          Thanks for applying to become a SmartPrepAfrica.com Partner. We&apos;ll review your application and
           notify you once it&apos;s approved — you can log in anytime to check your status.
         </p>
         <Link

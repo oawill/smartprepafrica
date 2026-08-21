@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SmartPrepAfrica",
+  title: {
+    template: "%s | SmartPrepAfrica.com",
+    default: "SmartPrepAfrica.com",
+  },
   description: "Prepare smarter, pass better, achieve more.",
 };
 

@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { PublicHeader } from "@/components/brand/public-header";
 
 export const metadata: Metadata = {
-  title: "Explore Courses | Educom",
-  description: "Browse courses from schools and teachers across Nigeria on Educom.",
+  title: "Explore Courses",
+  description: "Browse courses from schools and teachers across Nigeria on SmartPrepAfrica.com.",
 };
 
 export default function EducomLayout({ children }: { children: ReactNode }) {

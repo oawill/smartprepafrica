@@ -6,8 +6,8 @@ import { LegalContent } from "@/components/legal/legal-content";
 import { getActiveDocument } from "@/lib/legal/documents";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Educom",
-  description: "How Educom and SmartPrepAfrica collect, use, and protect your information.",
+  title: "Privacy Policy",
+  description: "How SmartPrepAfrica.com collects, uses, and protects your information.",
 };
 
 export default async function PrivacyPage() {

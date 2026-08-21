@@ -1029,7 +1029,7 @@ async function seedLegalDefaults() {
   const documents: Array<{ type: "TERMS" | "PRIVACY" | "PARTNER_PROGRAM"; title: string; content: string }> = [
     { type: "TERMS", title: "Terms & Conditions", content: TERMS_CONTENT },
     { type: "PRIVACY", title: "Privacy Policy", content: PRIVACY_CONTENT },
-    { type: "PARTNER_PROGRAM", title: "Educom Partner Program Terms", content: PARTNER_TERMS_CONTENT },
+    { type: "PARTNER_PROGRAM", title: "SmartPrepAfrica.com Partner Program Terms", content: PARTNER_TERMS_CONTENT },
   ];
 
   for (const doc of documents) {
@@ -1043,21 +1043,21 @@ async function seedLegalDefaults() {
 
 const TERMS_CONTENT = `## 1. Acceptance of Terms
 
-By creating an account, accessing, or using Educom (including its SmartPrepAfrica exam-preparation experience), you agree to be bound by these Terms & Conditions. If you do not agree, do not use the platform.
+By creating an account, accessing, or using SmartPrepAfrica.com, you agree to be bound by these Terms & Conditions. If you do not agree, do not use the platform. SmartPrepAfrica.com is a Cicerah Technologies Limited company.
 
 ## 2. Eligibility and Accounts
 
-Educom supports several account types: **Student**, **Parent**, **Teacher**, **School**, **Sponsor**, and **Partner**. Each account type may have different features and responsibilities, but all account holders are responsible for maintaining the confidentiality of their login credentials and for all activity that occurs under their account.
+SmartPrepAfrica.com supports several account types: **Student**, **Parent**, **Teacher**, **School**, **Sponsor**, and **Partner**. Each account type may have different features and responsibilities, but all account holders are responsible for maintaining the confidentiality of their login credentials and for all activity that occurs under their account.
 
 Where a student is a minor, appropriate parent, guardian, school, or other authorized adult consent may be required before the account is used, consistent with how the account was created (for example, a school-managed roster or a parent-linked account).
 
 ## 3. Educational Services
 
-Educom provides access to educational materials, courses, examination preparation resources, assessments, an AI-assisted study coach, and related educational services. Educom does not guarantee examination success, admission to any institution, specific grades, employment outcomes, or any other academic or career outcome. Results depend on many factors outside the platform's control.
+SmartPrepAfrica.com provides access to educational materials, courses, examination preparation resources, assessments, an AI-assisted study coach, and related educational services. SmartPrepAfrica.com does not guarantee examination success, admission to any institution, specific grades, employment outcomes, or any other academic or career outcome. Results depend on many factors outside the platform's control.
 
-## 4. SmartPrepAfrica
+## 4. Exam Preparation
 
-SmartPrepAfrica, Educom's exam-preparation experience, provides practice materials intended to support preparation for examinations such as WAEC, JAMB, NECO, Post-UTME, and similar assessments where available. Practice content may include original Educom-authored questions, AI-generated practice content, and, where explicitly indicated, licensed past questions. Educom does not claim affiliation, accreditation, or partnership with any examination body unless such an agreement actually exists and is disclosed.
+SmartPrepAfrica.com's exam-preparation tools provide practice materials intended to support preparation for examinations such as WAEC, JAMB, NECO, Post-UTME, and similar assessments where available. Practice content may include original SmartPrepAfrica.com-authored questions, AI-generated practice content, and, where explicitly indicated, licensed past questions. SmartPrepAfrica.com does not claim affiliation, accreditation, or partnership with any examination body unless such an agreement actually exists and is disclosed.
 
 ## 5. AI Study Coach
 
@@ -1065,19 +1065,19 @@ The AI Study Coach generates responses to support your learning. AI-generated re
 
 ## 6. Courses and Schools
 
-Some courses on Educom are provided by independent schools, teachers, or educational organizations through the Educom marketplace. Where a course is provided by a third party, Educom acts as the platform connecting learners to that provider and is not itself the creator of that third party's course content.
+Some courses on SmartPrepAfrica.com are provided by independent schools, teachers, or educational organizations through the SmartPrepAfrica.com course marketplace. Where a course is provided by a third party, SmartPrepAfrica.com acts as the platform connecting learners to that provider and is not itself the creator of that third party's course content.
 
 ## 7. Payments and Subscriptions
 
-Certain features require a paid subscription. Pricing, billing cycles, and renewal are shown at the point of purchase and are processed through Educom's integrated payment provider. Applicable taxes, where required by law, may be added to the displayed price. If a payment fails, access to paid features may be limited until payment is resolved.
+Certain features require a paid subscription. Pricing, billing cycles, and renewal are shown at the point of purchase and are processed through SmartPrepAfrica.com's integrated payment provider. Applicable taxes, where required by law, may be added to the displayed price. If a payment fails, access to paid features may be limited until payment is resolved.
 
 ## 8. Refunds
 
-Refund eligibility depends on the specific plan and payment terms shown at the time of purchase. *Educom's detailed refund policy (eligible circumstances, request windows, and process) is being finalized and will be published here before being relied upon commercially. Until then, refund requests are reviewed case by case — contact [Support](/contact).*
+Refund eligibility depends on the specific plan and payment terms shown at the time of purchase. *SmartPrepAfrica.com's detailed refund policy (eligible circumstances, request windows, and process) is being finalized and will be published here before being relied upon commercially. Until then, refund requests are reviewed case by case — contact [Support](/contact).*
 
 ## 9. Partner Program
 
-Partners may refer students and schools to Educom through their unique referral link. Referring a user does **not**, by itself, create a payable commission — a referral only becomes a payable commission once it meets the qualification criteria defined by Educom's active compensation rules (for example, a qualifying paid conversion and expiry of any applicable review/hold period). Educom may reverse a commission if the underlying transaction is refunded or charged back. Fraudulent, manipulated, or duplicate referrals may be flagged, investigated, and — where confirmed — result in forfeiture of the associated commission and suspension of the partner account. Where two partners submit competing claims to the same school, Educom resolves the dispute administratively rather than automatically reassigning attribution. Payouts require meeting the applicable minimum threshold and are subject to admin review before being marked complete.
+Partners may refer students and schools to SmartPrepAfrica.com through their unique referral link. Referring a user does **not**, by itself, create a payable commission — a referral only becomes a payable commission once it meets the qualification criteria defined by SmartPrepAfrica.com's active compensation rules (for example, a qualifying paid conversion and expiry of any applicable review/hold period). SmartPrepAfrica.com may reverse a commission if the underlying transaction is refunded or charged back. Fraudulent, manipulated, or duplicate referrals may be flagged, investigated, and — where confirmed — result in forfeiture of the associated commission and suspension of the partner account. Where two partners submit competing claims to the same school, SmartPrepAfrica.com resolves the dispute administratively rather than automatically reassigning attribution. Payouts require meeting the applicable minimum threshold and are subject to admin review before being marked complete.
 
 ## 10. Acceptable Use
 
@@ -1085,23 +1085,23 @@ You agree not to: engage in fraud or attempt to manipulate referrals, commission
 
 ## 11. Intellectual Property
 
-The Educom and SmartPrepAfrica platform software, branding, and logos are owned by Educom (or its licensors) and may not be used without permission. Course content, assessments, and other materials remain the property of their respective creators (Educom, participating schools, teachers, or other content providers), subject to the license under which they are made available on the platform. AI-generated study materials are provided for your personal educational use. Educom respects third-party intellectual property rights.
+The SmartPrepAfrica.com platform software, branding, and logos are owned by Cicerah Technologies Limited (or its licensors) and may not be used without permission. Course content, assessments, and other materials remain the property of their respective creators (SmartPrepAfrica.com, participating schools, teachers, or other content providers), subject to the license under which they are made available on the platform. AI-generated study materials are provided for your personal educational use. SmartPrepAfrica.com respects third-party intellectual property rights.
 
 ## 12. User Content
 
-Content you, your school, or your teachers upload or submit (such as course materials, assignments, or submissions) remains owned by its creator, but you grant Educom the license necessary to host, display, and deliver that content as part of the platform's normal operation.
+Content you, your school, or your teachers upload or submit (such as course materials, assignments, or submissions) remains owned by its creator, but you grant SmartPrepAfrica.com the license necessary to host, display, and deliver that content as part of the platform's normal operation.
 
 ## 13. Suspension and Termination
 
-Educom may suspend or terminate an account that violates these Terms, is used fraudulently, or poses a risk to the platform or other users. Where practical, Educom will provide notice of the reason.
+SmartPrepAfrica.com may suspend or terminate an account that violates these Terms, is used fraudulently, or poses a risk to the platform or other users. Where practical, SmartPrepAfrica.com will provide notice of the reason.
 
 ## 14. Limitation of Liability
 
-To the fullest extent permitted by law, Educom is not liable for indirect, incidental, or consequential damages arising from use of the platform, including but not limited to academic outcomes, examination results, or third-party course content. Nothing in these Terms limits liability where such limitation is not permitted by applicable law.
+To the fullest extent permitted by law, SmartPrepAfrica.com is not liable for indirect, incidental, or consequential damages arising from use of the platform, including but not limited to academic outcomes, examination results, or third-party course content. Nothing in these Terms limits liability where such limitation is not permitted by applicable law.
 
 ## 15. Changes to Terms
 
-Educom may update these Terms from time to time. The effective date at the top of this page reflects the version currently in force. Continued use of the platform after an update constitutes acceptance of the revised Terms.
+SmartPrepAfrica.com may update these Terms from time to time. The effective date at the top of this page reflects the version currently in force. Continued use of the platform after an update constitutes acceptance of the revised Terms.
 
 ## 16. Contact
 
@@ -1109,7 +1109,7 @@ Questions about these Terms can be sent through our [Contact page](/contact).`;
 
 const PRIVACY_CONTENT = `## 1. Information We Collect
 
-Depending on your account type and how you use Educom, we may collect: your name, email address, and account credentials; role-specific profile details (for example, a student's grade level and target exams, a school's name and address, a partner's phone number and payout details); course enrollment and learning activity (progress, quiz and practice results, topic mastery, AI Study Coach conversations); subscription and payment status (processed through our payment provider — see Payments below); partner referral identifiers used to attribute registrations; device/browser information captured automatically (such as user-agent); and any message you send us through the Contact form.
+Depending on your account type and how you use SmartPrepAfrica.com, we may collect: your name, email address, and account credentials; role-specific profile details (for example, a student's grade level and target exams, a school's name and address, a partner's phone number and payout details); course enrollment and learning activity (progress, quiz and practice results, topic mastery, AI Study Coach conversations); subscription and payment status (processed through our payment provider — see Payments below); partner referral identifiers used to attribute registrations; device/browser information captured automatically (such as user-agent); and any message you send us through the Contact form.
 
 We only describe data categories the platform actually collects, based on its current data model — not every category listed above applies to every account type.
 
@@ -1123,15 +1123,15 @@ When you use the AI Study Coach, relevant learning context (such as the topic yo
 
 ## 4. Children and Students
 
-Educom serves school-age users through student, parent, and school accounts. Where a student account is created and managed by a school (for example, via bulk roster upload) or linked to a parent account, that school or parent is responsible for the underlying consent to create the account. We aim to collect only the information needed to provide the educational service, and do not require students to provide more personal information than necessary to use the platform. We do not make specific legal-compliance certifications (e.g., under a named children's privacy law) unless such a certification has actually been obtained.
+SmartPrepAfrica.com serves school-age users through student, parent, and school accounts. Where a student account is created and managed by a school (for example, via bulk roster upload) or linked to a parent account, that school or parent is responsible for the underlying consent to create the account. We aim to collect only the information needed to provide the educational service, and do not require students to provide more personal information than necessary to use the platform. We do not make specific legal-compliance certifications (e.g., under a named children's privacy law) unless such a certification has actually been obtained.
 
 ## 5. Payments
 
-Subscription payments are processed through our integrated third-party payment provider (Paystack). Educom does not store your full card number or other full payment-card details — payment processing is handled by the payment provider, and Educom retains only the transaction status, amount, and reference needed to manage your subscription.
+Subscription payments are processed through our integrated third-party payment provider (Paystack). SmartPrepAfrica.com does not store your full card number or other full payment-card details — payment processing is handled by the payment provider, and SmartPrepAfrica.com retains only the transaction status, amount, and reference needed to manage your subscription.
 
 ## 6. Partner Referral Data
 
-If you were referred to Educom through a partner's link, we store a referral identifier and related attribution details (such as the click and registration timestamps) in order to correctly attribute your registration and, where applicable, calculate the referring partner's eligible commission.
+If you were referred to SmartPrepAfrica.com through a partner's link, we store a referral identifier and related attribution details (such as the click and registration timestamps) in order to correctly attribute your registration and, where applicable, calculate the referring partner's eligible commission.
 
 ## 7. Cookies and Similar Technologies
 
@@ -1143,7 +1143,7 @@ We use the information described above to: provide and operate the educational s
 
 ## 9. Data Sharing
 
-We share information only as needed to operate the platform: with service providers who help us run Educom (such as our hosting, database, and payment infrastructure providers); with a student's own school or linked parent account, where that relationship exists; with a course's instructor or school, limited to what's needed to support that course; and with our payment provider, to process subscriptions. **We do not sell personal data.**
+We share information only as needed to operate the platform: with service providers who help us run SmartPrepAfrica.com (such as our hosting, database, and payment infrastructure providers); with a student's own school or linked parent account, where that relationship exists; with a course's instructor or school, limited to what's needed to support that course; and with our payment provider, to process subscriptions. **We do not sell personal data.**
 
 ## 10. Data Retention
 
@@ -1165,19 +1165,19 @@ We may update this Privacy Policy from time to time. The effective date above re
 
 Questions about this Privacy Policy can be sent through our [Contact page](/contact).`;
 
-const PARTNER_TERMS_CONTENT = `## Educom Partner Program Terms
+const PARTNER_TERMS_CONTENT = `## SmartPrepAfrica.com Partner Program Terms
 
-By applying to the Educom Partner Program, you agree to the following, in addition to Educom's general [Terms & Conditions](/terms):
+By applying to the SmartPrepAfrica.com Partner Program, you agree to the following, in addition to SmartPrepAfrica.com's general [Terms & Conditions](/terms):
 
-- Commissions are payable **only** for referrals that meet the qualification criteria under Educom's active, admin-configured compensation rules at the time of the underlying event — not simply for a link click or registration.
-- Educom may reverse a pending or already-approved commission if the underlying payment is refunded, charged back, or found to be fraudulent.
+- Commissions are payable **only** for referrals that meet the qualification criteria under SmartPrepAfrica.com's active, admin-configured compensation rules at the time of the underlying event — not simply for a link click or registration.
+- SmartPrepAfrica.com may reverse a pending or already-approved commission if the underlying payment is refunded, charged back, or found to be fraudulent.
 - Referral attribution is recorded server-side at registration and is not editable by the referred user or the partner after the fact.
-- Where two partners submit competing claims to the same school, Educom resolves the dispute administratively; attribution is never automatically reassigned by a later click.
+- Where two partners submit competing claims to the same school, SmartPrepAfrica.com resolves the dispute administratively; attribution is never automatically reassigned by a later click.
 - Suspicious referral activity (including but not limited to self-referral, duplicate accounts, or fabricated students or schools) may be flagged for review and can result in commission forfeiture and/or partner account suspension.
 - Payouts require reaching the applicable minimum threshold and are subject to admin approval before being marked complete.
-- Educom does not guarantee any specific level of income from the Partner Program.
+- SmartPrepAfrica.com does not guarantee any specific level of income from the Partner Program.
 
-I agree to the Educom Partner Program Terms and understand that commissions are payable only for qualifying conversions under the applicable compensation rules.`;
+I agree to the SmartPrepAfrica.com Partner Program Terms and understand that commissions are payable only for qualifying conversions under the applicable compensation rules.`;
 
 async function main() {
   const subjectNames = Array.from(new Set(allQuestions.map((q) => q.subject)));

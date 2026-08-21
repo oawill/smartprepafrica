@@ -3,7 +3,7 @@ import Link from "next/link";
 const steps = [
   {
     title: "Join",
-    body: "Apply as an Educom Partner in a few minutes — no upfront cost.",
+    body: "Apply as a SmartPrepAfrica.com Partner in a few minutes — no upfront cost.",
   },
   {
     title: "Share",
@@ -15,7 +15,7 @@ const steps = [
   },
   {
     title: "Earn",
-    body: "Get paid for the students and schools that stick with Educom.",
+    body: "Get paid for the students and schools that stick with SmartPrepAfrica.com.",
   },
 ];
 
@@ -25,15 +25,15 @@ export default function PartnersLandingPage() {
       <main className="flex-1">
         <section className="mx-auto max-w-4xl px-6 py-20 text-center">
           <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
-            Educom Partner Program
+            SmartPrepAfrica.com Partner Program
           </span>
           <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-semibold leading-tight sm:text-5xl">
-            Become an Educom Partner
+            Become a SmartPrepAfrica.com Partner
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-slate-400">
-            Earn while helping students learn. Refer students and schools to Educom and get
-            rewarded for the ones who stick around — teachers, consultants, influencers, agencies,
-            and anyone with a network worth sharing with.
+            Earn while helping students learn. Refer students and schools to SmartPrepAfrica.com
+            and get rewarded for the ones who stick around — teachers, consultants, influencers,
+            agencies, and anyone with a network worth sharing with.
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
@@ -60,7 +60,7 @@ export default function PartnersLandingPage() {
 
         <section className="mx-auto max-w-4xl px-6 py-16 text-center">
           <p className="text-xs text-slate-500">
-            Commission structure and payout terms are set by Educom and may change; exact rates
+            Commission structure and payout terms are set by SmartPrepAfrica.com and may change; exact rates
             are confirmed once your application is approved. We don&apos;t promise a specific
             income amount.
           </p>

@@ -2,17 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
+import { hasPermission } from "@/lib/admin/permissions";
+import { QuestionBulkTable, type BulkQuestionRow } from "@/components/admin/question-bulk-table";
 import type { Prisma } from "@prisma/client";
 
 const PAGE_SIZE = 25;
-
-const statusColor: Record<string, string> = {
-  DRAFT: "text-slate-400",
-  NEEDS_REVIEW: "text-amber-400",
-  APPROVED: "text-blue-400",
-  PUBLISHED: "text-green-400",
-  ARCHIVED: "text-slate-600",
-};
 
 export default async function AdminQuestionsPage({
   searchParams,
@@ -25,7 +19,7 @@ export default async function AdminQuestionsPage({
     page?: string;
   }>;
 }) {
-  await requireAdminPagePermission("questions.view");
+  const session = await requireAdminPagePermission("questions.view");
 
   const params = await searchParams;
   const q = params.q?.trim();
@@ -66,6 +60,19 @@ export default async function AdminQuestionsPage({
     for (const [k, v] of Object.entries(merged)) if (v) sp.set(k, v);
     return `/dashboard/admin/questions?${sp.toString()}`;
   }
+
+  const canArchive = hasPermission(session.user.adminRole, "questions.archive");
+  const canPublish = hasPermission(session.user.adminRole, "questions.publish");
+  const rows: BulkQuestionRow[] = questions.map((q) => ({
+    id: q.id,
+    questionNumber: q.questionNumber,
+    subjectName: q.subject.name,
+    exam: q.exam,
+    topic: q.topic,
+    difficulty: q.difficulty,
+    status: q.status,
+    duplicateOfId: q.duplicateOfId,
+  }));
 
   return (
     <div>
@@ -138,46 +145,7 @@ export default async function AdminQuestionsPage({
 
       <div className="mt-6">
         <Card title={`${questions.length} question${questions.length === 1 ? "" : "s"} on this page`}>
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
-              <tr>
-                <th className="pb-2">ID</th>
-                <th className="pb-2">Subject / exam</th>
-                <th className="pb-2">Topic</th>
-                <th className="pb-2">Difficulty</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {questions.map((question) => (
-                <tr key={question.id} className="border-t border-slate-800">
-                  <td className="py-2 font-mono text-xs text-slate-500">{question.questionNumber ?? "—"}</td>
-                  <td className="py-2 text-slate-300">
-                    {question.subject.name} · {question.exam}
-                  </td>
-                  <td className="py-2 text-slate-400">{question.topic ?? "—"}</td>
-                  <td className="py-2 text-slate-400">{question.difficulty}</td>
-                  <td className={`py-2 ${statusColor[question.status] ?? ""}`}>
-                    {question.status}
-                    {question.duplicateOfId && (
-                      <span className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-400">
-                        possible duplicate
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2 text-right">
-                    <Link
-                      href={`/dashboard/admin/questions/${question.id}`}
-                      className="text-xs text-orange-400 hover:underline"
-                    >
-                      View →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <QuestionBulkTable questions={rows} canArchive={canArchive} canPublish={canPublish} />
         </Card>
       </div>
 

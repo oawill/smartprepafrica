@@ -61,7 +61,7 @@ export default async function ManageCoursePage({
       </div>
       {!course.published && (
         <p className="mt-2 text-xs text-amber-400">
-          Draft — not visible in the EduCom catalog until published.
+          Draft — not visible in the course catalog until published.
         </p>
       )}
 

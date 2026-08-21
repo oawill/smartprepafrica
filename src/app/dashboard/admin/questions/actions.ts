@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireActionPermission } from "@/lib/admin/authz";
 import { logAudit } from "@/lib/admin/audit";
 import { generateQuestionNumber } from "@/lib/admin/ids";
+import type { BulkResult } from "@/lib/admin/bulk-types";
 
 const optionSchema = z.object({ key: z.string(), text: z.string() });
 
@@ -299,4 +300,72 @@ export async function duplicateQuestion(formData: FormData) {
 
   revalidatePath("/dashboard/admin/questions");
   redirect(`/dashboard/admin/questions/${copy.id}`);
+}
+
+/** Archives a set of questions in one batched write. Any status can move to
+ * ARCHIVED, so the only failure case is an id that doesn't exist. */
+export async function bulkArchiveQuestions(ids: string[]): Promise<BulkResult> {
+  const session = await requireActionPermission("questions.archive");
+  if (ids.length === 0) return { updatedCount: 0, failed: [] };
+
+  const found = await prisma.question.findMany({ where: { id: { in: ids } }, select: { id: true } });
+  const foundIds = new Set(found.map((q) => q.id));
+  const failed = ids.filter((id) => !foundIds.has(id)).map((id) => ({ id, reason: "Not found" }));
+  const eligibleIds = ids.filter((id) => foundIds.has(id));
+
+  if (eligibleIds.length > 0) {
+    await prisma.question.updateMany({ where: { id: { in: eligibleIds } }, data: { status: "ARCHIVED" } });
+  }
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "QUESTIONS_BULK_ARCHIVED",
+    resourceType: "Question",
+    result: "SUCCESS",
+    after: { updatedIds: eligibleIds, failedIds: failed.map((f) => f.id) },
+  });
+
+  revalidatePath("/dashboard/admin/questions");
+  return { updatedCount: eligibleIds.length, failed };
+}
+
+/** Publishes a set of questions in one batched write. Only questions
+ * currently APPROVED are eligible — anything else is reported as a partial
+ * failure with the reason, rather than silently skipped or force-moved. */
+export async function bulkPublishQuestions(ids: string[]): Promise<BulkResult> {
+  const session = await requireActionPermission("questions.publish");
+  if (ids.length === 0) return { updatedCount: 0, failed: [] };
+
+  const found = await prisma.question.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, status: true },
+  });
+  const foundById = new Map(found.map((q) => [q.id, q]));
+
+  const failed: { id: string; reason: string }[] = [];
+  const eligibleIds: string[] = [];
+
+  for (const id of ids) {
+    const question = foundById.get(id);
+    if (!question) failed.push({ id, reason: "Not found" });
+    else if (question.status !== "APPROVED") failed.push({ id, reason: `Not approved (currently ${question.status})` });
+    else eligibleIds.push(id);
+  }
+
+  if (eligibleIds.length > 0) {
+    await prisma.question.updateMany({ where: { id: { in: eligibleIds } }, data: { status: "PUBLISHED" } });
+  }
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "QUESTIONS_BULK_PUBLISHED",
+    resourceType: "Question",
+    result: "SUCCESS",
+    after: { updatedIds: eligibleIds, failedIds: failed.map((f) => f.id) },
+  });
+
+  revalidatePath("/dashboard/admin/questions");
+  return { updatedCount: eligibleIds.length, failed };
 }

@@ -2,18 +2,12 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
+import { hasPermission } from "@/lib/admin/permissions";
 import { roleFromSlug, ROLE_SLUG_LABEL } from "@/lib/admin/user-role-slug";
+import { UserBulkTable, type BulkUserRow } from "@/components/admin/user-bulk-table";
 import type { Prisma } from "@prisma/client";
 
 const PAGE_SIZE = 25;
-
-const statusColor: Record<string, string> = {
-  ACTIVE: "text-green-400",
-  SUSPENDED: "text-red-400",
-  LOCKED: "text-red-500",
-  PENDING_VERIFICATION: "text-amber-400",
-  CLOSED: "text-slate-600",
-};
 
 export default async function AdminUsersByRolePage({
   params,
@@ -22,7 +16,7 @@ export default async function AdminUsersByRolePage({
   params: Promise<{ roleSlug: string }>;
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  await requireAdminPagePermission("users.view");
+  const session = await requireAdminPagePermission("users.view");
   const { roleSlug } = await params;
   const role = roleFromSlug(roleSlug);
   const label = ROLE_SLUG_LABEL[roleSlug];
@@ -62,6 +56,21 @@ export default async function AdminUsersByRolePage({
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const canBulkUpdate = hasPermission(session.user.adminRole, "users.suspend");
+
+  const rows: BulkUserRow[] = users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    status: u.status,
+    studentNumber: u.studentNumber,
+    detail:
+      u.studentProfile?.school?.name ??
+      u.teacherProfile?.school?.name ??
+      u.schoolAdminOf[0]?.name ??
+      u.sponsorProfile?.organization ??
+      (u.parentLinks.length > 0 ? `${u.parentLinks.length} linked child(ren)` : "—"),
+  }));
 
   return (
     <div>
@@ -86,45 +95,7 @@ export default async function AdminUsersByRolePage({
 
       <div className="mt-6">
         <Card title={`${users.length} on this page`}>
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
-              <tr>
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Email</th>
-                <th className="pb-2">Detail</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => {
-                const detail =
-                  u.studentProfile?.school?.name ??
-                  u.teacherProfile?.school?.name ??
-                  u.schoolAdminOf[0]?.name ??
-                  u.sponsorProfile?.organization ??
-                  (u.parentLinks.length > 0 ? `${u.parentLinks.length} linked child(ren)` : "—");
-                return (
-                  <tr key={u.id} className="border-t border-slate-800">
-                    <td className="py-2">
-                      {u.name}
-                      {u.studentNumber && (
-                        <span className="ml-2 font-mono text-xs text-slate-500">{u.studentNumber}</span>
-                      )}
-                    </td>
-                    <td className="py-2 text-slate-400">{u.email}</td>
-                    <td className="py-2 text-slate-400">{detail}</td>
-                    <td className={`py-2 ${statusColor[u.status] ?? ""}`}>{u.status}</td>
-                    <td className="py-2 text-right">
-                      <Link href={`/dashboard/admin/users/${roleSlug}/${u.id}`} className="text-xs text-orange-400 hover:underline">
-                        View →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <UserBulkTable users={rows} roleSlug={roleSlug} canBulkUpdate={canBulkUpdate} />
         </Card>
       </div>
 

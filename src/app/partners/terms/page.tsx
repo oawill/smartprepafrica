@@ -4,8 +4,8 @@ import { LegalContent } from "@/components/legal/legal-content";
 import { getActiveDocument } from "@/lib/legal/documents";
 
 export const metadata: Metadata = {
-  title: "Partner Program Terms | Educom",
-  description: "Terms governing the Educom Partner Program, including commission qualification and payouts.",
+  title: "Partner Program Terms",
+  description: "Terms governing the SmartPrepAfrica.com Partner Program, including commission qualification and payouts.",
 };
 
 export default async function PartnerProgramTermsPage() {

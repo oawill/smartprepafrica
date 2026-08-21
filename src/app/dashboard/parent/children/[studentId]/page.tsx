@@ -228,7 +228,7 @@ export default async function ChildDetailPage({
       <div className="mt-6">
         <Card title="Course progress">
           {insights.courseProgress.length === 0 ? (
-            <p className="text-sm text-slate-400">Not enrolled in any EduCom courses yet.</p>
+            <p className="text-sm text-slate-400">Not enrolled in any courses yet.</p>
           ) : (
             <div className="space-y-3">
               {insights.courseProgress.map((c) => (

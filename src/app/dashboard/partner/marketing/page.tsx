@@ -20,7 +20,7 @@ export default async function PartnerMarketingPage() {
     <div>
       <h1 className="text-2xl font-semibold">Marketing materials</h1>
       <p className="mt-1 text-sm text-slate-400">
-        Ready-to-use assets and suggested messages for promoting Educom.
+        Ready-to-use assets and suggested messages for promoting SmartPrepAfrica.com.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">

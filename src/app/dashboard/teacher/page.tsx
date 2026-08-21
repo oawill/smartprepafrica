@@ -136,7 +136,7 @@ export default async function TeacherDashboard() {
       <div className="mt-6">
         <Card title="Public profile">
           <p className="text-xs text-slate-500">
-            Shown on your Educom teacher profile so students anywhere can
+            Shown on your SmartPrepAfrica.com teacher profile so students anywhere can
             find and learn from you.
           </p>
           <form action={updateTeacherProfile} className="mt-3 space-y-3">

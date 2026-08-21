@@ -31,7 +31,7 @@ export default async function CertificatePage({
 
       <div className="mt-6 rounded-2xl border-2 border-orange-500/40 bg-slate-900 p-10 text-center">
         <p className="text-xs uppercase tracking-[0.2em] text-orange-400">
-          SmartPrepAfrica · EduCom
+          SmartPrepAfrica.com
         </p>
         <p className="mt-6 text-sm text-slate-400">This certifies that</p>
         <p className="mt-2 text-3xl font-semibold">{certificate.user.name}</p>

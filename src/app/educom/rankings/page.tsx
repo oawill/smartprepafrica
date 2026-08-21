@@ -92,11 +92,11 @@ export default async function RankingsPage({
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
-        ← Back to EduCom
+        ← Back to Courses
       </Link>
-      <h1 className="mt-4 text-3xl font-semibold">Discover on Educom</h1>
+      <h1 className="mt-4 text-3xl font-semibold">Discover on SmartPrepAfrica.com</h1>
       <p className="mt-2 max-w-2xl text-slate-400">
-        Rankings here are based only on verified Educom activity — real
+        Rankings here are based only on verified SmartPrepAfrica.com activity — real
         learner ratings and real enrollment — never an unverified
         &quot;best school&quot; claim.
       </p>
@@ -124,7 +124,7 @@ export default async function RankingsPage({
 
       <section className="mt-10">
         <h2 className="text-lg font-semibold">
-          Highly Rated {subjectFilter ? `${subjectFilter} ` : ""}Courses on Educom
+          Highly Rated {subjectFilter ? `${subjectFilter} ` : ""}Courses on SmartPrepAfrica.com
         </h2>
         {ratedCourses.length === 0 ? (
           <p className="mt-2 text-sm text-slate-400">Not enough reviews yet to rank courses.</p>
@@ -154,7 +154,7 @@ export default async function RankingsPage({
 
       <section className="mt-10">
         <h2 className="text-lg font-semibold">
-          Highly Rated {subjectFilter ? `${subjectFilter} ` : ""}Schools on Educom
+          Highly Rated {subjectFilter ? `${subjectFilter} ` : ""}Schools on SmartPrepAfrica.com
         </h2>
         {ratedSchools.length === 0 ? (
           <p className="mt-2 text-sm text-slate-400">Not enough reviews yet to rank schools.</p>

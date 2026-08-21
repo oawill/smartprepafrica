@@ -45,7 +45,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <div className="flex flex-1 flex-col">
         <header className="hidden items-center justify-between border-b border-slate-800 bg-slate-950 px-6 py-3 sm:flex">
           <div>
-            <p className="text-sm font-semibold text-slate-200">Educom Administration</p>
+            <p className="text-sm font-semibold text-slate-200">SmartPrepAfrica.com Administration</p>
             <p className="text-xs text-slate-500">
               {session.user.name} · {roleLabel}
             </p>

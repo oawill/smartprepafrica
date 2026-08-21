@@ -10,7 +10,7 @@ import type { Role } from "@prisma/client";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Explore Courses", href: "/educom" },
-  { label: "SmartPrepAfrica", href: "/practice" },
+  { label: "Exam Practice", href: "/practice" },
   { label: "Schools", href: "/educom/schools" },
   { label: "AI Study Coach", href: "/register" },
   { label: "Become a Partner", href: "/partners" },

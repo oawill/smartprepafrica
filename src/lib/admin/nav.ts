@@ -30,7 +30,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
-    label: "Educom",
+    label: "Courses",
     items: [
       { label: "Schools", href: "/dashboard/admin/schools", permission: "schools.view" },
       { label: "Courses", href: "/dashboard/admin/courses", permission: "courses.view" },

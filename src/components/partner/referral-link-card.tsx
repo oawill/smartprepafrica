@@ -20,7 +20,7 @@ export function ReferralLinkCard({
   }
 
   const whatsappHref = `https://wa.me/?text=${encodeURIComponent(
-    `Join Educom and start prepping smarter: ${referralLink}`
+    `Join SmartPrepAfrica.com and start prepping smarter: ${referralLink}`
   )}`;
 
   return (

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 
 export const metadata: Metadata = {
-  title: "Access Denied | Educom",
+  title: "Access Denied",
 };
 
 export default function UnauthorizedPage() {

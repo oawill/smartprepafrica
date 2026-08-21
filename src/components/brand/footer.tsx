@@ -7,7 +7,7 @@ const columns = [
     heading: "Platform",
     links: [
       { label: "Explore Courses", href: "/educom" },
-      { label: "SmartPrepAfrica", href: "/practice" },
+      { label: "Exam Practice", href: "/practice" },
       { label: "Schools", href: "/educom/schools" },
       { label: "AI Study Coach", href: "/register" },
       { label: "Become a Partner", href: "/partners" },
@@ -38,8 +38,7 @@ const columns = [
 
 export async function Footer() {
   const settings = await getPlatformSettings();
-  const legalName = settings.companyLegalName || "Educom";
-  const tradingAs = settings.companyLegalName && settings.companyLegalName !== "Educom";
+  const legalName = settings.companyLegalName || "Cicerah Technologies Limited";
   const year = new Date().getFullYear();
 
   return (
@@ -72,7 +71,7 @@ export async function Footer() {
         </div>
 
         <div className="mt-10 border-t border-slate-800 pt-6 text-center text-xs text-slate-500">
-          {tradingAs && <p className="mb-1">Educom is a trading name of {legalName}.</p>}
+          <p className="mb-1">SmartPrepAfrica.com is a {legalName} company.</p>
           © {year} {legalName}. All rights reserved.
         </div>
       </div>

@@ -33,7 +33,7 @@ export default async function ParentDashboard() {
     <div>
       <h1 className="text-2xl font-semibold">Parent dashboard</h1>
       <p className="mt-1 text-sm text-slate-400">
-        Monitor your child&apos;s exam prep and EduCom progress in one place.
+        Monitor your child&apos;s exam prep and course progress in one place.
       </p>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">

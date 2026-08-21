@@ -129,7 +129,7 @@ export default async function AdminDashboard({
         <div>
           <h1 className="text-2xl font-semibold">Platform health</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Central control center for SmartPrepAfrica and Educom.
+            Central control center for SmartPrepAfrica.com.
           </p>
         </div>
         <div className="flex gap-1 rounded-lg border border-slate-800 bg-slate-900 p-1 text-xs">

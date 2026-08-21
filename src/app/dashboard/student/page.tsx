@@ -186,7 +186,7 @@ export default async function StudentDashboard({
               href="/educom"
               className="block text-orange-400 hover:underline"
             >
-              Browse EduCom courses →
+              Browse courses →
             </Link>
           </div>
         </Card>

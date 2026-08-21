@@ -22,7 +22,7 @@ export default async function StudentCertificatesPage() {
 
       {certificates.length === 0 ? (
         <p className="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-400">
-          Complete an EduCom course to earn your first certificate.
+          Complete a course to earn your first certificate.
         </p>
       ) : (
         <div className="mt-6 space-y-2">

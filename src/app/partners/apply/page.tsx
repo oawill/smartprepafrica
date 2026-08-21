@@ -28,9 +28,9 @@ export default function PartnerApplyPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-8">
-        <h1 className="text-xl font-semibold">Become an Educom Partner</h1>
+        <h1 className="text-xl font-semibold">Become a SmartPrepAfrica.com Partner</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Refer students and schools to Educom and earn commission on successful conversions.
+          Refer students and schools to SmartPrepAfrica.com and earn commission on successful conversions.
         </p>
 
         <form action={formAction} className="mt-6 space-y-4">
@@ -165,7 +165,7 @@ export default function PartnerApplyPage() {
 
           <div>
             <label className={labelClass} htmlFor="promotionPlan">
-              How do you plan to promote Educom? (optional)
+              How do you plan to promote SmartPrepAfrica.com? (optional)
             </label>
             <textarea
               id="promotionPlan"
@@ -202,7 +202,7 @@ export default function PartnerApplyPage() {
             <span>
               I agree to the{" "}
               <Link href="/partners/terms" target="_blank" className="text-orange-400 hover:underline">
-                Educom Partner Program Terms
+                SmartPrepAfrica.com Partner Program Terms
               </Link>{" "}
               and understand that commissions are payable only for qualifying conversions under
               the applicable compensation rules.

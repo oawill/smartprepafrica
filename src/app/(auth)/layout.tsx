@@ -4,8 +4,8 @@ import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
 
 export const metadata: Metadata = {
-  title: "Log In or Sign Up | Educom",
-  description: "Log in or create your Educom account to start learning.",
+  title: "Log In or Sign Up",
+  description: "Log in or create your SmartPrepAfrica.com account to start learning.",
 };
 
 export default function AuthLayout({ children }: { children: ReactNode }) {

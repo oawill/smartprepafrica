@@ -35,7 +35,7 @@ export default async function SchoolsDirectoryPage({
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
-        ← Back to EduCom
+        ← Back to Courses
       </Link>
       <h1 className="mt-4 text-3xl font-semibold">Explore schools</h1>
       <p className="mt-2 max-w-2xl text-slate-400">

@@ -34,11 +34,11 @@ export default async function AdminPlatformSettingsPage() {
                 id="companyLegalName"
                 name="companyLegalName"
                 defaultValue={settings.companyLegalName ?? ""}
-                placeholder="Educom"
+                placeholder="Cicerah Technologies Limited"
                 className={inputClass}
               />
               <p className="mt-1 text-xs text-slate-500">
-                Shown in the footer copyright line. Defaults to &quot;Educom&quot; if left blank.
+                Shown in the footer copyright line. Defaults to &quot;Cicerah Technologies Limited&quot; if left blank.
               </p>
             </div>
 

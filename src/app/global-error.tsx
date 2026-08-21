@@ -28,7 +28,7 @@ export default function GlobalError({
             Something went wrong
           </h1>
           <p style={{ marginTop: "0.5rem", maxWidth: 420, fontSize: "0.875rem", color: "#94a3b8" }}>
-            Educom hit an unexpected error. Please try again.
+            SmartPrepAfrica.com hit an unexpected error. Please try again.
           </p>
           <button
             type="button"

@@ -115,13 +115,13 @@ export default function RegisterPage() {
 
         {referral.ref && (
           <p className="mt-4 rounded-lg border border-orange-800 bg-orange-950/30 px-3 py-2 text-xs text-orange-300">
-            You were referred by an Educom partner. 🎉
+            You were referred by a SmartPrepAfrica.com partner. 🎉
           </p>
         )}
         {schoolInvite && (
           <p className="mt-4 rounded-lg border border-orange-800 bg-orange-950/30 px-3 py-2 text-xs text-orange-300">
-            You&apos;re registering <strong>{schoolInvite.schoolName}</strong> via an Educom partner
-            invitation.
+            You&apos;re registering <strong>{schoolInvite.schoolName}</strong> via a SmartPrepAfrica.com
+            partner invitation.
           </p>
         )}
 

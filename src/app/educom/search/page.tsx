@@ -57,9 +57,9 @@ export default async function SearchPage({
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
-        ← Back to EduCom
+        ← Back to Courses
       </Link>
-      <h1 className="mt-4 text-3xl font-semibold">Search Educom</h1>
+      <h1 className="mt-4 text-3xl font-semibold">Search Courses</h1>
 
       <form method="GET" className="mt-6">
         <input

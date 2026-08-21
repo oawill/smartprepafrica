@@ -6,8 +6,8 @@ import { LegalContent } from "@/components/legal/legal-content";
 import { getActiveDocument } from "@/lib/legal/documents";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions | Educom",
-  description: "The terms and conditions governing use of the Educom and SmartPrepAfrica platform.",
+  title: "Terms & Conditions",
+  description: "The terms and conditions governing use of the SmartPrepAfrica.com platform.",
 };
 
 export default async function TermsPage() {

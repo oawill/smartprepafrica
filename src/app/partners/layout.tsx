@@ -4,8 +4,8 @@ import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
 
 export const metadata: Metadata = {
-  title: "Become an Educom Partner | Educom",
-  description: "Earn commission referring students and schools to Educom.",
+  title: "Become a SmartPrepAfrica.com Partner",
+  description: "Earn commission referring students and schools to SmartPrepAfrica.com.",
 };
 
 export default function PartnersLayout({ children }: { children: ReactNode }) {

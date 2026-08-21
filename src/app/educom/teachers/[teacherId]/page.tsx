@@ -44,7 +44,7 @@ export default async function TeacherProfilePage({
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
-        ← Back to EduCom
+        ← Back to Courses
       </Link>
 
       <div className="mt-4">

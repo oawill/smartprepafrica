@@ -28,7 +28,7 @@ export function Logo({
   const image = (
     <Image
       src="/logo-full.png"
-      alt="Educom"
+      alt="SmartPrepAfrica.com"
       width={width}
       height={height}
       className={`h-auto w-auto ${className}`}
@@ -40,7 +40,7 @@ export function Logo({
   if (href === null) return image;
 
   return (
-    <Link href={href} className="inline-flex items-center" aria-label="Educom home">
+    <Link href={href} className="inline-flex items-center" aria-label="SmartPrepAfrica.com home">
       {image}
     </Link>
   );

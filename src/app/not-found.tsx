@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 
 export const metadata: Metadata = {
-  title: "Page Not Found | Educom",
+  title: "Page Not Found",
 };
 
 export default function NotFound() {

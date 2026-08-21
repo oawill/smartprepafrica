@@ -7,8 +7,8 @@ import { checkout } from "@/app/pricing/actions";
 import { PublicHeader } from "@/components/brand/public-header";
 
 export const metadata: Metadata = {
-  title: "Plans & Pricing | Educom",
-  description: "Choose a SmartPrepAfrica plan and unlock the full question bank and EduCom library.",
+  title: "Plans & Pricing",
+  description: "Choose a SmartPrepAfrica.com plan and unlock the full question bank and course library.",
 };
 
 const orderedPlans = ["FREE", "BASIC", "PREMIUM", "SCHOOL"] as const;
@@ -43,7 +43,7 @@ export default async function PricingPage({
       </Link>
       <h1 className="mt-4 text-3xl font-semibold">Plans & pricing</h1>
       <p className="mt-2 max-w-2xl text-slate-400">
-        Start free. Upgrade for the full question bank and EduCom library.
+        Start free. Upgrade for the full question bank and course library.
       </p>
 
       {statusMessage && (

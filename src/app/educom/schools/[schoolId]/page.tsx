@@ -70,7 +70,7 @@ export default async function SchoolProfilePage({
 
       <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-400">
         <span>{formatRating(rating)}</span>
-        <span>{totalLearners} learner{totalLearners === 1 ? "" : "s"} on Educom</span>
+        <span>{totalLearners} learner{totalLearners === 1 ? "" : "s"} on SmartPrepAfrica.com</span>
         <span>{school.teachers.length} teacher{school.teachers.length === 1 ? "" : "s"}</span>
       </div>
 

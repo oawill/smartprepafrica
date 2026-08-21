@@ -14,11 +14,11 @@ export const PLAN_PRICING_KOBO: Partial<Record<SubscriptionPlan, number>> = {
 };
 
 export const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
-  FREE: ["Limited daily practice questions", "Browse EduCom course catalog"],
+  FREE: ["Limited daily practice questions", "Browse course catalog"],
   BASIC: [
     "Full WAEC / NECO / UTME / Post-UTME question bank",
     "Unlimited Study Drills and CBT practice",
-    "All EduCom courses",
+    "All courses",
   ],
   PREMIUM: [
     "Everything in Basic",

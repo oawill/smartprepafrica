@@ -103,7 +103,7 @@ export default async function EduComPage({
       <Link href="/" className="text-sm text-slate-400 hover:text-white">
         ← Back home
       </Link>
-      <h1 className="mt-4 text-3xl font-semibold">EduCom</h1>
+      <h1 className="mt-4 text-3xl font-semibold">Courses</h1>
       <p className="mt-2 max-w-2xl text-slate-400">
         Learn from great schools, wherever you are. Your school decides
         where you&apos;re enrolled — not where you can learn.

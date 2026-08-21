@@ -5,8 +5,8 @@ import { ContactForm } from "@/components/contact/contact-form";
 import { getPlatformSettings } from "@/lib/legal/settings";
 
 export const metadata: Metadata = {
-  title: "Contact Us | Educom",
-  description: "Get in touch with the Educom team — we're here to help.",
+  title: "Contact Us",
+  description: "Get in touch with the SmartPrepAfrica.com team — we're here to help.",
 };
 
 export default async function ContactPage() {

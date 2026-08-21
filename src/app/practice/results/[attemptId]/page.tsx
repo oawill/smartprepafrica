@@ -102,7 +102,7 @@ export default async function ResultsPage({
             <p className="text-sm font-medium text-orange-300">Recommended review</p>
             {recommendedLessons.length === 0 ? (
               <p className="mt-2 text-sm text-slate-400">
-                No EduCom lessons cover these topics yet.
+                No lessons cover these topics yet.
               </p>
             ) : (
               <ul className="mt-2 space-y-1.5 text-sm">
