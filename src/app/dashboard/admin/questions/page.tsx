@@ -17,6 +17,7 @@ export default async function AdminQuestionsPage({
     exam?: string;
     subjectId?: string;
     page?: string;
+    error?: string;
   }>;
 }) {
   const session = await requireAdminPagePermission("questions.view");
@@ -63,6 +64,7 @@ export default async function AdminQuestionsPage({
 
   const canArchive = hasPermission(session.user.adminRole, "questions.archive");
   const canPublish = hasPermission(session.user.adminRole, "questions.publish");
+  const canApprove = hasPermission(session.user.adminRole, "questions.approve");
   const rows: BulkQuestionRow[] = questions.map((q) => ({
     id: q.id,
     questionNumber: q.questionNumber,
@@ -88,6 +90,12 @@ export default async function AdminQuestionsPage({
           + New question
         </Link>
       </div>
+
+      {params.error && (
+        <div className="mt-4 rounded-lg border border-red-900 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+          {params.error}
+        </div>
+      )}
 
       <div className="mt-6">
         <Card title="Search & filter">
@@ -145,7 +153,7 @@ export default async function AdminQuestionsPage({
 
       <div className="mt-6">
         <Card title={`${questions.length} question${questions.length === 1 ? "" : "s"} on this page`}>
-          <QuestionBulkTable questions={rows} canArchive={canArchive} canPublish={canPublish} />
+          <QuestionBulkTable questions={rows} canArchive={canArchive} canPublish={canPublish} canApprove={canApprove} />
         </Card>
       </div>
 

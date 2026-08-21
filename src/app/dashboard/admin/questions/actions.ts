@@ -163,19 +163,68 @@ export async function submitForReview(formData: FormData) {
   revalidatePath("/dashboard/admin/questions");
 }
 
+/** Statuses a question can be approved from. Widened from NEEDS_REVIEW-only
+ * so a draft can be approved directly, without forcing every question
+ * through the separate "submit for review" step first. */
+const APPROVABLE_STATUSES = ["DRAFT", "NEEDS_REVIEW"] as const;
+
 export async function approveQuestion(formData: FormData) {
   const session = await requireActionPermission("questions.approve");
   const id = formData.get("id") as string;
-  const question = await prisma.question.findUniqueOrThrow({ where: { id } });
-  if (question.status !== "NEEDS_REVIEW") throw new Error("Only questions awaiting review can be approved.");
-  if (question.createdById === session.user.id) {
-    throw new Error("You cannot approve a question you created yourself — have another reviewer approve it.");
+
+  // Previously this whole function threw plain Errors for expected
+  // failures (wrong status, self-approval). A thrown error from a Server
+  // Action bound to <form action={...}> is uncaught by the framework and
+  // surfaces as a generic 500 + the app's global error boundary — losing
+  // the actual reason. Redirecting back with an ?error= message instead
+  // keeps the page alive and shows the real reason inline.
+  if (!id) {
+    redirect(`/dashboard/admin/questions?error=${encodeURIComponent("Missing question id.")}`);
   }
 
-  await prisma.question.update({
-    where: { id },
-    data: { status: "APPROVED", reviewedById: session.user.id, reviewedAt: new Date() },
-  });
+  const question = await prisma.question.findUnique({ where: { id } });
+
+  if (!question) {
+    redirect(`/dashboard/admin/questions?error=${encodeURIComponent("Question not found.")}`);
+  }
+
+  if (!APPROVABLE_STATUSES.includes(question.status as (typeof APPROVABLE_STATUSES)[number])) {
+    redirect(
+      `/dashboard/admin/questions/${id}?error=${encodeURIComponent(
+        `This question is not eligible for approval — its status is ${question.status}.`
+      )}`
+    );
+  }
+
+  if (question.createdById === session.user.id) {
+    redirect(
+      `/dashboard/admin/questions/${id}?error=${encodeURIComponent(
+        "You cannot approve a question you created yourself — have another reviewer approve it."
+      )}`
+    );
+  }
+
+  let saveFailed = false;
+  try {
+    await prisma.question.update({
+      where: { id },
+      data: { status: "APPROVED", reviewedById: session.user.id, reviewedAt: new Date() },
+    });
+  } catch (err) {
+    // Genuinely unexpected (DB constraint, connection issue, etc). Log the
+    // full detail server-side; never forward it to the client.
+    console.error(`approveQuestion: failed to update question ${id}`, err);
+    saveFailed = true;
+  }
+
+  if (saveFailed) {
+    redirect(
+      `/dashboard/admin/questions/${id}?error=${encodeURIComponent(
+        "Could not save the approval due to a server error — please try again."
+      )}`
+    );
+  }
+
   await logAudit({
     actorUserId: session.user.id,
     actorRole: session.user.role,
@@ -183,9 +232,12 @@ export async function approveQuestion(formData: FormData) {
     resourceType: "Question",
     resourceId: id,
     result: "SUCCESS",
+    before: { status: question.status },
+    after: { status: "APPROVED" },
   });
   revalidatePath(`/dashboard/admin/questions/${id}`);
   revalidatePath("/dashboard/admin/questions");
+  redirect(`/dashboard/admin/questions/${id}`);
 }
 
 export async function sendBackForChanges(formData: FormData) {
@@ -321,6 +373,64 @@ export async function bulkArchiveQuestions(ids: string[]): Promise<BulkResult> {
     actorUserId: session.user.id,
     actorRole: session.user.role,
     action: "QUESTIONS_BULK_ARCHIVED",
+    resourceType: "Question",
+    result: "SUCCESS",
+    after: { updatedIds: eligibleIds, failedIds: failed.map((f) => f.id) },
+  });
+
+  revalidatePath("/dashboard/admin/questions");
+  return { updatedCount: eligibleIds.length, failed };
+}
+
+/** Approves a set of questions (from Draft or Needs Review) in one batched
+ * write. Eligibility (status + not-self-created) is re-checked here
+ * server-side per id, inside a transaction so the read-then-write can't
+ * race a concurrent status change — the frontend selection is never
+ * trusted. Duplicate ids in the input are de-duplicated; ids that don't
+ * exist, aren't eligible, or belong to the caller's own submission are
+ * reported back individually rather than failing the whole batch. */
+export async function bulkApproveQuestions(rawIds: string[]): Promise<BulkResult> {
+  const session = await requireActionPermission("questions.approve");
+  const ids = Array.from(new Set(rawIds));
+  if (ids.length === 0) return { updatedCount: 0, failed: [] };
+
+  const { failed, eligibleIds } = await prisma.$transaction(async (tx) => {
+    const found = await tx.question.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, status: true, createdById: true },
+    });
+    const foundById = new Map(found.map((q) => [q.id, q]));
+
+    const failed: { id: string; reason: string }[] = [];
+    const eligibleIds: string[] = [];
+
+    for (const id of ids) {
+      const question = foundById.get(id);
+      if (!question) {
+        failed.push({ id, reason: "Not found" });
+      } else if (!APPROVABLE_STATUSES.includes(question.status as (typeof APPROVABLE_STATUSES)[number])) {
+        failed.push({ id, reason: `Not eligible — currently ${question.status}` });
+      } else if (question.createdById === session.user.id) {
+        failed.push({ id, reason: "Cannot approve a question you created yourself" });
+      } else {
+        eligibleIds.push(id);
+      }
+    }
+
+    if (eligibleIds.length > 0) {
+      await tx.question.updateMany({
+        where: { id: { in: eligibleIds } },
+        data: { status: "APPROVED", reviewedById: session.user.id, reviewedAt: new Date() },
+      });
+    }
+
+    return { failed, eligibleIds };
+  });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "QUESTIONS_BULK_APPROVED",
     resourceType: "Question",
     result: "SUCCESS",
     after: { updatedIds: eligibleIds, failedIds: failed.map((f) => f.id) },

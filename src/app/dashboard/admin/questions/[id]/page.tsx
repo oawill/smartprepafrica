@@ -16,10 +16,17 @@ import {
   duplicateQuestion,
 } from "@/app/dashboard/admin/questions/actions";
 
-export default async function QuestionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function QuestionDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const session = await requireAdminPagePermission("questions.view");
 
   const { id } = await params;
+  const { error } = await searchParams;
   const question = await prisma.question.findUnique({
     where: { id },
     include: { subject: { select: { name: true } } },
@@ -59,21 +66,22 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
               </button>
             </form>
           )}
-          {question.status === "NEEDS_REVIEW" && hasPermission(adminRole, "questions.approve") && (
-            <>
+          {(question.status === "DRAFT" || question.status === "NEEDS_REVIEW") &&
+            hasPermission(adminRole, "questions.approve") && (
               <form action={approveQuestion}>
                 <input type="hidden" name="id" value={question.id} />
                 <button type="submit" className="rounded-lg border border-green-800 px-3 py-2 text-xs text-green-400 hover:border-green-600">
                   Approve
                 </button>
               </form>
-              <form action={sendBackForChanges}>
-                <input type="hidden" name="id" value={question.id} />
-                <button type="submit" className="rounded-lg border border-amber-800 px-3 py-2 text-xs text-amber-400 hover:border-amber-600">
-                  Send back for changes
-                </button>
-              </form>
-            </>
+            )}
+          {question.status === "NEEDS_REVIEW" && hasPermission(adminRole, "questions.approve") && (
+            <form action={sendBackForChanges}>
+              <input type="hidden" name="id" value={question.id} />
+              <button type="submit" className="rounded-lg border border-amber-800 px-3 py-2 text-xs text-amber-400 hover:border-amber-600">
+                Send back for changes
+              </button>
+            </form>
           )}
           {question.status === "APPROVED" && hasPermission(adminRole, "questions.publish") && (
             <form action={publishQuestion}>
@@ -109,6 +117,12 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
           )}
         </div>
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-900 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
 
       {question.duplicateOfId && duplicateOf && (
         <div className="mt-4 rounded-lg border border-amber-800 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BulkActionBar } from "@/components/admin/bulk-action-bar";
 import { BulkResultBanner } from "@/components/admin/bulk-result-banner";
-import { bulkArchiveQuestions, bulkPublishQuestions } from "@/app/dashboard/admin/questions/actions";
+import { bulkArchiveQuestions, bulkPublishQuestions, bulkApproveQuestions } from "@/app/dashboard/admin/questions/actions";
 import type { BulkAction, BulkResult } from "@/lib/admin/bulk-types";
 
 const statusColor: Record<string, string> = {
@@ -31,17 +31,19 @@ export function QuestionBulkTable({
   questions,
   canArchive,
   canPublish,
+  canApprove,
 }: {
   questions: BulkQuestionRow[];
   canArchive: boolean;
   canPublish: boolean;
+  canApprove: boolean;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<{ result: BulkResult; label: string } | null>(null);
 
   const allSelected = questions.length > 0 && questions.every((q) => selected.has(q.id));
-  const canBulkUpdate = canArchive || canPublish;
+  const canBulkUpdate = canArchive || canPublish || canApprove;
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -57,6 +59,17 @@ export function QuestionBulkTable({
   }
 
   const actions: BulkAction[] = [
+    ...(canApprove
+      ? [
+          {
+            key: "approve",
+            label: "Approve selected",
+            confirmMessage: (n: number) =>
+              `You are about to approve ${n} draft question${n === 1 ? "" : "s"}. Are you sure you want to continue?`,
+            run: (ids: string[]) => bulkApproveQuestions(ids),
+          } satisfies BulkAction,
+        ]
+      : []),
     ...(canPublish
       ? [
           {
