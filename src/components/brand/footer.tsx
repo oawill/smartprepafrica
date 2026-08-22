@@ -6,8 +6,8 @@ const columns = [
   {
     heading: "Platform",
     links: [
-      { label: "Explore Courses", href: "/educom" },
-      { label: "Exam Practice", href: "/practice" },
+      { label: "SmartPrepAfrica Prep", href: "/practice" },
+      { label: "SmartPrepAfrica Learning", href: "/educom" },
       { label: "Schools", href: "/educom/schools" },
       { label: "AI Study Coach", href: "/register" },
       { label: "Become a Partner", href: "/partners" },

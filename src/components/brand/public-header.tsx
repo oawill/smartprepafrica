@@ -9,8 +9,8 @@ import type { Role } from "@prisma/client";
 
 const navLinks = [
   { label: "Home", href: "/" },
-  { label: "Explore Courses", href: "/educom" },
-  { label: "Exam Practice", href: "/practice" },
+  { label: "Prep", href: "/practice" },
+  { label: "Learning", href: "/educom" },
   { label: "Schools", href: "/educom/schools" },
   { label: "AI Study Coach", href: "/register" },
   { label: "Become a Partner", href: "/partners" },

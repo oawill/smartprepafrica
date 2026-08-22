@@ -50,7 +50,7 @@ export type BuildContextInput = {
 /** Assembles only what's needed to answer the current request — never the
  * student's full database record. Distinguishes the student's home school
  * from the school that authored the course they're currently in, since in
- * the Educom marketplace those are frequently different schools. */
+ * SmartPrepAfrica Learning those are frequently different schools. */
 export async function buildCoachContext({
   userId,
   courseId,

@@ -80,7 +80,10 @@ export default async function StudentDashboard({
         </p>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-orange-400">
+        SmartPrepAfrica Prep
+      </h2>
+      <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Readiness score">
           <p className="text-3xl font-semibold">
             {readinessScore !== null ? `${readinessScore}%` : "—"}
@@ -89,6 +92,12 @@ export default async function StudentDashboard({
         <Card title="Study streak">
           <p className="text-3xl font-semibold">0 days</p>
         </Card>
+      </div>
+
+      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-green-400">
+        SmartPrepAfrica Learning
+      </h2>
+      <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Courses in progress">
           <p className="text-3xl font-semibold">{coursesInProgress}</p>
         </Card>

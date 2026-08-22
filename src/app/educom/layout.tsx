@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { PublicHeader } from "@/components/brand/public-header";
 
 export const metadata: Metadata = {
-  title: "Explore Courses",
-  description: "Browse courses from schools and teachers across Nigeria on SmartPrepAfrica.com.",
+  title: "SmartPrepAfrica Learning",
+  description:
+    "Live Classes & Courses for Secondary School Students — join classes, courses and masterclasses from schools and teachers across Nigeria on SmartPrepAfrica Learning.",
 };
 
 export default function EducomLayout({ children }: { children: ReactNode }) {

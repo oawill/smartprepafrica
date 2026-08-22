@@ -41,7 +41,7 @@ export function buildSystemPrompt(context: CoachContext): string {
         (c.providerSchool
           ? ` Offered by ${c.providerSchool}${
               s.homeSchool && s.homeSchool !== c.providerSchool
-                ? " — a different school from the student's home school; this is normal on SmartPrepAfrica.com's course marketplace, do not assume the student's home school owns this course."
+                ? " — a different school from the student's home school; this is normal on SmartPrepAfrica Learning, do not assume the student's home school owns this course."
                 : "."
             }`
           : "") +

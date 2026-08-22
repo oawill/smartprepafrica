@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
 import { HeroCarousel } from "@/components/home/hero-carousel";
+import { prisma } from "@/lib/prisma";
 
 const exams = [
   { code: "WAEC", desc: "West African Senior School Certificate Examination" },
@@ -13,7 +14,19 @@ const exams = [
 const discoveryStates = ["Lagos", "Rivers", "Kano", "FCT", "Oyo", "Enugu"];
 const discoverySubjects = ["Mathematics", "English Language", "Physics", "Chemistry", "Biology"];
 
-export default function Home() {
+export default async function Home() {
+  // Real counts only — never fabricated. Used for the Learning section below.
+  const [schoolsWithCourses, publishedCourseCount, upcomingLiveClasses] = await Promise.all([
+    prisma.school.count({ where: { courses: { some: { published: true } } } }),
+    prisma.course.count({ where: { published: true } }),
+    prisma.liveClass.findMany({
+      where: { course: { published: true }, scheduledAt: { gte: new Date() } },
+      include: { course: { select: { title: true, school: { select: { name: true } } } } },
+      orderBy: { scheduledAt: "asc" },
+      take: 3,
+    }),
+  ]);
+
   return (
     <div className="flex flex-1 flex-col">
       <PublicHeader />
@@ -28,9 +41,9 @@ export default function Home() {
             <span className="text-green-400">Achieve more.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-slate-400">
-            SmartPrepAfrica.com helps Nigerian students master WAEC, NECO, UTME
-            and Post-UTME with an AI study coach, plus a course marketplace for
-            the skills and career readiness that come after the exam.
+            SmartPrepAfrica Prep helps Nigerian students master WAEC, NECO, UTME
+            and Post-UTME with an AI study coach. SmartPrepAfrica Learning connects
+            students with live classes and courses from schools across Nigeria.
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
@@ -43,7 +56,7 @@ export default function Home() {
               href="/educom"
               className="rounded-full border border-slate-700 px-6 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
             >
-              Explore Courses
+              Explore Learning
             </Link>
           </div>
         </section>
@@ -71,29 +84,47 @@ export default function Home() {
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
-            <span className="text-xs font-medium text-green-400">Courses</span>
+            <span className="text-xs font-medium text-green-400">SmartPrepAfrica Learning</span>
             <h2 className="mx-auto mt-2 max-w-2xl text-3xl font-semibold">
-              Learn From Great Schools.{" "}
-              <span className="text-green-400">Wherever You Are.</span>
+              Learn Beyond{" "}
+              <span className="text-green-400">Your School.</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-slate-400">
-              Your school shouldn&apos;t limit who you can learn from.
-              Discover classes from outstanding schools and teachers across
-              Nigeria — all in one place.
+              Great teaching shouldn&apos;t depend on where you go to school. SmartPrepAfrica
+              Learning connects secondary-school students with live classes, courses and
+              outstanding teachers from schools across Nigeria. Strengthen a subject, prepare
+              for an exam, join a masterclass, or learn from educators outside your own school.
             </p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+              One platform. Many schools. More opportunities.
+            </p>
+            {(schoolsWithCourses > 0 || publishedCourseCount > 0) && (
+              <p className="mt-3 text-xs text-slate-500">
+                {schoolsWithCourses} school{schoolsWithCourses === 1 ? "" : "s"} · {publishedCourseCount} live
+                course{publishedCourseCount === 1 ? "" : "s"} and counting
+              </p>
+            )}
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
-                href="/educom/schools"
+                href="/educom"
                 className="rounded-full bg-orange-500 px-6 py-3 text-sm font-medium text-slate-950 hover:bg-orange-400"
               >
-                Explore Schools
+                Explore Classes
               </Link>
               <Link
-                href="/educom"
+                href="/educom/schools"
                 className="rounded-full border border-slate-700 px-6 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
               >
-                Browse Courses
+                View Schools
               </Link>
+              {upcomingLiveClasses.length > 0 && (
+                <Link
+                  href="/educom"
+                  className="rounded-full border border-slate-700 px-6 py-3 text-sm font-medium text-slate-200 hover:border-slate-500"
+                >
+                  Join a Live Class
+                </Link>
+              )}
             </div>
             <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-slate-500">
               <Link href="/register" className="hover:text-slate-300">
@@ -104,6 +135,27 @@ export default function Home() {
               </Link>
             </div>
           </div>
+
+          {upcomingLiveClasses.length > 0 && (
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {upcomingLiveClasses.map((lc) => (
+                <Link
+                  key={lc.id}
+                  href="/educom"
+                  className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-600"
+                >
+                  <span className="inline-block rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+                    Upcoming
+                  </span>
+                  <p className="mt-2 text-sm font-medium text-slate-100">{lc.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {lc.course.title}
+                    {lc.course.school && ` · ${lc.course.school.name}`}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="mt-8">
             <h3 className="text-center text-sm font-medium text-slate-300">

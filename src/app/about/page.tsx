@@ -19,10 +19,10 @@ export default function AboutPage() {
           <p className="mt-4 text-slate-400">
             SmartPrepAfrica.com is a learning ecosystem built for Nigerian students, schools, and
             educators. We help students master WAEC, NECO, UTME, and Post-UTME with an
-            AI-assisted study coach, practice questions, and mock exams. Beyond exam prep, our
-            course marketplace connects learners to courses from independent schools, teachers,
-            and organizations across Nigeria — covering academics, career development,
-            technology, and life skills.
+            AI-assisted study coach, practice questions, and mock exams. Beyond exam prep,
+            SmartPrepAfrica Learning connects students to live classes and courses from
+            independent schools, teachers, and organizations across Nigeria — covering
+            academics, career development, technology, and life skills.
           </p>
           <p className="mt-4 text-slate-400">
             Our goal is simple: help students prepare smarter, learn from great educators

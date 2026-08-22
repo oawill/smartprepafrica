@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 type Slide = {
   src: string;
@@ -9,6 +10,7 @@ type Slide = {
   eyebrow: string;
   title: string;
   copy: string;
+  cta?: { label: string; href: string };
 };
 
 const SLIDES: Slide[] = [
@@ -35,14 +37,15 @@ const SLIDES: Slide[] = [
   },
   {
     src: "/homepage/carousel-4-prepare.png",
-    alt: "A mother and daughter following a live SmartPrepAfrica.com Educom class together on a laptop",
-    eyebrow: "Prepare",
-    title: "Prepare With Confidence",
-    copy: "Practice in an environment designed for exam success.",
+    alt: "A mother and daughter following a live SmartPrepAfrica Learning class together on a laptop",
+    eyebrow: "SmartPrepAfrica Learning",
+    title: "Learn Beyond Your School",
+    copy: "Join live classes and courses from great teachers and schools across Nigeria.",
+    cta: { label: "Explore Learning", href: "/educom" },
   },
   {
     src: "/homepage/carousel-5-succeed.png",
-    alt: "A family gathered around a laptop following a live SmartPrepAfrica.com Educom mathematics class",
+    alt: "A family gathered around a laptop following a live SmartPrepAfrica Learning mathematics class",
     eyebrow: "Succeed",
     title: "Ready for What's Next",
     copy: "Turn preparation into better results.",
@@ -158,6 +161,15 @@ export function HeroCarousel() {
                   {slide.title}
                 </h3>
                 <p className="mt-1 max-w-md text-sm text-slate-200 sm:text-base">{slide.copy}</p>
+                {slide.cta && (
+                  <Link
+                    href={slide.cta.href}
+                    tabIndex={i === index ? undefined : -1}
+                    className="relative z-10 mt-3 inline-block text-sm font-semibold text-orange-300 hover:text-orange-200 hover:underline"
+                  >
+                    {slide.cta.label} →
+                  </Link>
+                )}
               </div>
             </div>
           ))}

@@ -24,17 +24,17 @@ export type NavItem = { label: string; href: string };
 
 const defaultNav: NavItem[] = [
   { label: "Overview", href: "" }, // href filled in with roleDashboardPath at use-site
-  { label: "Exam practice", href: "/practice" },
-  { label: "Courses", href: "/educom" },
+  { label: "Prep", href: "/practice" },
+  { label: "Learning", href: "/educom" },
   { label: "Plans & billing", href: "/pricing" },
 ];
 
-// Students get the Learn -> Practice -> Review flow called out in the
-// EduCom spec; other roles keep the general dashboard nav for now.
+// Students get the Prep -> Learning -> Review flow; other roles keep the
+// general dashboard nav for now.
 const studentNav: NavItem[] = [
   { label: "Home", href: "" },
-  { label: "Learn", href: "/educom" },
-  { label: "Practice", href: "/practice" },
+  { label: "Prep", href: "/practice" },
+  { label: "Learning", href: "/educom" },
   { label: "Review", href: "/practice/history" },
   { label: "Plans & billing", href: "/pricing" },
 ];

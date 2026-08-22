@@ -53,30 +53,71 @@ function CourseCardLink({ course }: { course: CourseCard }) {
   );
 }
 
+function timeUntil(target: Date, now: Date): string {
+  const ms = target.getTime() - now.getTime();
+  const hours = Math.round(ms / (60 * 60 * 1000));
+  if (hours < 1) return "starting now";
+  if (hours < 24) return `starts in ${hours}h`;
+  return `starts in ${Math.round(hours / 24)}d`;
+}
+
 export default async function EduComPage({
   searchParams,
 }: PageProps<"/educom">) {
-  const { q, difficulty, price } = await searchParams;
+  const { q, difficulty, price, subjectId } = await searchParams;
   const search = typeof q === "string" ? q : "";
   const difficultyFilter = typeof difficulty === "string" ? difficulty : "";
   const priceFilter = typeof price === "string" ? price : "";
+  const subjectIdFilter = typeof subjectId === "string" ? subjectId : "";
 
   const session = await auth();
 
-  const courses = await prisma.course.findMany({
-    where: {
-      published: true,
-      ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
-      ...(difficultyFilter ? { difficulty: difficultyFilter as Difficulty } : {}),
-      ...(priceFilter === "free" ? { OR: [{ priceKobo: null }, { priceKobo: 0 }] } : {}),
-      ...(priceFilter === "paid" ? { priceKobo: { gt: 0 } } : {}),
-    },
-    include: {
-      subject: { select: { name: true } },
-      _count: { select: { modules: true, enrollments: true } },
-    },
-    orderBy: { title: "asc" },
-  });
+  const now = new Date();
+
+  const [courses, upcomingLiveClasses, courseCountsBySubject, subjects] = await Promise.all([
+    prisma.course.findMany({
+      where: {
+        published: true,
+        ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
+        ...(difficultyFilter ? { difficulty: difficultyFilter as Difficulty } : {}),
+        ...(priceFilter === "free" ? { OR: [{ priceKobo: null }, { priceKobo: 0 }] } : {}),
+        ...(priceFilter === "paid" ? { priceKobo: { gt: 0 } } : {}),
+        ...(subjectIdFilter ? { subjectId: subjectIdFilter } : {}),
+      },
+      include: {
+        subject: { select: { name: true } },
+        _count: { select: { modules: true, enrollments: true } },
+      },
+      orderBy: { title: "asc" },
+    }),
+    // "Live Now / Starting Soon" — real scheduled sessions, never fabricated.
+    // A class still counts as live for the length of its stated duration.
+    prisma.liveClass.findMany({
+      where: {
+        course: { published: true },
+        scheduledAt: { gte: new Date(now.getTime() - 3 * 60 * 60 * 1000) },
+      },
+      include: {
+        course: {
+          select: {
+            title: true,
+            school: { select: { id: true, name: true } },
+            teacher: { select: { user: { select: { name: true } } } },
+          },
+        },
+      },
+      orderBy: { scheduledAt: "asc" },
+      take: 6,
+    }),
+    prisma.course.groupBy({
+      by: ["subjectId"],
+      where: { published: true, subjectId: { not: null } },
+      _count: { _all: true },
+    }),
+    prisma.subject.findMany({ orderBy: { name: "asc" } }),
+  ]);
+
+  const courseCountBySubjectId = new Map(courseCountsBySubject.map((c) => [c.subjectId, c._count._all]));
 
   const coreSecondary = courses.filter((c) => c.subjectId);
   const examPrep = courses.filter((c) => c.examType && !c.subjectId);
@@ -103,17 +144,21 @@ export default async function EduComPage({
       <Link href="/" className="text-sm text-slate-400 hover:text-white">
         ← Back home
       </Link>
-      <h1 className="mt-4 text-3xl font-semibold">Courses</h1>
+      <span className="mt-4 inline-block rounded-full bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-400">
+        SmartPrepAfrica Learning
+      </span>
+      <h1 className="mt-3 text-3xl font-semibold">Learn Beyond Your School</h1>
       <p className="mt-2 max-w-2xl text-slate-400">
-        Learn from great schools, wherever you are. Your school decides
-        where you&apos;re enrolled — not where you can learn.
+        Great teaching shouldn&apos;t depend on where you go to school. Join live classes,
+        courses and masterclasses from schools and teachers across Nigeria — one platform,
+        many schools, more opportunities.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href="/educom/schools"
           className="inline-block rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
         >
-          Explore schools →
+          View Schools →
         </Link>
         <Link
           href="/educom/search"
@@ -125,13 +170,89 @@ export default async function EduComPage({
           href="/educom/rankings"
           className="inline-block rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
         >
-          Discover →
+          Popular this week →
+        </Link>
+        <Link
+          href="/practice"
+          className="inline-block rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+        >
+          SmartPrepAfrica Prep →
         </Link>
       </div>
 
       {session?.user.role === "STUDENT" && <LearnHub userId={session.user.id} />}
 
-      <form method="GET" className="mt-8 flex flex-wrap gap-2">
+      {upcomingLiveClasses.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold">Live Now / Starting Soon</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {upcomingLiveClasses.map((lc) => {
+              const isLive =
+                now >= lc.scheduledAt && now.getTime() <= lc.scheduledAt.getTime() + lc.durationMinutes * 60000;
+              return (
+                <div key={lc.id} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                  <span
+                    className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      isLive ? "bg-red-500 text-white" : "bg-slate-800 text-slate-300"
+                    }`}
+                  >
+                    {isLive ? "Live" : timeUntil(lc.scheduledAt, now)}
+                  </span>
+                  <p className="mt-2 font-medium text-slate-100">{lc.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {lc.course.title}
+                    {lc.course.teacher && ` · ${lc.course.teacher.user.name}`}
+                  </p>
+                  {lc.course.school && (
+                    <Link
+                      href={`/educom/schools/${lc.course.school.id}`}
+                      className="mt-1 inline-block text-xs text-orange-400 hover:underline"
+                    >
+                      {lc.course.school.name}
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {subjects.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold">Explore by Subject</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {subjects.map((subject) => (
+              <Link
+                key={subject.id}
+                href={`/educom?subjectId=${subject.id}`}
+                className={`rounded-full border px-4 py-2 text-sm hover:border-orange-500 hover:text-orange-300 ${
+                  subjectIdFilter === subject.id
+                    ? "border-orange-500 text-orange-300"
+                    : "border-slate-700 text-slate-300"
+                }`}
+              >
+                {subject.name}
+                <span className="ml-1.5 text-slate-500">
+                  ({courseCountBySubjectId.get(subject.id) ?? 0})
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {subjectIdFilter && (
+        <p className="mt-6 text-sm text-slate-400">
+          Filtered by subject.{" "}
+          <Link href="/educom" className="text-orange-400 hover:underline">
+            Clear filter
+          </Link>
+        </p>
+      )}
+
+      <form method="GET" className="mt-4 flex flex-wrap gap-2">
+        <input type="hidden" name="subjectId" value={subjectIdFilter} />
         <input
           type="text"
           name="q"
