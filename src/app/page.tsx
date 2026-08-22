@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
+import { HeroCarousel } from "@/components/home/hero-carousel";
 
 const exams = [
   { code: "WAEC", desc: "West African Senior School Certificate Examination" },
@@ -45,6 +46,10 @@ export default function Home() {
               Explore Courses
             </Link>
           </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 pb-16">
+          <HeroCarousel />
         </section>
 
         <section className="mx-auto max-w-6xl px-6 py-12">
