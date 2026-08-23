@@ -1,16 +1,10 @@
 import type { AiCoachMode } from "@prisma/client";
 
+export type { CoachFocusQuestion } from "@/lib/ai/focus-question";
+
 export type CoachLaunchContext = {
   courseId?: string | null;
   lessonId?: string | null;
-};
-
-export type CoachFocusQuestion = {
-  prompt: string;
-  studentAnswer: string | null;
-  correctAnswer: string;
-  explanation: string | null;
-  topic: string | null;
 };
 
 export const MODE_LABELS: Record<AiCoachMode, string> = {

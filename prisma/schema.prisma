@@ -108,8 +108,8 @@ model User {
   redeemedVouchers VoucherRedemption[]
 
   legalAcceptances           LegalAcceptance[]
-  contactSubmissions         ContactSubmission[]     @relation("ContactSubmitter")
-  assignedContactSubmissions ContactSubmission[]     @relation("ContactAssignee")
+  contactSubmissions         ContactSubmission[] @relation("ContactSubmitter")
+  assignedContactSubmissions ContactSubmission[] @relation("ContactAssignee")
 
   // Set when this user IS an approved partner (role=PARTNER).
   partnerProfile Partner?
@@ -117,7 +117,7 @@ model User {
   // Set ONCE at registration time by the attribution service, from a valid
   // partner referral click/code. Never editable afterward by any user-facing
   // action — the only writer is the registration transaction itself.
-  referredByPartner    Partner? @relation("PartnerReferredUsers", fields: [referredByPartnerId], references: [id])
+  referredByPartner    Partner?         @relation("PartnerReferredUsers", fields: [referredByPartnerId], references: [id])
   referredByPartnerId  String?
   referredByCampaign   PartnerCampaign? @relation(fields: [referredByCampaignId], references: [id])
   referredByCampaignId String?
@@ -161,38 +161,38 @@ model ParentStudentLink {
 }
 
 model School {
-  id            String           @id @default(cuid())
-  name          String
-  address       String?
+  id                String           @id @default(cuid())
+  name              String
+  address           String?
   // Plain string for now (Nigeria-only marketplace) rather than a full
   // countries/states relation — easy to migrate to a relation later if
   // Educom expands beyond Nigeria.
-  state         String?
-  country       String           @default("Nigeria")
-  logoUrl       String?
-  coverImageUrl String?
-  description   String?
-  verified      Boolean          @default(false)
+  state             String?
+  country           String           @default("Nigeria")
+  logoUrl           String?
+  coverImageUrl     String?
+  description       String?
+  verified          Boolean          @default(false)
   // Permanent human-readable reference, e.g. SCH-000045. Backfilled for
   // schools that existed before this field was added.
-  schoolNumber  String?          @unique
-  status        SchoolStatus     @default(PENDING)
-  statusReason  String?
+  schoolNumber      String?          @unique
+  status            SchoolStatus     @default(PENDING)
+  statusReason      String?
   statusChangedById String?
   statusChangedAt   DateTime?
-  admins        User[]           @relation("SchoolAdmins")
-  students      StudentProfile[]
-  teachers      TeacherProfile[]
-  classes       Class[]
-  courses       Course[]
-  createdAt     DateTime         @default(now())
+  admins            User[]           @relation("SchoolAdmins")
+  students          StudentProfile[]
+  teachers          TeacherProfile[]
+  classes           Class[]
+  courses           Course[]
+  createdAt         DateTime         @default(now())
 
   sponsorshipPrograms SponsorshipProgram[]
 
   // A school may be pursued by multiple partners before it registers; only
   // one of these leads (if any) becomes the authoritative attribution.
-  partnerSchoolLeads PartnerSchoolLead[]
-  partnerAttribution PartnerSchoolAttribution?
+  partnerSchoolLeads    PartnerSchoolLead[]
+  partnerAttribution    PartnerSchoolAttribution?
   partnerSchoolDisputes PartnerSchoolDispute[]
 
   @@index([status])
@@ -267,6 +267,7 @@ model Subject {
   id                  String               @id @default(cuid())
   name                String               @unique
   questions           Question[]
+  passageGroups       PassageGroup[]
   examAttempts        ExamAttempt[]
   courses             Course[]
   sponsorshipPrograms SponsorshipProgram[]
@@ -313,7 +314,56 @@ model Question {
   // decides.
   duplicateOfId String?
 
+  // Optional membership in a shared reading passage (English Comprehension /
+  // Literature). Null means a fully standalone question — every existing
+  // question and every non-English exam stays on this path unchanged.
+  passageGroup     PassageGroup? @relation(fields: [passageGroupId], references: [id])
+  passageGroupId   String?
+  passageOrder     Int? // position within the passage group (count-then-create)
+  passageLineRef   String? // freeform anchor, e.g. "Stanza 2" / "Act I, Scene 1"
+  passageLineStart Int? // numeric line anchor for auto-highlight/scroll
+  passageLineEnd   Int?
+
   responses QuestionResponse[]
+
+  @@index([status])
+  @@index([subjectId])
+  @@index([exam])
+  @@index([passageGroupId])
+}
+
+enum PassageType {
+  COMPREHENSION
+  PROSE_EXTRACT
+  POETRY
+  DRAMA_EXTRACT
+  DIALOGUE
+  LITERARY_EXTRACT
+  OTHER
+}
+
+// A shared reading passage/poem/extract that multiple Questions attach to.
+// Reuses QuestionStatus/QuestionSourceType so the admin review workflow
+// (draft -> review -> approve -> publish -> archive) and its existing
+// permission checks / bulk-action patterns apply here unchanged.
+model PassageGroup {
+  id                 String             @id @default(cuid())
+  exam               ExamType
+  subject            Subject            @relation(fields: [subjectId], references: [id])
+  subjectId          String
+  code               String?            @unique // human-readable, e.g. PSG-000123
+  type               PassageType        @default(COMPREHENSION)
+  title              String?
+  instructions       String?
+  bodyText           String
+  showLineNumbers    Boolean            @default(false)
+  startingLineNumber Int                @default(1)
+  status             QuestionStatus     @default(DRAFT)
+  sourceType         QuestionSourceType @default(ORIGINAL_SMARTPREP_QUESTION)
+  createdById        String?
+  createdAt          DateTime           @default(now())
+
+  questions Question[]
 
   @@index([status])
   @@index([subjectId])
@@ -374,6 +424,7 @@ model QuestionResponse {
   selectedOption String?
   isCorrect      Boolean?
   timeSpentSecs  Int?
+  flagged        Boolean     @default(false)
 
   @@unique([attemptId, questionId])
 }
@@ -674,10 +725,10 @@ model Payment {
   // Permanent human-readable reference, e.g. TXN-000023456. Backfilled for
   // payments that existed before this field was added.
   transactionNumber String?     @unique
-  kind               PaymentKind @default(CHARGE)
+  kind              PaymentKind @default(CHARGE)
   // Set on a REFUND row: the original CHARGE row it reverses. Historical
   // charge rows are never edited in place — a refund is a new row.
-  reversalOfId       String?
+  reversalOfId      String?
 
   @@index([userId])
   @@index([createdAt])
@@ -817,14 +868,14 @@ model AiMessage {
 }
 
 model StudentTopicMastery {
-  id      String  @id @default(cuid())
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId  String
-  subject Subject @relation(fields: [subjectId], references: [id])
+  id        String  @id @default(cuid())
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  subject   Subject @relation(fields: [subjectId], references: [id])
   subjectId String
   // Plain string, matching the existing Question.topic / Lesson.topic
   // convention rather than introducing a new normalized Topic entity.
-  topic   String
+  topic     String
 
   // 0-100 estimate of how well the student knows this topic.
   masteryScore    Float @default(0)
@@ -865,17 +916,17 @@ model AiLearningInsight {
 }
 
 model AiUsageLog {
-  id       String @id @default(cuid())
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
+  id                String   @id @default(cuid())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
   // e.g. "coach_chat", "practice_generate", "mistake_explain"
-  feature  String
-  model    String
-  inputTokens       Int @default(0)
-  outputTokens      Int @default(0)
+  feature           String
+  model             String
+  inputTokens       Int      @default(0)
+  outputTokens      Int      @default(0)
   // Rough estimate, in kobo, for admin cost visibility — not a billing record.
-  estimatedCostKobo Int @default(0)
-  createdAt DateTime @default(now())
+  estimatedCostKobo Int      @default(0)
+  createdAt         DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([createdAt])
@@ -911,7 +962,7 @@ enum PartnerStatus {
 }
 
 model Partner {
-  id            String @id @default(cuid())
+  id            String  @id @default(cuid())
   // Permanent, human-readable, never reused — e.g. EDP-00001245. Assigned
   // only at approval time (pending applicants don't have one yet). The
   // cuid above stays the actual FK/primary key everywhere else.
@@ -925,7 +976,7 @@ model Partner {
   firstName    String
   lastName     String
   phone        String
-  country      String  @default("Nigeria")
+  country      String      @default("Nigeria")
   state        String?
   city         String?
   organization String?
@@ -954,17 +1005,17 @@ model Partner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  campaigns          PartnerCampaign[]
-  referrals          PartnerReferral[]
-  schoolLeads        PartnerSchoolLead[]
-  schoolAttributions PartnerSchoolAttribution[]
-  commissions        PartnerCommission[]
-  payouts            PartnerPayout[]
-  notifications      PartnerNotification[]
-  fraudFlags         PartnerFraudFlag[]
-  referredUsers      User[]                     @relation("PartnerReferredUsers")
-  disputesAsIncumbent  PartnerSchoolDispute[] @relation("DisputeIncumbent")
-  disputesAsChallenger PartnerSchoolDispute[] @relation("DisputeChallenger")
+  campaigns            PartnerCampaign[]
+  referrals            PartnerReferral[]
+  schoolLeads          PartnerSchoolLead[]
+  schoolAttributions   PartnerSchoolAttribution[]
+  commissions          PartnerCommission[]
+  payouts              PartnerPayout[]
+  notifications        PartnerNotification[]
+  fraudFlags           PartnerFraudFlag[]
+  referredUsers        User[]                     @relation("PartnerReferredUsers")
+  disputesAsIncumbent  PartnerSchoolDispute[]     @relation("DisputeIncumbent")
+  disputesAsChallenger PartnerSchoolDispute[]     @relation("DisputeChallenger")
 
   @@index([status])
 }
@@ -979,7 +1030,7 @@ model PartnerCampaign {
 
   createdAt DateTime @default(now())
 
-  referrals    PartnerReferral[]
+  referrals     PartnerReferral[]
   referredUsers User[]
 
   @@unique([partnerId, slug])
@@ -1073,9 +1124,9 @@ model PartnerSchoolLead {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  statusHistory  PartnerSchoolLeadStatusChange[]
-  referralClicks PartnerReferral[]
-  attributionsWon PartnerSchoolAttribution[] @relation("WinningLead")
+  statusHistory       PartnerSchoolLeadStatusChange[]
+  referralClicks      PartnerReferral[]
+  attributionsWon     PartnerSchoolAttribution[]      @relation("WinningLead")
   disputeAsChallenger PartnerSchoolDispute?
 
   @@index([partnerId, status])
@@ -1083,14 +1134,14 @@ model PartnerSchoolLead {
 }
 
 model PartnerSchoolLeadStatusChange {
-  id          String             @id @default(cuid())
-  lead        PartnerSchoolLead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  id          String            @id @default(cuid())
+  lead        PartnerSchoolLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
   leadId      String
   fromStatus  SchoolLeadStatus?
   toStatus    SchoolLeadStatus
   changedById String?
   note        String?
-  createdAt   DateTime           @default(now())
+  createdAt   DateTime          @default(now())
 
   @@index([leadId])
 }
@@ -1100,8 +1151,8 @@ model PartnerSchoolLeadStatusChange {
 // competing leads from other partners remain on file (never deleted) and
 // can only be reassigned here by an explicit, audit-logged admin decision.
 model PartnerSchoolAttribution {
-  id     String @id @default(cuid())
-  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   schoolId String @unique
 
   partner   Partner @relation(fields: [partnerId], references: [id])
@@ -1110,8 +1161,8 @@ model PartnerSchoolAttribution {
   winningLead   PartnerSchoolLead? @relation("WinningLead", fields: [winningLeadId], references: [id])
   winningLeadId String?
 
-  decidedById   String?
-  decisionNote  String?
+  decidedById  String?
+  decisionNote String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1228,12 +1279,12 @@ model PartnerCommission {
 
   // Internal references only — never resolved to PII beyond what the
   // partner is already entitled to see in their own referral tables.
-  sourceUser     User?   @relation("CommissionSourceUser", fields: [sourceUserId], references: [id])
-  sourceUserId   String?
-  sourceSchoolId String?
-  sourcePaymentId String?
+  sourceUser           User?   @relation("CommissionSourceUser", fields: [sourceUserId], references: [id])
+  sourceUserId         String?
+  sourceSchoolId       String?
+  sourcePaymentId      String?
   sourceSubscriptionId String?
-  sourceSchoolLeadId String?
+  sourceSchoolLeadId   String?
 
   // Immutable once created — status/timestamps change, this does not.
   amountKobo Int
@@ -1268,13 +1319,13 @@ enum PayoutStatus {
 }
 
 model PartnerPayout {
-  id          String  @id @default(cuid())
-  payoutNumber String @unique // PAY-000123
-  partner     Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  partnerId   String
+  id           String  @id @default(cuid())
+  payoutNumber String  @unique // PAY-000123
+  partner      Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId    String
 
-  amountKobo Int
-  method     String // BANK_TRANSFER | PAYSTACK | OTHER
+  amountKobo          Int
+  method              String // BANK_TRANSFER | PAYSTACK | OTHER
   destinationSnapshot Json? // bank details as they were at request time
 
   status         PayoutStatus @default(REQUESTED)
@@ -1377,8 +1428,8 @@ model LoginActivity {
 }
 
 model PartnerAuditLog {
-  id     String  @id @default(cuid())
-  actor  User?   @relation("AuditActor", fields: [actorUserId], references: [id])
+  id          String  @id @default(cuid())
+  actor       User?   @relation("AuditActor", fields: [actorUserId], references: [id])
   actorUserId String?
 
   action     String // e.g. "PARTNER_APPROVED", "SCHOOL_ATTRIBUTION_REASSIGNED"
@@ -1427,10 +1478,10 @@ model PartnerFraudFlag {
   partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   partnerId String
 
-  reason               String // SELF_REFERRAL | DUPLICATE_ACCOUNT | ...
-  details              String?
-  relatedReferralId    String?
-  relatedCommissionId  String?
+  reason              String // SELF_REFERRAL | DUPLICATE_ACCOUNT | ...
+  details             String?
+  relatedReferralId   String?
+  relatedCommissionId String?
 
   status       FraudFlagStatus @default(OPEN)
   reviewedById String?
@@ -1499,14 +1550,14 @@ model LegalDocument {
 // context, and (where legally permitted) from which hashed IP — never the
 // raw IP. Rows are never updated or deleted once created.
 model LegalAcceptance {
-  id         String   @id @default(cuid())
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id         String        @id @default(cuid())
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId     String?
   document   LegalDocument @relation(fields: [documentId], references: [id])
   documentId String
   context    String // "REGISTRATION" | "PARTNER_APPLICATION"
   ipHash     String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime      @default(now())
 
   @@index([userId])
   @@index([documentId])

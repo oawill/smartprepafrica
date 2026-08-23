@@ -10,11 +10,20 @@ import {
   validateRow,
   type ParsedQuestionRow,
   type RowValidation,
+  type PassageLookup,
 } from "@/lib/admin/question-csv";
 
 async function subjectIdMap() {
   const subjects = await prisma.subject.findMany();
   return new Map(subjects.map((s) => [s.name.trim().toLowerCase(), s.id]));
+}
+
+async function passageCodeMap(): Promise<Map<string, PassageLookup>> {
+  const passages = await prisma.passageGroup.findMany({
+    where: { code: { not: null } },
+    select: { id: true, code: true, subjectId: true, exam: true },
+  });
+  return new Map(passages.map((p) => [p.code!.toUpperCase(), { id: p.id, subjectId: p.subjectId, exam: p.exam }]));
 }
 
 async function flagDuplicates(rows: ParsedQuestionRow[], subjectIdByName: Map<string, string>) {
@@ -59,10 +68,11 @@ export async function validateBulkUpload(csvText: string): Promise<BulkRowResult
 
   const rows = rowsToObjects(parseQuotedCsv(csvText));
   const subjectIdByName = await subjectIdMap();
+  const passageByCode = await passageCodeMap();
   const duplicates = await flagDuplicates(rows, subjectIdByName);
 
   return rows.map((row) => {
-    const validation: RowValidation = validateRow(row, subjectIdByName);
+    const validation: RowValidation = validateRow(row, subjectIdByName, passageByCode);
     const duplicateOfId = duplicates.get(row.rowNumber) ?? null;
     const messages = duplicateOfId
       ? [...validation.messages, "Possible duplicate of an existing question."]
@@ -88,13 +98,14 @@ export async function commitBulkUpload(csvText: string): Promise<{
 
   const rows = rowsToObjects(parseQuotedCsv(csvText));
   const subjectIdByName = await subjectIdMap();
+  const passageByCode = await passageCodeMap();
   const duplicates = await flagDuplicates(rows, subjectIdByName);
 
   const results: BulkRowResult[] = [];
   let importedCount = 0;
 
   for (const row of rows) {
-    const validation = validateRow(row, subjectIdByName);
+    const validation = validateRow(row, subjectIdByName, passageByCode);
     const duplicateOfIdRaw = duplicates.get(row.rowNumber) ?? null;
     const duplicateOfId = duplicateOfIdRaw?.startsWith("row-") ? null : duplicateOfIdRaw;
 
@@ -114,6 +125,17 @@ export async function commitBulkUpload(csvText: string): Promise<{
 
     const subjectId = subjectIdByName.get(row.subjectName.trim().toLowerCase())!;
     const questionNumber = await generateQuestionNumber();
+
+    const passage = row.passageCode ? passageByCode.get(row.passageCode) : undefined;
+    const passageGroupId = passage?.id ?? null;
+    let passageOrder: number | null = null;
+    if (passageGroupId) {
+      const requestedOrder = row.passageOrder ? Number(row.passageOrder) : NaN;
+      passageOrder = Number.isInteger(requestedOrder) && requestedOrder >= 0
+        ? requestedOrder
+        : await prisma.question.count({ where: { passageGroupId } });
+    }
+
     await prisma.question.create({
       data: {
         exam: row.exam as never,
@@ -133,6 +155,8 @@ export async function commitBulkUpload(csvText: string): Promise<{
         status: "DRAFT",
         createdById: session.user.id,
         duplicateOfId,
+        passageGroupId,
+        passageOrder,
       },
     });
     importedCount++;

@@ -17,7 +17,7 @@ export default async function SessionPage({
     include: {
       responses: {
         orderBy: { order: "asc" },
-        include: { question: true },
+        include: { question: { include: { passageGroup: true } } },
       },
     },
   });
@@ -31,13 +31,46 @@ export default async function SessionPage({
     prompt: r.question.prompt,
     options: asOptions(r.question.options),
     selectedOption: r.selectedOption,
+    flagged: r.flagged,
+    passageGroupId: r.question.passageGroupId,
+    passageLineRef: r.question.passageLineRef,
+    passageLineStart: r.question.passageLineStart,
+    passageLineEnd: r.question.passageLineEnd,
   }));
+
+  const passages: Record<
+    string,
+    {
+      id: string;
+      type: string;
+      title: string | null;
+      instructions: string | null;
+      bodyText: string;
+      showLineNumbers: boolean;
+      startingLineNumber: number;
+    }
+  > = {};
+  for (const r of attempt.responses) {
+    const pg = r.question.passageGroup;
+    if (pg && !passages[pg.id]) {
+      passages[pg.id] = {
+        id: pg.id,
+        type: pg.type,
+        title: pg.title,
+        instructions: pg.instructions,
+        bodyText: pg.bodyText,
+        showLineNumbers: pg.showLineNumbers,
+        startingLineNumber: pg.startingLineNumber,
+      };
+    }
+  }
 
   return (
     <SessionRunner
       attemptId={attempt.id}
       examLabel={examLabels[attempt.exam]}
       questions={questions}
+      passages={passages}
     />
   );
 }

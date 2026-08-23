@@ -21,6 +21,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: "Learning Content",
     items: [
       { label: "Questions", href: "/dashboard/admin/questions", permission: "questions.view" },
+      { label: "Passages", href: "/dashboard/admin/passages", permission: "questions.view" },
       {
         label: "Bulk upload",
         href: "/dashboard/admin/questions/upload",

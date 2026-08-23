@@ -21,7 +21,13 @@ export type QuestionFormValue = {
   correctOption: string;
   explanation: string | null;
   sourceType: string;
+  passageGroupId?: string | null;
+  passageLineRef?: string | null;
+  passageLineStart?: number | null;
+  passageLineEnd?: number | null;
 };
+
+export type PassageOption = { id: string; code: string | null; title: string | null; exam: string; subjectId: string };
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
@@ -30,24 +36,102 @@ const labelClass = "block text-xs text-slate-400";
 export function QuestionForm({
   action,
   subjects,
+  passages = [],
   initial,
 }: {
   action: (formData: FormData) => void;
   subjects: { id: string; name: string }[];
+  passages?: PassageOption[];
   initial?: QuestionFormValue;
 }) {
   const [prompt, setPrompt] = useState(initial?.prompt ?? "");
   const [explanation, setExplanation] = useState(initial?.explanation ?? "");
+  const [exam, setExam] = useState(initial?.exam ?? "WAEC");
+  const [subjectId, setSubjectId] = useState(initial?.subjectId ?? "");
+  const [isPassageBased, setIsPassageBased] = useState(!!initial?.passageGroupId);
   const optionByKey = new Map(initial?.options.map((o) => [o.key, o.text]));
+
+  const matchingPassages = passages.filter((p) => p.exam === exam && p.subjectId === subjectId);
 
   return (
     <form action={action} className="space-y-5">
       {initial?.id && <input type="hidden" name="id" value={initial.id} />}
 
+      <div>
+        <label className={labelClass}>Question type</label>
+        <div className="mt-1 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setIsPassageBased(false)}
+            className={`rounded-lg border px-4 py-2 text-sm ${
+              !isPassageBased ? "border-orange-500 bg-orange-500/10 text-white" : "border-slate-700 text-slate-400"
+            }`}
+          >
+            Standalone
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPassageBased(true)}
+            className={`rounded-lg border px-4 py-2 text-sm ${
+              isPassageBased ? "border-orange-500 bg-orange-500/10 text-white" : "border-slate-700 text-slate-400"
+            }`}
+          >
+            Passage-Based
+          </button>
+        </div>
+      </div>
+
+      {isPassageBased && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+          <div>
+            <label className={labelClass}>Passage / source (must match the exam &amp; subject above)</label>
+            <select name="passageGroupId" defaultValue={initial?.passageGroupId ?? ""} required={isPassageBased} className={inputClass}>
+              <option value="" disabled>
+                Select a passage
+              </option>
+              {matchingPassages.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title ?? p.code ?? p.id}
+                </option>
+              ))}
+            </select>
+            {matchingPassages.length === 0 && (
+              <p className="mt-1 text-[11px] text-amber-400/80">
+                No passages exist yet for this exam &amp; subject — create one under Admin → Passages first.
+              </p>
+            )}
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className={labelClass}>Line/section reference (optional)</label>
+              <input
+                name="passageLineRef"
+                defaultValue={initial?.passageLineRef ?? ""}
+                placeholder="Stanza 2 / Act I, Scene 1"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Start line (optional)</label>
+              <input name="passageLineStart" type="number" min={1} defaultValue={initial?.passageLineStart ?? ""} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>End line (optional)</label>
+              <input name="passageLineEnd" type="number" min={1} defaultValue={initial?.passageLineEnd ?? ""} className={inputClass} />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Exam</label>
-          <select name="exam" defaultValue={initial?.exam ?? "WAEC"} className={inputClass}>
+          <select
+            name="exam"
+            value={exam}
+            onChange={(e) => setExam(e.target.value)}
+            className={inputClass}
+          >
             <option value="WAEC">WAEC</option>
             <option value="NECO">NECO</option>
             <option value="UTME">UTME</option>
@@ -56,7 +140,13 @@ export function QuestionForm({
         </div>
         <div>
           <label className={labelClass}>Subject</label>
-          <select name="subjectId" defaultValue={initial?.subjectId ?? ""} required className={inputClass}>
+          <select
+            name="subjectId"
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value)}
+            required
+            className={inputClass}
+          >
             <option value="" disabled>
               Select a subject
             </option>

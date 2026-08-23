@@ -5,7 +5,14 @@ import { createQuestion } from "@/app/dashboard/admin/questions/actions";
 
 export default async function NewQuestionPage() {
   await requireAdminPagePermission("questions.create");
-  const subjects = await prisma.subject.findMany({ orderBy: { name: "asc" } });
+  const [subjects, passages] = await Promise.all([
+    prisma.subject.findMany({ orderBy: { name: "asc" } }),
+    prisma.passageGroup.findMany({
+      where: { status: { not: "ARCHIVED" } },
+      select: { id: true, code: true, title: true, exam: true, subjectId: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return (
     <div>
@@ -14,7 +21,7 @@ export default async function NewQuestionPage() {
         Created as a draft. Submit it for review before it can be approved and published.
       </p>
       <div className="mt-6 max-w-3xl">
-        <QuestionForm action={createQuestion} subjects={subjects} />
+        <QuestionForm action={createQuestion} subjects={subjects} passages={passages} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { AiCoachMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import type { CoachFocusQuestion } from "@/lib/ai/focus-question";
 
 const MAX_LESSON_CONTENT_CHARS = 2500;
 
@@ -26,13 +27,7 @@ export type CoachContext = {
     lessonIndex: number;
     totalLessons: number;
   };
-  focusQuestion?: {
-    prompt: string;
-    studentAnswer: string | null;
-    correctAnswer: string;
-    explanation: string | null;
-    topic: string | null;
-  };
+  focusQuestion?: CoachFocusQuestion;
   recentAttempts: { exam: string; mode: string; score: number | null; daysAgo: number }[];
   weakTopics: { topic: string; subject: string | null; masteryScore: number }[];
   strongTopics: { topic: string; subject: string | null; masteryScore: number }[];

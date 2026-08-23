@@ -5,6 +5,7 @@ import type { AttemptMode, ExamType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
+import { buildSelectionUnits, selectContiguousUnits } from "@/lib/practice/attempt-selection";
 
 export async function startAttempt(formData: FormData) {
   const session = await auth();
@@ -26,26 +27,53 @@ export async function startAttempt(formData: FormData) {
       subjectId: { in: subjectIds },
       status: "PUBLISHED",
       ...(topic ? { topic } : {}),
+      OR: [{ passageGroupId: null }, { passageGroup: { status: "PUBLISHED" } }],
     },
-    select: { id: true },
+    select: { id: true, passageGroupId: true, passageOrder: true },
   });
 
   if (eligible.length === 0) {
     throw new Error("No questions are available for that selection yet.");
   }
 
-  const shuffled = [...eligible].sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, Math.min(requestedCount, shuffled.length));
+  // A topic filter can match only some members of a passage group, but a
+  // passage's questions must always be read together — so pull in the full
+  // published set for any group that showed up at all. This can rarely
+  // widen a topic-filtered session by a sibling question outside the
+  // requested topic; accepted since the original code never guaranteed an
+  // exact question count either.
+  const partialGroupIds = topic
+    ? [...new Set(eligible.filter((q) => q.passageGroupId).map((q) => q.passageGroupId!))]
+    : [];
+  const eligibleById = new Map(eligible.map((q) => [q.id, q]));
+  if (partialGroupIds.length > 0) {
+    const fullGroupMembers = await prisma.question.findMany({
+      where: {
+        passageGroupId: { in: partialGroupIds },
+        status: "PUBLISHED",
+        passageGroup: { status: "PUBLISHED" },
+      },
+      select: { id: true, passageGroupId: true, passageOrder: true },
+    });
+    for (const q of fullGroupMembers) eligibleById.set(q.id, q);
+  }
+
+  const units = buildSelectionUnits([...eligibleById.values()]);
+  const selectedIds = selectContiguousUnits(units, requestedCount);
+
+  if (selectedIds.length === 0) {
+    throw new Error("No questions are available for that selection yet.");
+  }
 
   const attempt = await prisma.examAttempt.create({
     data: {
       userId: session.user.id,
       exam,
       mode,
-      totalItems: selected.length,
+      totalItems: selectedIds.length,
       subjects: { connect: subjectIds.map((id) => ({ id })) },
       responses: {
-        create: selected.map((q, index) => ({ questionId: q.id, order: index })),
+        create: selectedIds.map((questionId, index) => ({ questionId, order: index })),
       },
     },
   });
@@ -88,6 +116,22 @@ export async function saveAnswer(
       selectedOption,
       isCorrect: selectedOption === question.correctOption,
     },
+  });
+}
+
+export async function toggleFlag(
+  attemptId: string,
+  questionId: string,
+  flagged: boolean
+) {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  await assertOwnedInProgressAttempt(attemptId, session.user.id);
+
+  await prisma.questionResponse.update({
+    where: { attemptId_questionId: { attemptId, questionId } },
+    data: { flagged },
   });
 }
 

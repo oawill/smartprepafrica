@@ -41,7 +41,14 @@ export default async function QuestionDetailPage({
       : null,
   ]);
 
-  const subjects = await prisma.subject.findMany({ orderBy: { name: "asc" } });
+  const [subjects, passages] = await Promise.all([
+    prisma.subject.findMany({ orderBy: { name: "asc" } }),
+    prisma.passageGroup.findMany({
+      where: { status: { not: "ARCHIVED" } },
+      select: { id: true, code: true, title: true, exam: true, subjectId: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
   const adminRole = session.user.adminRole;
 
   return (
@@ -140,6 +147,7 @@ export default async function QuestionDetailPage({
             <QuestionForm
               action={updateQuestion}
               subjects={subjects}
+              passages={passages}
               initial={{
                 id: question.id,
                 exam: question.exam,
@@ -155,6 +163,10 @@ export default async function QuestionDetailPage({
                 correctOption: question.correctOption,
                 explanation: question.explanation,
                 sourceType: question.sourceType,
+                passageGroupId: question.passageGroupId,
+                passageLineRef: question.passageLineRef,
+                passageLineStart: question.passageLineStart,
+                passageLineEnd: question.passageLineEnd,
               }}
             />
           ) : (

@@ -62,6 +62,8 @@ export const QUESTION_CSV_HEADERS = [
   "correctOption",
   "explanation",
   "sourceType",
+  "passageCode",
+  "passageOrder",
 ] as const;
 
 export function generateQuestionCsvTemplate(): string {
@@ -84,6 +86,8 @@ export function generateQuestionCsvTemplate(): string {
     "A",
     '"Factor as (x-2)(x-3)=0, so x=2 or x=3."',
     "ORIGINAL_SMARTPREP_QUESTION",
+    "",
+    "",
   ].join(",");
   return `${header}\n${example}\n`;
 }
@@ -103,6 +107,8 @@ export type ParsedQuestionRow = {
   correctOption: string;
   explanation: string;
   sourceType: string;
+  passageCode: string;
+  passageOrder: string;
 };
 
 export function rowsToObjects(rows: string[][]): ParsedQuestionRow[] {
@@ -131,6 +137,8 @@ export function rowsToObjects(rows: string[][]): ParsedQuestionRow[] {
       correctOption: get("correctOption").toUpperCase(),
       explanation: get("explanation"),
       sourceType: get("sourceType").toUpperCase() || "IMPORTED",
+      passageCode: get("passageCode").toUpperCase(),
+      passageOrder: get("passageOrder"),
     };
   });
 }
@@ -152,9 +160,12 @@ export type RowValidation = {
   messages: string[];
 };
 
+export type PassageLookup = { id: string; subjectId: string; exam: string };
+
 export function validateRow(
   row: ParsedQuestionRow,
-  subjectIdByName: Map<string, string>
+  subjectIdByName: Map<string, string>,
+  passageByCode: Map<string, PassageLookup> = new Map()
 ): RowValidation {
   const messages: string[] = [];
   let status: "OK" | "WARNING" | "ERROR" = "OK";
@@ -213,6 +224,27 @@ export function validateRow(
 
   if (row.imageUrl && !/^https?:\/\//i.test(row.imageUrl)) {
     warn(`Image URL "${row.imageUrl}" does not look like a valid http(s) URL.`);
+  }
+
+  if (row.passageCode) {
+    const passage = passageByCode.get(row.passageCode);
+    if (!passage) {
+      fail(`Unknown passage code "${row.passageCode}" — create the passage in Admin → Passages first.`);
+    } else {
+      const subjectId = subjectIdByName.get(row.subjectName.trim().toLowerCase());
+      if (subjectId && passage.subjectId !== subjectId) {
+        fail(`Passage "${row.passageCode}" belongs to a different subject than this row.`);
+      }
+      if (row.exam && passage.exam !== row.exam) {
+        fail(`Passage "${row.passageCode}" belongs to a different exam than this row.`);
+      }
+    }
+  }
+  if (row.passageOrder) {
+    const order = Number(row.passageOrder);
+    if (!Number.isInteger(order) || order < 0) {
+      warn(`Invalid passage order "${row.passageOrder}" — will append to the end instead.`);
+    }
   }
 
   if (messages.length === 0) messages.push("Looks good.");

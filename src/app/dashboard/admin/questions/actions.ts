@@ -31,6 +31,10 @@ const questionFieldsSchema = z.object({
     "AI_GENERATED",
     "IMPORTED",
   ]),
+  passageGroupId: z.string().trim().optional(),
+  passageLineRef: z.string().trim().optional(),
+  passageLineStart: z.coerce.number().int().optional(),
+  passageLineEnd: z.coerce.number().int().optional(),
 });
 
 function parseOptionsFromForm(formData: FormData) {
@@ -57,6 +61,10 @@ function parseFields(formData: FormData) {
     correctOption: formData.get("correctOption"),
     explanation: (formData.get("explanation") as string) || undefined,
     sourceType: formData.get("sourceType"),
+    passageGroupId: (formData.get("passageGroupId") as string) || undefined,
+    passageLineRef: (formData.get("passageLineRef") as string) || undefined,
+    passageLineStart: (formData.get("passageLineStart") as string) || undefined,
+    passageLineEnd: (formData.get("passageLineEnd") as string) || undefined,
   });
 }
 
@@ -84,10 +92,14 @@ export async function createQuestion(formData: FormData) {
 
   const duplicateOfId = await findLikelyDuplicate(fields.subjectId, fields.exam, fields.prompt);
   const questionNumber = await generateQuestionNumber();
+  const passageOrder = fields.passageGroupId
+    ? await prisma.question.count({ where: { passageGroupId: fields.passageGroupId } })
+    : undefined;
 
   const question = await prisma.question.create({
     data: {
       ...fields,
+      passageOrder,
       options: options as never,
       questionNumber,
       status: "DRAFT",
@@ -123,9 +135,30 @@ export async function updateQuestion(formData: FormData) {
 
   const duplicateOfId = await findLikelyDuplicate(fields.subjectId, fields.exam, fields.prompt, id);
 
+  // Full-replace semantics for the passage fields (matching every other
+  // field in this form): omitting passageGroupId means the admin picked
+  // "Standalone" in the toggle, which should detach the question, not leave
+  // its previous passage membership untouched.
+  const passageGroupId = fields.passageGroupId ?? null;
+  const passageOrder =
+    !passageGroupId
+      ? null
+      : passageGroupId !== before.passageGroupId
+        ? await prisma.question.count({ where: { passageGroupId } })
+        : before.passageOrder;
+
   await prisma.question.update({
     where: { id },
-    data: { ...fields, options: options as never, duplicateOfId },
+    data: {
+      ...fields,
+      options: options as never,
+      duplicateOfId,
+      passageGroupId,
+      passageOrder,
+      passageLineRef: passageGroupId ? (fields.passageLineRef ?? null) : null,
+      passageLineStart: passageGroupId ? (fields.passageLineStart ?? null) : null,
+      passageLineEnd: passageGroupId ? (fields.passageLineEnd ?? null) : null,
+    },
   });
 
   await logAudit({

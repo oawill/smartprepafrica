@@ -1,5 +1,22 @@
 import type { CoachContext } from "@/lib/ai/context-builder";
 
+const MAX_PASSAGE_CONTEXT_CHARS = 6000;
+
+const COMPREHENSION_SKILLS =
+  "direct retrieval, inference, vocabulary in context, author's purpose, tone, main idea, supporting detail, figurative expression, or grammatical function";
+const LITERATURE_SKILLS =
+  "theme, characterization, imagery, symbolism, metaphor, simile, personification, irony, tone, mood, dramatic technique, poetic device, or context";
+
+const PASSAGE_TYPE_LABELS: Record<string, string> = {
+  COMPREHENSION: "English comprehension passage",
+  PROSE_EXTRACT: "prose extract",
+  POETRY: "poem",
+  DRAMA_EXTRACT: "drama extract",
+  DIALOGUE: "dialogue",
+  LITERARY_EXTRACT: "literary extract",
+  OTHER: "passage",
+};
+
 const MODE_INSTRUCTIONS: Record<CoachContext["mode"], string> = {
   ASK: "The student is asking a general question about their current material. Answer directly and clearly.",
   EXPLAIN:
@@ -63,6 +80,21 @@ export function buildSystemPrompt(context: CoachContext): string {
 
   if (context.focusQuestion) {
     const q = context.focusQuestion;
+    if (q.passage) {
+      const typeLabel = PASSAGE_TYPE_LABELS[q.passage.type] ?? "passage";
+      const isLiterature = q.passage.type !== "COMPREHENSION";
+      const skills = isLiterature ? LITERATURE_SKILLS : COMPREHENSION_SKILLS;
+      const truncatedBody =
+        q.passage.bodyText.length > MAX_PASSAGE_CONTEXT_CHARS
+          ? q.passage.bodyText.slice(0, MAX_PASSAGE_CONTEXT_CHARS) + "…"
+          : q.passage.bodyText;
+      parts.push(
+        `This question is based on a ${typeLabel}${q.passage.title ? ` titled "${q.passage.title}"` : ""}${
+          q.passage.lineRef ? ` (the student is being asked about ${q.passage.lineRef})` : ""
+        }:\n"""\n${truncatedBody}\n"""\n` +
+          `When explaining this question, first name which reading/literary skill it tests (choose the closest fit from: ${skills}), then teach the reasoning process for that skill using specific evidence quoted or paraphrased from the passage above — do not just restate the correct answer without showing how to find it in the text.`
+      );
+    }
     parts.push(
       `The student just got this question wrong and wants it explained:\nQuestion: ${q.prompt}\nStudent's answer: ${
         q.studentAnswer ?? "(no answer selected)"

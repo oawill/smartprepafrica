@@ -18,7 +18,7 @@ export default async function ResultsPage({
     include: {
       responses: {
         orderBy: { order: "asc" },
-        include: { question: true },
+        include: { question: { include: { passageGroup: true } } },
       },
     },
   });
@@ -131,7 +131,19 @@ export default async function ResultsPage({
               key={response.id}
               className="rounded-xl border border-slate-800 bg-slate-900 p-5"
             >
-              <p className="text-xs text-slate-500">Question {i + 1}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-slate-500">Question {i + 1}</p>
+                {response.flagged && (
+                  <span className="rounded-full border border-amber-700 bg-amber-900/30 px-2.5 py-0.5 text-[11px] font-medium text-amber-300">
+                    Flagged for review
+                  </span>
+                )}
+              </div>
+              {response.question.passageGroup && (
+                <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">
+                  {response.question.passageGroup.title ?? "Passage-based question"}
+                </p>
+              )}
               <p className="mt-1 font-medium">{response.question.prompt}</p>
 
               <div className="mt-3 space-y-1.5 text-sm">
@@ -186,6 +198,20 @@ export default async function ResultsPage({
                       correctAnswer: `${response.question.correctOption}) ${options.find((o) => o.key === response.question.correctOption)?.text ?? ""}`,
                       explanation: response.question.explanation,
                       topic: response.question.topic,
+                      passage: response.question.passageGroup
+                        ? {
+                            type: response.question.passageGroup.type,
+                            title: response.question.passageGroup.title,
+                            bodyText: response.question.passageGroup.bodyText,
+                            lineRef:
+                              response.question.passageLineRef ??
+                              (response.question.passageLineStart
+                                ? `Lines ${response.question.passageLineStart}–${
+                                    response.question.passageLineEnd ?? response.question.passageLineStart
+                                  }`
+                                : null),
+                          }
+                        : null,
                     }}
                   />
                 </div>

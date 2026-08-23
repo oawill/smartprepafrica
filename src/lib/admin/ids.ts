@@ -64,3 +64,12 @@ export async function generateSubmissionNumber(): Promise<string> {
     async (c) => !!(await prisma.contactSubmission.findUnique({ where: { submissionNumber: c } }))
   );
 }
+
+export async function generatePassageCode(): Promise<string> {
+  return generateSequential(
+    "PSG-",
+    6,
+    () => prisma.passageGroup.count(),
+    async (c) => !!(await prisma.passageGroup.findUnique({ where: { code: c } }))
+  );
+}
