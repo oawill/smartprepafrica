@@ -1,26 +1,341 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens: light values live on the bare :root, dark values live
+ * under the system media query AND under explicit [data-theme] attribute
+ * selectors. The attribute selectors have higher specificity than both the
+ * bare :root and the media-query :root, so an explicit user choice always
+ * wins over system preference in either direction. When no attribute is
+ * set, the media query alone decides — pure CSS, no JS, no flash.
+ *
+ * Keep the media-query block and the [data-theme="dark"] block byte-for-byte
+ * identical (same for light) — this is the one maintenance invariant that
+ * keeps "system" and "explicit" behavior consistent.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef0f3;
+  --border: #e2e5ea;
+  --border-strong: #c7ccd4;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --text-primary: #10131a;
+  --text-secondary: #454b57;
+  --text-muted: #5b6270;
+  --text-disabled: #9aa1ac;
+
+  --brand: #f97316;
+  --brand-hover: #ea580c;
+  --brand-foreground: #10131a;
+  --brand-text: #c2410c;
+
+  --success: #15803d;
+  --success-surface: #dcfce7;
+  --success-foreground: #ffffff;
+
+  --warning: #b45309;
+  --warning-surface: #fef3c7;
+  --warning-foreground: #ffffff;
+
+  --danger: #b91c1c;
+  --danger-surface: #fee2e2;
+  --danger-foreground: #ffffff;
+
+  --info: #1d4ed8;
+  --info-surface: #dbeafe;
+  --info-foreground: #ffffff;
+
+  --focus-ring: #ea580c;
+
+  --exam-option-bg: #ffffff;
+  --exam-option-border: #e2e5ea;
+  --exam-option-text: #10131a;
+  --exam-selected-bg: #ffedd5;
+  --exam-selected-border: #f97316;
+  --exam-selected-text: #10131a;
+  --exam-correct-bg: #dcfce7;
+  --exam-correct-border: #15803d;
+  --exam-correct-text: #14532d;
+  --exam-incorrect-bg: #fee2e2;
+  --exam-incorrect-border: #b91c1c;
+  --exam-incorrect-text: #7f1d1d;
+  --exam-flagged: #b45309;
+  --exam-palette-current: #f97316;
+  --exam-palette-answered: #15803d;
+  --exam-palette-answered-text: #ffffff;
+  --exam-palette-unanswered: #e2e5ea;
+  --exam-palette-unanswered-text: #454b57;
+
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --surface: #020617;
+    --surface-raised: #0f172a;
+    --surface-sunken: #1e293b;
+    --border: #1e293b;
+    --border-strong: #334155;
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-disabled: #64748b;
+
+    --brand: #f97316;
+    --brand-hover: #fb923c;
+    --brand-foreground: #10131a;
+    --brand-text: #fb923c;
+
+    --success: #4ade80;
+    --success-surface: rgb(34 197 94 / 0.16);
+    --success-foreground: #052e1c;
+
+    --warning: #fbbf24;
+    --warning-surface: rgb(245 158 11 / 0.16);
+    --warning-foreground: #451a03;
+
+    --danger: #f87171;
+    --danger-surface: rgb(239 68 68 / 0.16);
+    --danger-foreground: #450a0a;
+
+    --info: #60a5fa;
+    --info-surface: rgb(59 130 246 / 0.16);
+    --info-foreground: #172554;
+
+    --focus-ring: #fb923c;
+
+    --exam-option-bg: #0f172a;
+    --exam-option-border: #334155;
+    --exam-option-text: #f1f5f9;
+    --exam-selected-bg: rgb(249 115 22 / 0.12);
+    --exam-selected-border: #f97316;
+    --exam-selected-text: #ffffff;
+    --exam-correct-bg: rgb(34 197 94 / 0.14);
+    --exam-correct-border: #16a34a;
+    --exam-correct-text: #86efac;
+    --exam-incorrect-bg: rgb(239 68 68 / 0.14);
+    --exam-incorrect-border: #dc2626;
+    --exam-incorrect-text: #fca5a5;
+    --exam-flagged: #fbbf24;
+    --exam-palette-current: #f97316;
+    --exam-palette-answered: #14532d;
+    --exam-palette-answered-text: #86efac;
+    --exam-palette-unanswered: #1e293b;
+    --exam-palette-unanswered-text: #94a3b8;
+
+    color-scheme: dark;
   }
 }
 
+:root[data-theme="light"] {
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef0f3;
+  --border: #e2e5ea;
+  --border-strong: #c7ccd4;
+
+  --text-primary: #10131a;
+  --text-secondary: #454b57;
+  --text-muted: #5b6270;
+  --text-disabled: #9aa1ac;
+
+  --brand: #f97316;
+  --brand-hover: #ea580c;
+  --brand-foreground: #10131a;
+  --brand-text: #c2410c;
+
+  --success: #15803d;
+  --success-surface: #dcfce7;
+  --success-foreground: #ffffff;
+
+  --warning: #b45309;
+  --warning-surface: #fef3c7;
+  --warning-foreground: #ffffff;
+
+  --danger: #b91c1c;
+  --danger-surface: #fee2e2;
+  --danger-foreground: #ffffff;
+
+  --info: #1d4ed8;
+  --info-surface: #dbeafe;
+  --info-foreground: #ffffff;
+
+  --focus-ring: #ea580c;
+
+  --exam-option-bg: #ffffff;
+  --exam-option-border: #e2e5ea;
+  --exam-option-text: #10131a;
+  --exam-selected-bg: #ffedd5;
+  --exam-selected-border: #f97316;
+  --exam-selected-text: #10131a;
+  --exam-correct-bg: #dcfce7;
+  --exam-correct-border: #15803d;
+  --exam-correct-text: #14532d;
+  --exam-incorrect-bg: #fee2e2;
+  --exam-incorrect-border: #b91c1c;
+  --exam-incorrect-text: #7f1d1d;
+  --exam-flagged: #b45309;
+  --exam-palette-current: #f97316;
+  --exam-palette-answered: #15803d;
+  --exam-palette-answered-text: #ffffff;
+  --exam-palette-unanswered: #e2e5ea;
+  --exam-palette-unanswered-text: #454b57;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --surface: #020617;
+  --surface-raised: #0f172a;
+  --surface-sunken: #1e293b;
+  --border: #1e293b;
+  --border-strong: #334155;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-disabled: #64748b;
+
+  --brand: #f97316;
+  --brand-hover: #fb923c;
+  --brand-foreground: #10131a;
+  --brand-text: #fb923c;
+
+  --success: #4ade80;
+  --success-surface: rgb(34 197 94 / 0.16);
+  --success-foreground: #052e1c;
+
+  --warning: #fbbf24;
+  --warning-surface: rgb(245 158 11 / 0.16);
+  --warning-foreground: #451a03;
+
+  --danger: #f87171;
+  --danger-surface: rgb(239 68 68 / 0.16);
+  --danger-foreground: #450a0a;
+
+  --info: #60a5fa;
+  --info-surface: rgb(59 130 246 / 0.16);
+  --info-foreground: #172554;
+
+  --focus-ring: #fb923c;
+
+  --exam-option-bg: #0f172a;
+  --exam-option-border: #334155;
+  --exam-option-text: #f1f5f9;
+  --exam-selected-bg: rgb(249 115 22 / 0.12);
+  --exam-selected-border: #f97316;
+  --exam-selected-text: #ffffff;
+  --exam-correct-bg: rgb(34 197 94 / 0.14);
+  --exam-correct-border: #16a34a;
+  --exam-correct-text: #86efac;
+  --exam-incorrect-bg: rgb(239 68 68 / 0.14);
+  --exam-incorrect-border: #dc2626;
+  --exam-incorrect-text: #fca5a5;
+  --exam-flagged: #fbbf24;
+  --exam-palette-current: #f97316;
+  --exam-palette-answered: #14532d;
+  --exam-palette-answered-text: #86efac;
+  --exam-palette-unanswered: #1e293b;
+  --exam-palette-unanswered-text: #94a3b8;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-text: var(--brand-text);
+
+  --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-foreground: var(--danger-foreground);
+
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
+  --color-info-foreground: var(--info-foreground);
+
+  --color-focus-ring: var(--focus-ring);
+
+  --color-exam-option-bg: var(--exam-option-bg);
+  --color-exam-option-border: var(--exam-option-border);
+  --color-exam-option-text: var(--exam-option-text);
+  --color-exam-selected-bg: var(--exam-selected-bg);
+  --color-exam-selected-border: var(--exam-selected-border);
+  --color-exam-selected-text: var(--exam-selected-text);
+  --color-exam-correct-bg: var(--exam-correct-bg);
+  --color-exam-correct-border: var(--exam-correct-border);
+  --color-exam-correct-text: var(--exam-correct-text);
+  --color-exam-incorrect-bg: var(--exam-incorrect-bg);
+  --color-exam-incorrect-border: var(--exam-incorrect-border);
+  --color-exam-incorrect-text: var(--exam-incorrect-text);
+  --color-exam-flagged: var(--exam-flagged);
+  --color-exam-palette-current: var(--exam-palette-current);
+  --color-exam-palette-answered: var(--exam-palette-answered);
+  --color-exam-palette-answered-text: var(--exam-palette-answered-text);
+  --color-exam-palette-unanswered: var(--exam-palette-unanswered);
+  --color-exam-palette-unanswered-text: var(--exam-palette-unanswered-text);
+}
+
+/* Typography scale. text-question is deliberately the largest body-scale
+   token — exam questions get the strongest treatment per the design brief. */
+@theme {
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.1;
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.2;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.3;
+  --text-h3: 1.125rem;
+  --text-h3--line-height: 1.4;
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.5;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.4;
+  --text-button: 0.875rem;
+  --text-button--line-height: 1;
+  --text-question: 1.1875rem;
+  --text-question--line-height: 1.6;
+  --text-answer: 1rem;
+  --text-answer--line-height: 1.5;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }

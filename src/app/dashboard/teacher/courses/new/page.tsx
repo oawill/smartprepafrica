@@ -25,28 +25,28 @@ export default async function NewCoursePage() {
 
   return (
     <div className="mx-auto max-w-xl px-6 py-12">
-      <Link href="/dashboard/teacher" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/dashboard/teacher" className="text-sm text-text-secondary hover:text-text-primary">
         ← Teacher dashboard
       </Link>
-      <h1 className="mt-4 text-2xl font-semibold">Create a course</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="mt-4 text-h2 font-semibold text-text-primary">Create a course</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         You can add modules, lessons, and assignments after creating it.
       </p>
 
       <form action={createCourse} className="mt-6 space-y-4">
         <div>
-          <label className="block text-sm text-slate-300" htmlFor="title">
+          <label className="block text-sm text-text-secondary" htmlFor="title">
             Title
           </label>
           <input
             id="title"
             name="title"
             required
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-300" htmlFor="description">
+          <label className="block text-sm text-text-secondary" htmlFor="description">
             Description
           </label>
           <textarea
@@ -54,18 +54,18 @@ export default async function NewCoursePage() {
             name="description"
             required
             rows={3}
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-300" htmlFor="category">
+          <label className="block text-sm text-text-secondary" htmlFor="category">
             Category
           </label>
           <select
             id="category"
             name="category"
             required
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
           >
             {categories.map((c) => (
               <option key={c} value={c}>
@@ -76,13 +76,13 @@ export default async function NewCoursePage() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-slate-300" htmlFor="difficulty">
+            <label className="block text-sm text-text-secondary" htmlFor="difficulty">
               Difficulty
             </label>
             <select
               id="difficulty"
               name="difficulty"
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             >
               <option value="EASY">Easy</option>
               <option value="MEDIUM">Medium</option>
@@ -90,7 +90,7 @@ export default async function NewCoursePage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm text-slate-300" htmlFor="estimatedMinutes">
+            <label className="block text-sm text-text-secondary" htmlFor="estimatedMinutes">
               Duration (minutes)
             </label>
             <input
@@ -98,18 +98,18 @@ export default async function NewCoursePage() {
               name="estimatedMinutes"
               type="number"
               min={1}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm text-slate-300" htmlFor="classLevelId">
+          <label className="block text-sm text-text-secondary" htmlFor="classLevelId">
             Class level (optional)
           </label>
           <select
             id="classLevelId"
             name="classLevelId"
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
           >
             <option value="">Not tied to a class level (Skills/Career courses)</option>
             {classLevels.map((cl) => (
@@ -120,20 +120,20 @@ export default async function NewCoursePage() {
           </select>
         </div>
         <div>
-          <label className="block text-sm text-slate-300" htmlFor="instructorName">
+          <label className="block text-sm text-text-secondary" htmlFor="instructorName">
             Instructor name
           </label>
           <input
             id="instructorName"
             name="instructorName"
             placeholder="Defaults to your name"
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
           />
         </div>
 
         <button
           type="submit"
-          className="rounded-full bg-orange-500 px-6 py-2.5 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           Create course
         </button>

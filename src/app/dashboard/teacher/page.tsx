@@ -49,7 +49,7 @@ export default async function TeacherDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Teacher dashboard</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             {teacher?.school?.name
               ? `Teaching at ${teacher.school.name}.`
               : "Not yet assigned to a school — ask your school administrator to add you."}
@@ -58,7 +58,7 @@ export default async function TeacherDashboard() {
         {teacher && (
           <Link
             href={`/educom/teachers/${teacher.id}`}
-            className="shrink-0 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="shrink-0 rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             View public profile
           </Link>
@@ -80,7 +80,7 @@ export default async function TeacherDashboard() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="My classes">
           {!teacher || teacher.classes.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               No classes assigned yet. Your school administrator can assign
               you to a class.
             </p>
@@ -90,10 +90,10 @@ export default async function TeacherDashboard() {
                 <li key={c.id}>
                   <Link
                     href={`/dashboard/teacher/classes/${c.id}`}
-                    className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm hover:border-slate-600"
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-border-strong"
                   >
                     <span>{c.name}</span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-text-muted">
                       {c.students.length} student{c.students.length === 1 ? "" : "s"}
                     </span>
                   </Link>
@@ -104,18 +104,18 @@ export default async function TeacherDashboard() {
         </Card>
         <Card title="My courses">
           {!teacher || teacher.courses.length === 0 ? (
-            <p className="text-sm text-slate-400">No courses created yet.</p>
+            <p className="text-sm text-text-secondary">No courses created yet.</p>
           ) : (
             <ul className="space-y-1.5">
               {teacher.courses.map((c) => (
                 <li key={c.id}>
                   <Link
                     href={`/dashboard/teacher/courses/${c.id}`}
-                    className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm hover:border-slate-600"
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-border-strong"
                   >
                     <span>{c.title}</span>
                     <span
-                      className={`text-xs ${c.published ? "text-green-400" : "text-amber-400"}`}
+                      className={`text-xs ${c.published ? "text-success" : "text-warning"}`}
                     >
                       {c.published ? "Published" : "Draft"}
                     </span>
@@ -126,7 +126,7 @@ export default async function TeacherDashboard() {
           )}
           <Link
             href="/dashboard/teacher/courses/new"
-            className="mt-3 inline-block rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+            className="mt-3 inline-block rounded-full bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
           >
             Create a course
           </Link>
@@ -135,13 +135,13 @@ export default async function TeacherDashboard() {
 
       <div className="mt-6">
         <Card title="Public profile">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             Shown on your SmartPrepAfrica.com teacher profile so students anywhere can
             find and learn from you.
           </p>
           <form action={updateTeacherProfile} className="mt-3 space-y-3">
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="bio">
+              <label className="block text-xs text-text-secondary" htmlFor="bio">
                 Bio
               </label>
               <textarea
@@ -150,12 +150,12 @@ export default async function TeacherDashboard() {
                 defaultValue={teacher?.bio ?? ""}
                 rows={3}
                 placeholder="What should students know about how you teach?"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs text-slate-400" htmlFor="qualifications">
+                <label className="block text-xs text-text-secondary" htmlFor="qualifications">
                   Qualifications
                 </label>
                 <input
@@ -163,11 +163,11 @@ export default async function TeacherDashboard() {
                   name="qualifications"
                   defaultValue={teacher?.qualifications ?? ""}
                   placeholder="B.Sc. Mathematics, PGDE"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                  className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400" htmlFor="yearsExperience">
+                <label className="block text-xs text-text-secondary" htmlFor="yearsExperience">
                   Years of experience
                 </label>
                 <input
@@ -176,12 +176,12 @@ export default async function TeacherDashboard() {
                   type="number"
                   min={0}
                   defaultValue={teacher?.yearsExperience ?? ""}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                  className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="photoUrl">
+              <label className="block text-xs text-text-secondary" htmlFor="photoUrl">
                 Photo URL
               </label>
               <input
@@ -189,12 +189,12 @@ export default async function TeacherDashboard() {
                 name="photoUrl"
                 defaultValue={teacher?.photoUrl ?? ""}
                 placeholder="https://…"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Save
             </button>

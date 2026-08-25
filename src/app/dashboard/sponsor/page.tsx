@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { issueVoucher, createSponsorshipProgram, renewProgram } from "@/app/dashboard/sponsor/actions";
 import { PLAN_LABELS } from "@/lib/plans";
 
@@ -80,7 +81,7 @@ export default async function SponsorDashboard() {
   return (
     <div>
       <h1 className="text-2xl font-semibold">Earn by helping students succeed.</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-text-secondary">
         Issue vouchers, track redemptions, and see your impact.
       </p>
 
@@ -107,7 +108,7 @@ export default async function SponsorDashboard() {
         </Card>
       </div>
 
-      <p className="mt-4 text-xs text-slate-500">
+      <p className="mt-4 text-xs text-text-muted">
         Individual student identities aren&apos;t shown here to protect
         privacy — only aggregate outcomes across everyone who redeemed your
         vouchers.
@@ -116,45 +117,45 @@ export default async function SponsorDashboard() {
       <div className="mt-6">
         <Card title="Sponsorship programs">
           {programs.length === 0 ? (
-            <p className="text-sm text-slate-400">No programs yet.</p>
+            <p className="text-sm text-text-secondary">No programs yet.</p>
           ) : (
             <div className="space-y-3">
               {programs.map((p) => {
                 const redeemed = p.vouchers.filter((v) => v.status === "REDEEMED").length;
                 const pct = p.totalSeats > 0 ? Math.round((redeemed / p.totalSeats) * 100) : 0;
                 return (
-                  <div key={p.id} className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+                  <div key={p.id} className="rounded-lg border border-border bg-surface p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-slate-100">{p.name}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="font-medium text-text-primary">{p.name}</p>
+                        <p className="text-xs text-text-muted">
                           {PLAN_LABELS[p.plan]} · {p.school?.name ?? "Open to any student"}
                           {p.subject && ` · ${p.subject.name}`} ·{" "}
                           {p.durationDays} day access
                         </p>
                       </div>
-                      <p className="text-sm text-slate-300">
+                      <p className="text-sm text-text-secondary">
                         {redeemed} / {p.totalSeats} seats used
                       </p>
                     </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
-                      <div className="h-full bg-orange-500" style={{ width: `${pct}%` }} />
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-sunken">
+                      <div className="h-full bg-brand" style={{ width: `${pct}%` }} />
                     </div>
                     <form action={renewProgram} className="mt-3 flex items-end gap-2">
                       <input type="hidden" name="programId" value={p.id} />
                       <div>
-                        <label className="block text-xs text-slate-400">Add seats</label>
+                        <label className="block text-xs text-text-secondary">Add seats</label>
                         <input
                           type="number"
                           name="additionalSeats"
                           min={1}
                           required
-                          className="mt-1 w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm outline-none focus:border-orange-500"
+                          className="mt-1 w-24 rounded-lg border border-border-strong bg-surface px-3 py-1.5 text-sm text-text-primary outline-none focus:border-brand"
                         />
                       </div>
                       <button
                         type="submit"
-                        className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500"
+                        className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted"
                       >
                         Renew
                       </button>
@@ -165,19 +166,19 @@ export default async function SponsorDashboard() {
             </div>
           )}
 
-          <form action={createSponsorshipProgram} className="mt-4 space-y-2 border-t border-slate-800 pt-4">
+          <form action={createSponsorshipProgram} className="mt-4 space-y-2 border-t border-border pt-4">
             <input
               type="text"
               name="name"
               required
               placeholder="Program name (e.g. Lagos Girls Scholarship)"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
               <select
                 name="plan"
                 required
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               >
                 {(["BASIC", "PREMIUM", "SCHOOL"] as const).map((plan) => (
                   <option key={plan} value={plan}>
@@ -187,7 +188,7 @@ export default async function SponsorDashboard() {
               </select>
               <select
                 name="schoolId"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               >
                 <option value="">Any school</option>
                 {schools.map((s) => (
@@ -198,7 +199,7 @@ export default async function SponsorDashboard() {
               </select>
               <select
                 name="subjectId"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               >
                 <option value="">Any subject</option>
                 {subjects.map((s) => (
@@ -213,7 +214,7 @@ export default async function SponsorDashboard() {
                 min={1}
                 required
                 placeholder="Seats"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
               <input
                 type="number"
@@ -221,12 +222,12 @@ export default async function SponsorDashboard() {
                 min={1}
                 required
                 placeholder="Days"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Create program
             </button>
@@ -238,14 +239,14 @@ export default async function SponsorDashboard() {
         <Card title="Issue a single voucher">
           <form action={issueVoucher} className="space-y-3">
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="plan">
+              <label className="block text-xs text-text-secondary" htmlFor="plan">
                 Plan
               </label>
               <select
                 id="plan"
                 name="plan"
                 required
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               >
                 {purchasablePlans.map((plan) => (
                   <option key={plan} value={plan}>
@@ -255,7 +256,7 @@ export default async function SponsorDashboard() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="expiryDays">
+              <label className="block text-xs text-text-secondary" htmlFor="expiryDays">
                 Expires after (days, optional)
               </label>
               <input
@@ -264,12 +265,12 @@ export default async function SponsorDashboard() {
                 type="number"
                 min={1}
                 placeholder="No expiry"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Generate voucher
             </button>
@@ -278,11 +279,11 @@ export default async function SponsorDashboard() {
 
         <Card title="Your vouchers">
           {vouchers.length === 0 ? (
-            <p className="text-sm text-slate-400">No vouchers issued yet.</p>
+            <p className="text-sm text-text-secondary">No vouchers issued yet.</p>
           ) : (
             <div className="max-h-80 overflow-y-auto">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-slate-900 text-xs text-slate-500">
+                <thead className="sticky top-0 bg-surface-raised text-xs text-text-muted">
                   <tr>
                     <th className="pb-2">Code</th>
                     <th className="pb-2">Plan</th>
@@ -290,25 +291,19 @@ export default async function SponsorDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {vouchers.map((v) => (
-                    <tr key={v.id} className="border-t border-slate-800">
-                      <td className="py-2 font-mono text-xs">{v.code}</td>
-                      <td className="py-2 text-slate-400">{PLAN_LABELS[v.plan]}</td>
-                      <td className="py-2">
-                        <span
-                          className={
-                            v.status === "REDEEMED"
-                              ? "text-green-400"
-                              : v.status === "EXPIRED"
-                                ? "text-slate-500"
-                                : "text-orange-400"
-                          }
-                        >
-                          {v.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {vouchers.map((v) => {
+                    const tone: BadgeTone =
+                      v.status === "REDEEMED" ? "success" : v.status === "EXPIRED" ? "neutral" : "brand";
+                    return (
+                      <tr key={v.id} className="border-t border-border">
+                        <td className="py-2 font-mono text-xs text-text-primary">{v.code}</td>
+                        <td className="py-2 text-text-secondary">{PLAN_LABELS[v.plan]}</td>
+                        <td className="py-2">
+                          <Badge tone={tone}>{v.status}</Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

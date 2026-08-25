@@ -30,8 +30,8 @@ const topicOptions = [
 const initialState: ContactResult = { error: null, success: false };
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
-const labelClass = "block text-sm text-slate-300";
+  "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
+const labelClass = "block text-sm text-text-secondary";
 
 export function ContactForm() {
   const [state, formAction, isPending] = useActionState(submitContactForm, initialState);
@@ -47,12 +47,12 @@ export function ContactForm() {
 
   if (state.success) {
     return (
-      <div className="mt-8 rounded-xl border border-green-800 bg-green-900/20 p-6">
-        <p className="font-semibold text-green-300">Message sent 🎉</p>
-        <p className="mt-2 text-sm text-slate-400">
+      <div className="mt-8 rounded-xl border border-success/40 bg-success-surface p-6">
+        <p className="font-semibold text-success">Message sent 🎉</p>
+        <p className="mt-2 text-sm text-text-secondary">
           Thanks for reaching out — our team will get back to you as soon as possible.
         </p>
-        <Link href="/" className="mt-4 inline-block text-sm text-orange-400 hover:underline">
+        <Link href="/" className="mt-4 inline-block text-sm text-brand-text hover:underline">
           ← Back home
         </Link>
       </div>
@@ -130,17 +130,17 @@ export function ContactForm() {
         <textarea id="message" name="message" required rows={5} minLength={10} className={inputClass} />
       </div>
 
-      <label className="flex items-start gap-2 text-xs text-slate-400">
+      <label className="flex items-start gap-2 text-xs text-text-secondary">
         <input type="checkbox" name="agree" required className="mt-0.5" />
         <span>I agree that SmartPrepAfrica.com may use this information to respond to my request.</span>
       </label>
 
-      {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-orange-500 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-orange-400 disabled:opacity-60"
+        className="w-full rounded-lg bg-brand py-2.5 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
       >
         {isPending ? "Sending…" : "Send Message"}
       </button>

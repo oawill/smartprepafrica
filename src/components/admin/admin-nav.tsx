@@ -18,10 +18,10 @@ export function AdminNav({ groups }: { groups: AdminNavGroup[] }) {
             <button
               type="button"
               onClick={() => setCollapsed((c) => ({ ...c, [group.label]: !isCollapsed }))}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-300"
+              className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted hover:text-text-secondary"
             >
               {group.label}
-              <span className="text-slate-600">{isCollapsed ? "+" : "–"}</span>
+              <span className="text-text-muted">{isCollapsed ? "+" : "–"}</span>
             </button>
             {!isCollapsed && (
               <div className="flex flex-col gap-0.5">
@@ -33,8 +33,8 @@ export function AdminNav({ groups }: { groups: AdminNavGroup[] }) {
                       href={item.href}
                       className={`rounded-lg px-3 py-1.5 ${
                         active
-                          ? "bg-orange-500/10 text-orange-400"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                          ? "bg-brand/10 text-brand-text"
+                          : "text-text-secondary hover:bg-surface-sunken hover:text-text-primary"
                       }`}
                     >
                       {item.label}

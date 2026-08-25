@@ -6,6 +6,7 @@ import { enrollInCourse, submitAssignment, submitCourseReview } from "@/app/educ
 import { formatNaira } from "@/lib/plans";
 import { getCourseRating, formatRating } from "@/lib/ratings";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
+import { CheckIcon } from "@/components/ui/icons";
 
 export default async function CourseDetailPage({
   params,
@@ -77,12 +78,12 @@ export default async function CourseDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
 
       <div className="mt-4 flex items-start justify-between gap-4">
-        <span className="inline-block rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
+        <span className="inline-block rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary">
           {course.category.replace(/_/g, " ")}
         </span>
         {enrollment && (
@@ -97,25 +98,25 @@ export default async function CourseDetailPage({
           />
         )}
       </div>
-      <h1 className="mt-3 text-3xl font-semibold">{course.title}</h1>
+      <h1 className="mt-3 text-h1 font-semibold text-text-primary">{course.title}</h1>
 
       {course.school && (
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-text-secondary">
           Offered by{" "}
-          <Link href={`/educom/schools/${course.school.id}`} className="text-orange-400 hover:underline">
+          <Link href={`/educom/schools/${course.school.id}`} className="text-brand-text hover:underline">
             {course.school.name}
           </Link>
           {course.school.state && ` — ${course.school.state}`}
         </p>
       )}
 
-      <p className="mt-2 text-slate-400">{course.description}</p>
+      <p className="mt-2 text-text-secondary">{course.description}</p>
 
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-secondary">
         {course.teacher ? (
           <span>
             Taught by{" "}
-            <Link href={`/educom/teachers/${course.teacher.id}`} className="text-orange-400 hover:underline">
+            <Link href={`/educom/teachers/${course.teacher.id}`} className="text-brand-text hover:underline">
               {course.teacher.user.name}
             </Link>
           </span>
@@ -132,11 +133,11 @@ export default async function CourseDetailPage({
       </div>
 
       {course.learningObjectives.length > 0 && (
-        <div className="mt-4 rounded-lg border border-slate-800 bg-slate-900 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <div className="mt-4 rounded-lg border border-border bg-surface-raised p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
             What you&apos;ll learn
           </p>
-          <ul className="mt-2 space-y-1 text-sm text-slate-300">
+          <ul className="mt-2 space-y-1 text-sm text-text-secondary">
             {course.learningObjectives.map((objective) => (
               <li key={objective}>· {objective}</li>
             ))}
@@ -146,34 +147,34 @@ export default async function CourseDetailPage({
 
       {enrollment ? (
         <div className="mt-6">
-          <div className="flex items-center justify-between text-sm text-slate-400">
+          <div className="flex items-center justify-between text-sm text-text-secondary">
             <span>
               {completedLessonIds.size} / {totalLessons} lessons complete
             </span>
             <span>{progressPct}%</span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-sunken">
             <div
-              className="h-full bg-green-500"
+              className="h-full bg-success"
               style={{ width: `${progressPct}%` }}
             />
           </div>
           {enrollment.status === "COMPLETED" && (
-            <p className="mt-3 rounded-lg border border-green-800 bg-green-900/30 px-4 py-2 text-sm text-green-300">
+            <p className="mt-3 rounded-lg border border-success/40 bg-success-surface px-4 py-2 text-sm text-success">
               Course complete — your certificate has been issued.
             </p>
           )}
           {firstLesson && (
             <Link
               href={`/educom/${course.id}/lessons/${firstLesson.id}`}
-              className="mt-4 inline-block rounded-full bg-orange-500 px-6 py-2.5 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="mt-4 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               {completedLessonIds.size > 0 ? "Continue course" : "Start course"}
             </Link>
           )}
         </div>
       ) : isPaid ? (
-        <p className="mt-6 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-400">
+        <p className="mt-6 rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm text-text-secondary">
           Paid course checkout isn&apos;t available yet — pricing is shown for
           browsing only.
         </p>
@@ -181,7 +182,7 @@ export default async function CourseDetailPage({
         <form action={enrollInCourse.bind(null, course.id)} className="mt-6">
           <button
             type="submit"
-            className="rounded-full bg-orange-500 px-6 py-2.5 text-sm font-medium text-slate-950 hover:bg-orange-400"
+            className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
           >
             Enroll for free
           </button>
@@ -191,19 +192,23 @@ export default async function CourseDetailPage({
       <div className="mt-10 space-y-6">
         {course.modules.map((mod, i) => (
           <div key={mod.id}>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
               Module {i + 1}
             </p>
-            <h2 className="mt-1 font-medium">{mod.title}</h2>
+            <h2 className="mt-1 font-medium text-text-primary">{mod.title}</h2>
             <ul className="mt-2 space-y-1">
               {mod.lessons.map((lesson) => {
                 const isComplete = completedLessonIds.has(lesson.id);
                 const content = (
-                  <span className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-sm">
-                    <span className={isComplete ? "text-slate-400" : "text-slate-200"}>
+                  <span className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-4 py-2.5 text-sm">
+                    <span className={isComplete ? "text-text-secondary" : "text-text-primary"}>
                       {lesson.title}
                     </span>
-                    {isComplete && <span className="text-green-400">✓</span>}
+                    {isComplete && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-success">
+                        <CheckIcon className="h-3.5 w-3.5" /> Completed
+                      </span>
+                    )}
                   </span>
                 );
                 return (
@@ -224,35 +229,35 @@ export default async function CourseDetailPage({
       </div>
 
       {enrollment && course.assignments.length > 0 && (
-        <div className="mt-10 space-y-4 border-t border-slate-800 pt-8">
-          <h2 className="text-lg font-semibold">Assignments</h2>
+        <div className="mt-10 space-y-4 border-t border-border pt-8">
+          <h2 className="text-lg font-semibold text-text-primary">Assignments</h2>
           {course.assignments.map((assignment) => {
             const submission = assignment.submissions?.[0];
             return (
-              <div key={assignment.id} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+              <div key={assignment.id} className="rounded-xl border border-border bg-surface-raised p-5">
                 <div className="flex items-center justify-between">
-                  <p className="font-medium text-slate-100">{assignment.title}</p>
+                  <p className="font-medium text-text-primary">{assignment.title}</p>
                   {assignment.dueAt && (
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-text-muted">
                       Due {assignment.dueAt.toLocaleDateString()}
                     </p>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-slate-400">{assignment.instructions}</p>
+                <p className="mt-1 text-sm text-text-secondary">{assignment.instructions}</p>
 
                 {submission ? (
-                  <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950 p-3 text-sm">
-                    <p className="text-xs text-slate-500">
+                  <div className="mt-3 rounded-lg border border-border bg-surface p-3 text-sm">
+                    <p className="text-xs text-text-muted">
                       Submitted {submission.submittedAt.toLocaleDateString()}
                     </p>
-                    <p className="mt-1 whitespace-pre-wrap text-slate-300">{submission.content}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-text-secondary">{submission.content}</p>
                     {submission.gradedAt ? (
-                      <p className="mt-2 text-green-400">
+                      <p className="mt-2 text-success">
                         Grade: {submission.grade}%
                         {submission.feedback && ` — ${submission.feedback}`}
                       </p>
                     ) : (
-                      <p className="mt-2 text-xs text-amber-400">Awaiting grading.</p>
+                      <p className="mt-2 text-xs text-warning">Awaiting grading.</p>
                     )}
                   </div>
                 ) : (
@@ -262,11 +267,11 @@ export default async function CourseDetailPage({
                       required
                       rows={3}
                       placeholder="Write your response…"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                      className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                     />
                     <button
                       type="submit"
-                      className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                      className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                     >
                       Submit
                     </button>
@@ -279,13 +284,13 @@ export default async function CourseDetailPage({
       )}
 
       {course.liveClasses.length > 0 && (
-        <div className="mt-10 border-t border-slate-800 pt-8">
-          <h2 className="text-lg font-semibold">Upcoming live classes</h2>
+        <div className="mt-10 border-t border-border pt-8">
+          <h2 className="text-lg font-semibold text-text-primary">Upcoming live classes</h2>
           <ul className="mt-3 space-y-2">
             {course.liveClasses.map((lc) => (
-              <li key={lc.id} className="rounded-lg border border-slate-800 bg-slate-900 p-4 text-sm">
-                <p className="text-slate-100">{lc.title}</p>
-                <p className="mt-1 text-xs text-slate-500">
+              <li key={lc.id} className="rounded-lg border border-border bg-surface-raised p-4 text-sm">
+                <p className="text-text-primary">{lc.title}</p>
+                <p className="mt-1 text-xs text-text-muted">
                   {lc.scheduledAt.toLocaleString()} · {lc.durationMinutes} min
                 </p>
                 {enrollment && (
@@ -293,7 +298,7 @@ export default async function CourseDetailPage({
                     href={lc.meetingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-block text-xs text-orange-400 hover:underline"
+                    className="mt-2 inline-block text-xs text-brand-text hover:underline"
                   >
                     Join link →
                   </a>
@@ -304,19 +309,19 @@ export default async function CourseDetailPage({
         </div>
       )}
 
-      <div className="mt-10 border-t border-slate-800 pt-8">
-        <h2 className="text-lg font-semibold">Reviews</h2>
+      <div className="mt-10 border-t border-border pt-8">
+        <h2 className="text-lg font-semibold text-text-primary">Reviews</h2>
         {course.reviews.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-400">No reviews yet.</p>
+          <p className="mt-2 text-sm text-text-secondary">No reviews yet.</p>
         ) : (
           <ul className="mt-3 space-y-3">
             {course.reviews.map((review) => (
-              <li key={review.id} className="rounded-lg border border-slate-800 bg-slate-900 p-4 text-sm">
+              <li key={review.id} className="rounded-lg border border-border bg-surface-raised p-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-slate-100">{review.user.name}</p>
-                  <p className="text-orange-400">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</p>
+                  <p className="text-text-primary">{review.user.name}</p>
+                  <p className="text-brand-text">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</p>
                 </div>
-                {review.comment && <p className="mt-1 text-slate-400">{review.comment}</p>}
+                {review.comment && <p className="mt-1 text-text-secondary">{review.comment}</p>}
               </li>
             ))}
           </ul>
@@ -324,13 +329,13 @@ export default async function CourseDetailPage({
 
         {enrollment?.status === "COMPLETED" && (
           <form action={submitCourseReview.bind(null, course.id)} className="mt-4 space-y-2">
-            <label className="block text-xs text-slate-400">
+            <label className="block text-xs text-text-secondary">
               {myReview ? "Update your review" : "Leave a review"}
             </label>
             <select
               name="rating"
               defaultValue={myReview?.rating ?? 5}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             >
               {[5, 4, 3, 2, 1].map((n) => (
                 <option key={n} value={n}>
@@ -343,11 +348,11 @@ export default async function CourseDetailPage({
               defaultValue={myReview?.comment ?? ""}
               rows={2}
               placeholder="What was your experience with this course?"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               {myReview ? "Update review" : "Submit review"}
             </button>

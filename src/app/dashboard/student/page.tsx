@@ -59,7 +59,7 @@ export default async function StudentDashboard({
           <h1 className="text-2xl font-semibold">
             Welcome back, {session.user.name?.split(" ")[0] ?? "there"}.
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             Here&apos;s where your prep and learning progress will live.
           </p>
         </div>
@@ -75,12 +75,12 @@ export default async function StudentDashboard({
       </div>
 
       {payment === "success" && (
-        <p className="mt-4 rounded-lg border border-green-800 bg-green-900/30 px-4 py-2 text-sm text-green-300">
+        <p className="mt-4 rounded-lg border border-success/40 bg-success-surface px-4 py-2 text-sm text-success">
           Payment successful — your subscription is now active.
         </p>
       )}
 
-      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-orange-400">
+      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-brand-text">
         SmartPrepAfrica Prep
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -94,7 +94,7 @@ export default async function StudentDashboard({
         </Card>
       </div>
 
-      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-green-400">
+      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-success">
         SmartPrepAfrica Learning
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -111,21 +111,21 @@ export default async function StudentDashboard({
       {recommendation && (
         <div className="mt-6">
           <Card title="Your AI Study Coach">
-            <p className="text-xs uppercase tracking-wide text-orange-400">Recommended for today</p>
-            <p className="mt-1 text-lg font-medium text-slate-100">{recommendation.topic}</p>
-            <p className="text-xs text-slate-500">{recommendation.subjectName}</p>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="text-xs uppercase tracking-wide text-brand-text">Recommended for today</p>
+            <p className="mt-1 text-lg font-medium text-text-primary">{recommendation.topic}</p>
+            <p className="text-xs text-text-muted">{recommendation.subjectName}</p>
+            <p className="mt-2 text-sm text-text-secondary">
               Current mastery: {recommendation.masteryScore}%
             </p>
             {recommendation.nextTopic && (
-              <p className="mt-1 text-sm text-slate-400">
-                Next, review: <span className="text-slate-300">{recommendation.nextTopic}</span>
+              <p className="mt-1 text-sm text-text-secondary">
+                Next, review: <span className="text-text-secondary">{recommendation.nextTopic}</span>
               </p>
             )}
             {recommendation.lesson && (
               <Link
                 href={`/educom/${recommendation.lesson.courseId}/lessons/${recommendation.lesson.id}`}
-                className="mt-3 inline-block rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="mt-3 inline-block rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Continue Learning
               </Link>
@@ -138,26 +138,26 @@ export default async function StudentDashboard({
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {readiness.map((r) => (
             <Card key={r.subjectName} title={`${r.subjectName} Readiness`}>
-              <p className="text-3xl font-semibold text-orange-400">{r.readinessPct}% Ready</p>
+              <p className="text-3xl font-semibold text-brand-text">{r.readinessPct}% Ready</p>
               {r.strongTopics.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs font-medium text-green-400">Strong</p>
-                  <p className="text-sm text-slate-300">{r.strongTopics.join(", ")}</p>
+                  <p className="text-xs font-medium text-success">Strong</p>
+                  <p className="text-sm text-text-secondary">{r.strongTopics.join(", ")}</p>
                 </div>
               )}
               {r.weakTopics.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-xs font-medium text-amber-400">Needs improvement</p>
-                  <p className="text-sm text-slate-300">{r.weakTopics.join(", ")}</p>
+                  <p className="text-xs font-medium text-warning">Needs improvement</p>
+                  <p className="text-sm text-text-secondary">{r.weakTopics.join(", ")}</p>
                 </div>
               )}
               {r.recommendedStudyMinutes > 0 && (
-                <p className="mt-3 text-xs text-slate-500">
+                <p className="mt-3 text-xs text-text-muted">
                   Recommended study time: {Math.floor(r.recommendedStudyMinutes / 60)}h{" "}
                   {r.recommendedStudyMinutes % 60}min
                 </p>
               )}
-              <p className="mt-2 text-[11px] text-slate-600">
+              <p className="mt-2 text-[11px] text-text-muted">
                 Estimated from your practice history — not a guarantee of exam results.
               </p>
             </Card>
@@ -168,16 +168,16 @@ export default async function StudentDashboard({
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Weak topics">
           {weakTopics.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               Complete a mock exam or Study Drill to see your weak topics
               here.
             </p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {weakTopics.map(([topic, count]) => (
-                <li key={topic} className="flex justify-between text-slate-300">
+                <li key={topic} className="flex justify-between text-text-secondary">
                   <span>{topic}</span>
-                  <span className="text-slate-500">{count} missed</span>
+                  <span className="text-text-muted">{count} missed</span>
                 </li>
               ))}
             </ul>
@@ -187,13 +187,13 @@ export default async function StudentDashboard({
           <div className="space-y-2 text-sm">
             <Link
               href="/practice"
-              className="block text-orange-400 hover:underline"
+              className="block text-brand-text hover:underline"
             >
               Take a practice session →
             </Link>
             <Link
               href="/educom"
-              className="block text-orange-400 hover:underline"
+              className="block text-brand-text hover:underline"
             >
               Browse courses →
             </Link>
@@ -209,11 +209,11 @@ export default async function StudentDashboard({
               name="code"
               placeholder="SP-XXXXXXXX"
               required
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm uppercase outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm uppercase outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Redeem
             </button>

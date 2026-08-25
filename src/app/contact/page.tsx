@@ -20,29 +20,29 @@ export default async function ContactPage() {
 
       <main className="flex-1">
         <section className="mx-auto max-w-2xl px-6 py-16">
-          <h1 className="text-3xl font-semibold">Contact Us</h1>
-          <p className="mt-2 text-slate-400">Need help? Our team is here to assist.</p>
+          <h1 className="text-h1 font-semibold text-text-primary">Contact Us</h1>
+          <p className="mt-2 text-text-secondary">Need help? Our team is here to assist.</p>
 
           {hasContactInfo && (
-            <div className="mt-6 grid gap-2 rounded-xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300 sm:grid-cols-2">
+            <div className="mt-6 grid gap-2 rounded-xl border border-border bg-surface-raised p-5 text-sm text-text-secondary sm:grid-cols-2">
               {settings.supportEmail && (
                 <p>
-                  <span className="text-slate-500">Email:</span> {settings.supportEmail}
+                  <span className="text-text-muted">Email:</span> {settings.supportEmail}
                 </p>
               )}
               {settings.supportPhone && (
                 <p>
-                  <span className="text-slate-500">Phone:</span> {settings.supportPhone}
+                  <span className="text-text-muted">Phone:</span> {settings.supportPhone}
                 </p>
               )}
               {settings.companyAddress && (
                 <p className="sm:col-span-2">
-                  <span className="text-slate-500">Address:</span> {settings.companyAddress}
+                  <span className="text-text-muted">Address:</span> {settings.companyAddress}
                 </p>
               )}
               {settings.supportHours && (
                 <p className="sm:col-span-2">
-                  <span className="text-slate-500">Support Hours:</span> {settings.supportHours}
+                  <span className="text-text-muted">Support Hours:</span> {settings.supportHours}
                 </p>
               )}
             </div>

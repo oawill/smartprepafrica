@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { PLAN_FEATURES, PLAN_LABELS, PLAN_PRICING_KOBO, formatNaira } from "@/lib/plans";
 import { checkout } from "@/app/pricing/actions";
 import { PublicHeader } from "@/components/brand/public-header";
+import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "Plans & Pricing",
@@ -38,16 +39,16 @@ export default async function PricingPage({
     <div className="flex flex-1 flex-col">
       <PublicHeader />
     <div className="mx-auto w-full max-w-5xl px-6 py-12">
-      <Link href="/" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back home
       </Link>
       <h1 className="mt-4 text-3xl font-semibold">Plans & pricing</h1>
-      <p className="mt-2 max-w-2xl text-slate-400">
+      <p className="mt-2 max-w-2xl text-text-secondary">
         Start free. Upgrade for the full question bank and course library.
       </p>
 
       {statusMessage && (
-        <p className="mt-4 rounded-lg border border-red-800 bg-red-900/30 px-4 py-2 text-sm text-red-300">
+        <p className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-4 py-2 text-sm text-danger">
           {statusMessage}
         </p>
       )}
@@ -62,22 +63,22 @@ export default async function PricingPage({
           return (
             <div
               key={plan}
-              className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 p-5"
+              className="flex flex-col rounded-xl border border-border bg-surface-raised p-5"
             >
-              <p className="font-semibold text-orange-400">
+              <p className="font-semibold text-brand-text">
                 {PLAN_LABELS[plan]}
               </p>
               <p className="mt-2 text-2xl font-semibold">
                 {priceKobo ? formatNaira(priceKobo) : isFree ? "₦0" : "Custom"}
                 {priceKobo && (
-                  <span className="text-sm font-normal text-slate-500">
+                  <span className="text-sm font-normal text-text-muted">
                     {" "}
                     / month
                   </span>
                 )}
               </p>
 
-              <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-400">
+              <ul className="mt-4 flex-1 space-y-1.5 text-sm text-text-secondary">
                 {PLAN_FEATURES[plan].map((feature) => (
                   <li key={feature}>· {feature}</li>
                 ))}
@@ -85,17 +86,17 @@ export default async function PricingPage({
 
               <div className="mt-5">
                 {isCurrent ? (
-                  <span className="block rounded-full border border-green-800 bg-green-900/30 px-4 py-2 text-center text-sm text-green-300">
-                    Current plan
-                  </span>
+                  <div className="flex justify-center">
+                    <Badge tone="success">Current plan</Badge>
+                  </div>
                 ) : isFree ? (
-                  <span className="block rounded-full border border-slate-700 px-4 py-2 text-center text-sm text-slate-400">
+                  <span className="block rounded-full border border-border-strong px-4 py-2 text-center text-sm text-text-secondary">
                     Default plan
                   </span>
                 ) : isSchool ? (
                   <Link
                     href="/contact?topic=SCHOOL_REGISTRATION"
-                    className="block rounded-full border border-slate-700 px-4 py-2 text-center text-sm text-slate-200 hover:border-slate-500"
+                    className="block rounded-full border border-border-strong px-4 py-2 text-center text-sm text-text-primary hover:border-text-muted"
                   >
                     Contact us
                   </Link>
@@ -104,7 +105,7 @@ export default async function PricingPage({
                     <input type="hidden" name="plan" value={plan} />
                     <button
                       type="submit"
-                      className="w-full rounded-full bg-orange-500 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                      className="w-full rounded-full bg-brand py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                     >
                       Subscribe
                     </button>
@@ -116,7 +117,7 @@ export default async function PricingPage({
         })}
       </div>
 
-      <p className="mt-6 text-xs text-slate-500">
+      <p className="mt-6 text-xs text-text-muted">
         Payments are processed securely by Paystack. Cards, bank transfer,
         and USSD are supported.
       </p>

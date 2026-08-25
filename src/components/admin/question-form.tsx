@@ -30,8 +30,8 @@ export type QuestionFormValue = {
 export type PassageOption = { id: string; code: string | null; title: string | null; exam: string; subjectId: string };
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
-const labelClass = "block text-xs text-slate-400";
+  "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
+const labelClass = "block text-xs text-text-secondary";
 
 export function QuestionForm({
   action,
@@ -64,7 +64,7 @@ export function QuestionForm({
             type="button"
             onClick={() => setIsPassageBased(false)}
             className={`rounded-lg border px-4 py-2 text-sm ${
-              !isPassageBased ? "border-orange-500 bg-orange-500/10 text-white" : "border-slate-700 text-slate-400"
+              !isPassageBased ? "border-brand bg-brand/10 text-text-primary" : "border-border-strong text-text-secondary"
             }`}
           >
             Standalone
@@ -73,7 +73,7 @@ export function QuestionForm({
             type="button"
             onClick={() => setIsPassageBased(true)}
             className={`rounded-lg border px-4 py-2 text-sm ${
-              isPassageBased ? "border-orange-500 bg-orange-500/10 text-white" : "border-slate-700 text-slate-400"
+              isPassageBased ? "border-brand bg-brand/10 text-text-primary" : "border-border-strong text-text-secondary"
             }`}
           >
             Passage-Based
@@ -82,7 +82,7 @@ export function QuestionForm({
       </div>
 
       {isPassageBased && (
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+        <div className="rounded-lg border border-border bg-surface-raised p-4">
           <div>
             <label className={labelClass}>Passage / source (must match the exam &amp; subject above)</label>
             <select name="passageGroupId" defaultValue={initial?.passageGroupId ?? ""} required={isPassageBased} className={inputClass}>
@@ -96,7 +96,7 @@ export function QuestionForm({
               ))}
             </select>
             {matchingPassages.length === 0 && (
-              <p className="mt-1 text-[11px] text-amber-400/80">
+              <p className="mt-1 text-[11px] text-warning">
                 No passages exist yet for this exam &amp; subject — create one under Admin → Passages first.
               </p>
             )}
@@ -200,7 +200,7 @@ export function QuestionForm({
             <option value="AI_GENERATED">AI-generated</option>
             <option value="IMPORTED">Imported</option>
           </select>
-          <p className="mt-1 text-[11px] text-amber-400/80">
+          <p className="mt-1 text-[11px] text-warning">
             Never label a question &quot;Official past question&quot; unless it genuinely is one.
           </p>
         </div>
@@ -227,11 +227,11 @@ export function QuestionForm({
         </div>
         <div>
           <label className={labelClass}>Live preview</label>
-          <div className="mt-1 min-h-[9.5rem] rounded-lg border border-slate-800 bg-slate-900 p-3">
+          <div className="mt-1 min-h-[9.5rem] rounded-lg border border-border bg-surface-raised p-3">
             {prompt.trim() ? (
               <MessageContent content={prompt} />
             ) : (
-              <p className="text-xs text-slate-600">Preview appears here.</p>
+              <p className="text-xs text-text-muted">Preview appears here.</p>
             )}
           </div>
         </div>
@@ -242,7 +242,7 @@ export function QuestionForm({
         <div className="mt-1 space-y-2">
           {OPTION_KEYS.map((key) => (
             <div key={key} className="flex items-center gap-2">
-              <span className="w-5 text-xs font-mono text-slate-500">{key}</span>
+              <span className="w-5 text-xs font-mono text-text-muted">{key}</span>
               <input name={`option_${key}`} defaultValue={optionByKey.get(key) ?? ""} className={inputClass} />
             </div>
           ))}
@@ -270,7 +270,7 @@ export function QuestionForm({
           className={inputClass}
         />
         {explanation.trim() && (
-          <div className="mt-2 rounded-lg border border-slate-800 bg-slate-900 p-3">
+          <div className="mt-2 rounded-lg border border-border bg-surface-raised p-3">
             <MessageContent content={explanation} />
           </div>
         )}
@@ -278,7 +278,7 @@ export function QuestionForm({
 
       <button
         type="submit"
-        className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+        className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
       >
         {initial?.id ? "Save changes" : "Create draft"}
       </button>

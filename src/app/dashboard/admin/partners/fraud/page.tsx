@@ -25,47 +25,47 @@ export default async function AdminFraudReviewPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Partner fraud review</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-2xl font-semibold text-text-primary">Partner fraud review</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Suspicious referral activity is flagged, never auto-blocked or deleted. Review and decide.
       </p>
 
       <div className="mt-6">
         <Card title={`Open flags (${openFlags.length})`}>
           {openFlags.length === 0 ? (
-            <p className="text-sm text-slate-400">No open fraud flags.</p>
+            <p className="text-sm text-text-secondary">No open fraud flags.</p>
           ) : (
             <div className="space-y-3">
               {openFlags.map((f) => (
-                <div key={f.id} className="rounded-lg border border-amber-900 p-4">
+                <div key={f.id} className="rounded-lg border border-warning/40 bg-warning-surface p-4">
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium text-text-primary">
                         <Link
                           href={`/dashboard/admin/partners/${f.partnerId}`}
-                          className="text-orange-400 hover:underline"
+                          className="text-brand-text hover:underline"
                         >
                           {f.partner.firstName} {f.partner.lastName}
                         </Link>{" "}
                         ({f.partner.partnerNumber})
                       </p>
-                      <p className="text-xs text-slate-500">{f.reason}</p>
+                      <p className="text-xs text-text-muted">{f.reason}</p>
                     </div>
-                    <span className="text-xs text-amber-400">{f.status}</span>
+                    <span className="text-xs text-warning">{f.status}</span>
                   </div>
-                  {f.details && <p className="mt-2 text-sm text-slate-400">{f.details}</p>}
+                  {f.details && <p className="mt-2 text-sm text-text-secondary">{f.details}</p>}
                   <form action={resolveFraudFlag} className="mt-3 flex flex-wrap items-center gap-2">
                     <input type="hidden" name="flagId" value={f.id} />
                     <input
                       name="reviewNote"
                       placeholder="Review note (optional)"
-                      className="flex-1 min-w-[200px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs outline-none focus:border-orange-500"
+                      className="flex-1 min-w-[200px] rounded-lg border border-border-strong bg-surface px-3 py-1.5 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                     />
                     <button
                       type="submit"
                       name="decision"
                       value="DISMISSED"
-                      className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500"
+                      className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted"
                     >
                       Dismiss (false positive)
                     </button>
@@ -73,7 +73,7 @@ export default async function AdminFraudReviewPage() {
                       type="submit"
                       name="decision"
                       value="CONFIRMED"
-                      className="rounded-lg border border-red-900 px-3 py-1.5 text-xs text-red-400 hover:border-red-700"
+                      className="rounded-lg border border-danger/40 px-3 py-1.5 text-xs text-danger hover:border-danger"
                     >
                       Confirm fraud
                     </button>
@@ -88,10 +88,10 @@ export default async function AdminFraudReviewPage() {
       <div className="mt-6">
         <Card title="Recently resolved">
           {resolvedFlags.length === 0 ? (
-            <p className="text-sm text-slate-400">No resolved flags yet.</p>
+            <p className="text-sm text-text-secondary">No resolved flags yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Partner</th>
                   <th className="pb-2">Reason</th>
@@ -100,13 +100,13 @@ export default async function AdminFraudReviewPage() {
               </thead>
               <tbody>
                 {resolvedFlags.map((f) => (
-                  <tr key={f.id} className="border-t border-slate-800">
-                    <td className="py-2">
+                  <tr key={f.id} className="border-t border-border">
+                    <td className="py-2 text-text-primary">
                       {f.partner.firstName} {f.partner.lastName}
                     </td>
-                    <td className="py-2 text-slate-400">{f.reason}</td>
+                    <td className="py-2 text-text-secondary">{f.reason}</td>
                     <td className="py-2">
-                      <span className={f.status === "CONFIRMED" ? "text-red-400" : "text-slate-500"}>
+                      <span className={f.status === "CONFIRMED" ? "text-danger" : "text-text-muted"}>
                         {f.status}
                       </span>
                     </td>

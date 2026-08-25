@@ -16,7 +16,7 @@ export function BulkUploadForm({
     <div>
       <form action={formAction} className="space-y-3">
         <div>
-          <label className="block text-sm text-slate-300" htmlFor="csvFile">
+          <label className="block text-sm text-text-secondary" htmlFor="csvFile">
             Student roster CSV (columns: name,email)
           </label>
           <input
@@ -25,18 +25,18 @@ export function BulkUploadForm({
             type="file"
             accept=".csv,text/csv"
             required
-            className="mt-1 w-full text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-sm file:text-slate-200"
+            className="mt-1 w-full text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-surface-sunken file:px-3 file:py-1.5 file:text-sm file:text-text-primary"
           />
         </div>
         {classes.length > 0 && (
           <div>
-            <label className="block text-sm text-slate-300" htmlFor="classId">
+            <label className="block text-sm text-text-secondary" htmlFor="classId">
               Assign to class (optional)
             </label>
             <select
               id="classId"
               name="classId"
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="">No class</option>
               {classes.map((c) => (
@@ -50,7 +50,7 @@ export function BulkUploadForm({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400 disabled:opacity-60"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover disabled:opacity-60"
         >
           {isPending ? "Uploading…" : "Upload roster"}
         </button>
@@ -60,14 +60,14 @@ export function BulkUploadForm({
         <div className="mt-4 space-y-3">
           {state.created.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-green-400">
+              <p className="text-sm font-medium text-success">
                 {state.created.length} account{state.created.length === 1 ? "" : "s"} created.
                 Copy these temporary passwords now — they won&apos;t be shown again, and no
                 invitation email was sent (email sending isn&apos;t configured yet).
               </p>
-              <div className="mt-2 overflow-x-auto rounded-lg border border-slate-800">
+              <div className="mt-2 overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-800 text-xs text-slate-400">
+                  <thead className="bg-surface-sunken text-xs text-text-secondary">
                     <tr>
                       <th className="px-3 py-2">Name</th>
                       <th className="px-3 py-2">Email</th>
@@ -76,10 +76,10 @@ export function BulkUploadForm({
                   </thead>
                   <tbody>
                     {state.created.map((row) => (
-                      <tr key={row.email} className="border-t border-slate-800">
+                      <tr key={row.email} className="border-t border-border">
                         <td className="px-3 py-2">{row.name}</td>
-                        <td className="px-3 py-2 text-slate-400">{row.email}</td>
-                        <td className="px-3 py-2 font-mono text-orange-300">
+                        <td className="px-3 py-2 text-text-secondary">{row.email}</td>
+                        <td className="px-3 py-2 font-mono text-brand-text">
                           {row.tempPassword}
                         </td>
                       </tr>
@@ -92,10 +92,10 @@ export function BulkUploadForm({
 
           {state.skipped.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-amber-400">
+              <p className="text-sm font-medium text-warning">
                 {state.skipped.length} row{state.skipped.length === 1 ? "" : "s"} skipped.
               </p>
-              <ul className="mt-1 space-y-0.5 text-xs text-slate-400">
+              <ul className="mt-1 space-y-0.5 text-xs text-text-secondary">
                 {state.skipped.map((row, i) => (
                   <li key={i}>
                     Row {row.row} ({row.email || "no email"}): {row.reason}

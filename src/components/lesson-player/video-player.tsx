@@ -166,7 +166,7 @@ export function VideoPlayer({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative overflow-hidden rounded-lg border border-slate-800 bg-black">
+    <div ref={containerRef} className="relative overflow-hidden rounded-lg border border-border bg-black">
       <div className="relative aspect-video">
         {/* eslint-disable-next-line jsx-a11y/media-has-caption -- captions track is added below when captionsUrl is present */}
         <video
@@ -191,7 +191,7 @@ export function VideoPlayer({
         )}
       </div>
 
-      <div className="bg-slate-950 px-4 py-3">
+      <div className="bg-surface-raised px-4 py-3">
         {/* Custom scrubber with chapter tick marks — a native range input
             can't easily overlay chapter markers, so this is a plain
             click-to-seek div with absolutely-positioned ticks. */}
@@ -207,16 +207,16 @@ export function VideoPlayer({
             if (e.key === "ArrowRight") seekTo(currentTime + 5);
             if (e.key === "ArrowLeft") seekTo(currentTime - 5);
           }}
-          className="relative h-2 w-full cursor-pointer rounded-full bg-slate-800"
+          className="relative h-2 w-full cursor-pointer rounded-full bg-surface-sunken"
         >
           <div
-            className="h-full rounded-full bg-orange-500"
+            className="h-full rounded-full bg-brand"
             style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
           />
           {chapters.map((c) => (
             <div
               key={c.id}
-              className="absolute top-0 h-2 w-0.5 bg-slate-950"
+              className="absolute top-0 h-2 w-0.5 bg-surface-raised"
               style={{ left: duration ? `${(c.startSeconds / duration) * 100}%` : "0%" }}
             />
           ))}
@@ -227,23 +227,23 @@ export function VideoPlayer({
             type="button"
             onClick={togglePlay}
             aria-label={isPlaying ? "Pause" : "Play"}
-            className="rounded-full bg-orange-500 p-2 text-slate-950 hover:bg-orange-400"
+            className="rounded-full bg-brand p-2 text-brand-foreground hover:bg-brand-hover"
           >
             {isPlaying ? <PauseIcon /> : <PlayIcon />}
           </button>
 
-          <span className="font-mono text-xs text-slate-400">
+          <span className="font-mono text-xs text-text-secondary">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
           {currentChapterIndex >= 0 && (
-            <span className="hidden truncate text-xs text-slate-500 sm:inline">
+            <span className="hidden truncate text-xs text-text-muted sm:inline">
               {chapters[currentChapterIndex].title}
             </span>
           )}
 
           <div className="ml-auto flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-slate-400">
+            <label className="flex items-center gap-1.5 text-xs text-text-secondary">
               <VolumeIcon />
               <input
                 type="range"
@@ -253,7 +253,7 @@ export function VideoPlayer({
                 value={volume}
                 onChange={(e) => changeVolume(Number(e.target.value))}
                 aria-label="Volume"
-                className="w-16 accent-orange-500"
+                className="w-16 accent-brand"
               />
             </label>
 
@@ -261,7 +261,7 @@ export function VideoPlayer({
               value={playbackRate}
               onChange={(e) => changeSpeed(Number(e.target.value))}
               aria-label="Playback speed"
-              className="rounded border border-slate-700 bg-slate-900 px-1.5 py-1 text-xs text-slate-300"
+              className="rounded border border-border-strong bg-surface px-1.5 py-1 text-xs text-text-secondary"
             >
               {PLAYBACK_SPEEDS.map((s) => (
                 <option key={s} value={s}>
@@ -276,7 +276,7 @@ export function VideoPlayer({
                 onClick={toggleCaptions}
                 aria-pressed={captionsOn}
                 className={`rounded border px-1.5 py-1 text-xs ${
-                  captionsOn ? "border-orange-500 text-orange-300" : "border-slate-700 text-slate-400"
+                  captionsOn ? "border-brand text-brand-text" : "border-border-strong text-text-secondary"
                 }`}
               >
                 CC
@@ -287,7 +287,7 @@ export function VideoPlayer({
               type="button"
               onClick={toggleFullscreen}
               aria-label="Fullscreen"
-              className="rounded border border-slate-700 p-1.5 text-slate-300 hover:border-slate-500"
+              className="rounded border border-border-strong p-1.5 text-text-secondary hover:border-text-muted"
             >
               <FullscreenIcon />
             </button>

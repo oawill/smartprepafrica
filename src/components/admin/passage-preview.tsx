@@ -49,12 +49,12 @@ export function PassagePreview({
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
+        <span className="rounded-full bg-surface-sunken px-3 py-1 text-xs font-medium text-text-secondary">
           Preview only — answers are not saved
         </span>
         <Link
           href={`/dashboard/admin/passages/${passageGroupId}`}
-          className="text-sm text-slate-400 hover:text-white"
+          className="text-sm text-text-secondary hover:text-text-primary"
         >
           ← Back to passage
         </Link>

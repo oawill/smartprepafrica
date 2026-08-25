@@ -126,7 +126,7 @@ export function HeroCarousel() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative h-[240px] w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/20 sm:h-[340px] lg:h-[440px]">
+      <div className="relative h-[240px] w-full overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-xl shadow-black/20 sm:h-[340px] lg:h-[440px]">
         <div
           className={`flex h-full ${reducedMotion ? "" : "transition-transform duration-700 ease-out"}`}
           style={{ transform: `translateX(-${index * 100}%)` }}
@@ -211,7 +211,7 @@ export function HeroCarousel() {
             aria-label={`Go to slide ${i + 1}: ${slide.title}`}
             aria-current={i === index}
             className={`h-2 rounded-full transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400 ${
-              i === index ? "w-6 bg-orange-500" : "w-2 bg-slate-600 hover:bg-slate-400"
+              i === index ? "w-6 bg-brand" : "w-2 bg-border-strong hover:bg-text-muted"
             }`}
           />
         ))}

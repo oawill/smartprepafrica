@@ -1,17 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { approveCourse, rejectCourse, suspendCourse, toggleFeatured } from "@/app/dashboard/admin/courses/actions";
 
-const statusColor: Record<string, string> = {
-  DRAFT: "text-slate-500",
-  SUBMITTED: "text-amber-400",
-  UNDER_REVIEW: "text-amber-400",
-  APPROVED: "text-blue-400",
-  PUBLISHED: "text-green-400",
-  REJECTED: "text-red-400",
-  NEEDS_CHANGES: "text-amber-400",
-  SUSPENDED: "text-red-500",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  DRAFT: "neutral",
+  SUBMITTED: "warning",
+  UNDER_REVIEW: "warning",
+  APPROVED: "info",
+  PUBLISHED: "success",
+  REJECTED: "danger",
+  NEEDS_CHANGES: "warning",
+  SUSPENDED: "danger",
 };
 
 export default async function AdminCoursesPage({
@@ -37,14 +38,14 @@ export default async function AdminCoursesPage({
     <div>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Courses</h1>
-          <p className="mt-1 text-sm text-slate-400">Moderate SmartPrepAfrica.com courses — approve, reject, suspend, or feature.</p>
+          <h1 className="text-h2 font-semibold text-text-primary">Courses</h1>
+          <p className="mt-1 text-sm text-text-secondary">Moderate SmartPrepAfrica.com courses — approve, reject, suspend, or feature.</p>
         </div>
         <form className="flex gap-2">
           <select
             name="status"
             defaultValue={status ?? ""}
-            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
           >
             <option value="">Any status</option>
             <option value="DRAFT">Draft</option>
@@ -56,7 +57,7 @@ export default async function AdminCoursesPage({
             <option value="NEEDS_CHANGES">Needs changes</option>
             <option value="SUSPENDED">Suspended</option>
           </select>
-          <button type="submit" className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500">
+          <button type="submit" className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted">
             Filter
           </button>
         </form>
@@ -65,19 +66,21 @@ export default async function AdminCoursesPage({
       <div className="mt-6 space-y-3">
         {courses.map((c) => (
           <Card key={c.id} title={c.title}>
-            <p className="text-sm text-slate-400">
-              {c.teacher?.user.name ?? c.school?.name ?? "SmartPrepAfrica"} · {c._count.enrollments} learners ·{" "}
-              <span className={statusColor[c.moderationStatus] ?? ""}>{c.moderationStatus}</span>
-              {c.featured && <span className="ml-2 text-amber-400">★ Featured</span>}
-            </p>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+              <span>
+                {c.teacher?.user.name ?? c.school?.name ?? "SmartPrepAfrica"} · {c._count.enrollments} learners
+              </span>
+              <Badge tone={STATUS_TONE[c.moderationStatus] ?? "neutral"}>{c.moderationStatus}</Badge>
+              {c.featured && <Badge tone="brand" icon={null}>★ Featured</Badge>}
+            </div>
             {c.moderationReason && (
-              <p className="mt-1 text-xs text-slate-500">Reason on file: {c.moderationReason}</p>
+              <p className="mt-1 text-xs text-text-muted">Reason on file: {c.moderationReason}</p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               {c.moderationStatus !== "APPROVED" && (
                 <form action={approveCourse}>
                   <input type="hidden" name="courseId" value={c.id} />
-                  <button type="submit" className="rounded-lg border border-green-800 px-3 py-1.5 text-xs text-green-400 hover:border-green-600">
+                  <button type="submit" className="rounded-lg border border-success/40 px-3 py-1.5 text-xs text-success hover:border-success">
                     Approve
                   </button>
                 </form>
@@ -87,9 +90,9 @@ export default async function AdminCoursesPage({
                 <input
                   name="reason"
                   placeholder="Reason to reject…"
-                  className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs outline-none focus:border-orange-500"
+                  className="w-40 rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                 />
-                <button type="submit" className="rounded-lg border border-red-900 px-3 py-1.5 text-xs text-red-400 hover:border-red-700">
+                <button type="submit" className="rounded-lg border border-danger/40 px-3 py-1.5 text-xs text-danger hover:border-danger">
                   Reject
                 </button>
               </form>
@@ -98,15 +101,15 @@ export default async function AdminCoursesPage({
                 <input
                   name="reason"
                   placeholder="Reason to suspend…"
-                  className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs outline-none focus:border-orange-500"
+                  className="w-40 rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                 />
-                <button type="submit" className="rounded-lg border border-amber-800 px-3 py-1.5 text-xs text-amber-400 hover:border-amber-600">
+                <button type="submit" className="rounded-lg border border-warning/40 px-3 py-1.5 text-xs text-warning hover:border-warning">
                   Suspend
                 </button>
               </form>
               <form action={toggleFeatured}>
                 <input type="hidden" name="courseId" value={c.id} />
-                <button type="submit" className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500">
+                <button type="submit" className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted">
                   {c.featured ? "Unfeature" : "Feature"}
                 </button>
               </form>

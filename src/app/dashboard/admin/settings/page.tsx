@@ -5,8 +5,8 @@ import { getPlatformSettings } from "@/lib/legal/settings";
 import { savePlatformSettings } from "@/app/dashboard/admin/settings/actions";
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
-const labelClass = "block text-sm text-slate-300";
+  "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
+const labelClass = "block text-sm text-text-secondary";
 
 export default async function AdminPlatformSettingsPage() {
   const session = await auth();
@@ -17,8 +17,8 @@ export default async function AdminPlatformSettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Platform settings</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Platform settings</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Official company identity and support contact details shown on the Contact page and in
         the site footer. Leave a field blank to hide it rather than showing a placeholder.
       </p>
@@ -37,7 +37,7 @@ export default async function AdminPlatformSettingsPage() {
                 placeholder="Cicerah Technologies Limited"
                 className={inputClass}
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-text-muted">
                 Shown in the footer copyright line. Defaults to &quot;Cicerah Technologies Limited&quot; if left blank.
               </p>
             </div>
@@ -95,7 +95,7 @@ export default async function AdminPlatformSettingsPage() {
 
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Save settings
             </button>

@@ -15,13 +15,13 @@ export default async function StudentCertificatesPage() {
 
   return (
     <div>
-      <Link href="/dashboard/student" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/dashboard/student" className="text-sm text-text-secondary hover:text-text-primary">
         ← Dashboard
       </Link>
-      <h1 className="mt-4 text-2xl font-semibold">My certificates</h1>
+      <h1 className="mt-4 text-h2 font-semibold text-text-primary">My certificates</h1>
 
       {certificates.length === 0 ? (
-        <p className="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-400">
+        <p className="mt-6 rounded-xl border border-border bg-surface-raised p-5 text-sm text-text-secondary">
           Complete a course to earn your first certificate.
         </p>
       ) : (
@@ -31,10 +31,10 @@ export default async function StudentCertificatesPage() {
               key={cert.id}
               href={`/certificates/${cert.id}`}
               target="_blank"
-              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-sm hover:border-slate-600"
+              className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm hover:border-border-strong"
             >
-              <span className="text-slate-100">{cert.course.title}</span>
-              <span className="text-xs text-slate-500">
+              <span className="text-text-primary">{cert.course.title}</span>
+              <span className="text-xs text-text-muted">
                 {cert.issuedAt.toLocaleDateString()}
               </span>
             </Link>

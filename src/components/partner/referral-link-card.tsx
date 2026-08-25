@@ -25,10 +25,10 @@ export function ReferralLinkCard({
 
   return (
     <Card title="Your referral link">
-      <p className="break-all rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-orange-300">
+      <p className="break-all rounded-lg border border-border bg-surface px-3 py-2 font-mono text-xs text-brand-text">
         {referralLink}
       </p>
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-text-muted">
         Add <code>&campaign=your-campaign-name</code> to track a specific campaign.
       </p>
 
@@ -36,7 +36,7 @@ export function ReferralLinkCard({
         <button
           type="button"
           onClick={copyLink}
-          className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500"
+          className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted"
         >
           {copied ? "Copied!" : "Copy link"}
         </button>
@@ -44,21 +44,21 @@ export function ReferralLinkCard({
           href={whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-lg border border-green-800 px-3 py-1.5 text-xs text-green-400 hover:border-green-600"
+          className="rounded-lg border border-success/40 px-3 py-1.5 text-xs text-success hover:border-success"
         >
           Share on WhatsApp
         </a>
         <button
           type="button"
           onClick={() => setShowQr((v) => !v)}
-          className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500"
+          className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted"
         >
           {showQr ? "Hide QR code" : "Generate QR code"}
         </button>
       </div>
 
       {showQr && (
-        <div className="mt-3 inline-block rounded-lg border border-slate-800 bg-white p-3">
+        <div className="mt-3 inline-block rounded-lg border border-border bg-white p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrDataUri} alt="Referral link QR code" width={160} height={160} />
         </div>

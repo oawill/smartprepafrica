@@ -2,7 +2,18 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { formatNaira } from "@/lib/partners/compensation";
+
+const STATUS_TONE: Record<string, BadgeTone> = {
+  PENDING: "warning",
+  QUALIFIED: "info",
+  APPROVED: "info",
+  AVAILABLE: "success",
+  PAID: "success",
+  REVERSED: "danger",
+  CANCELLED: "neutral",
+};
 
 type Period = "this_month" | "last_month" | "quarter" | "year" | "custom";
 
@@ -82,18 +93,18 @@ export default async function PartnerEarningsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Earnings statement</h1>
+      <h1 className="text-h2 font-semibold text-text-primary">Earnings statement</h1>
 
       <form className="mt-4 flex flex-wrap items-end gap-3">
         <div>
-          <label className="block text-xs text-slate-400" htmlFor="period">
+          <label className="block text-xs text-text-secondary" htmlFor="period">
             Period
           </label>
           <select
             id="period"
             name="period"
             defaultValue={period}
-            className="mt-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
           >
             {Object.entries(periodLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -103,7 +114,7 @@ export default async function PartnerEarningsPage({
           </select>
         </div>
         <div>
-          <label className="block text-xs text-slate-400" htmlFor="from">
+          <label className="block text-xs text-text-secondary" htmlFor="from">
             From (custom)
           </label>
           <input
@@ -111,11 +122,11 @@ export default async function PartnerEarningsPage({
             name="from"
             type="date"
             defaultValue={params.from}
-            className="mt-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
           />
         </div>
         <div>
-          <label className="block text-xs text-slate-400" htmlFor="to">
+          <label className="block text-xs text-text-secondary" htmlFor="to">
             To (custom)
           </label>
           <input
@@ -123,18 +134,18 @@ export default async function PartnerEarningsPage({
             name="to"
             type="date"
             defaultValue={params.to}
-            className="mt-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="mt-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
           />
         </div>
         <button
           type="submit"
-          className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+          className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
         >
           Apply
         </button>
         <a
           href={`/dashboard/partner/earnings/export?period=${period}${params.from ? `&from=${params.from}` : ""}${params.to ? `&to=${params.to}` : ""}`}
-          className="rounded-lg border border-orange-700 px-4 py-2 text-sm text-orange-300 hover:border-orange-500"
+          className="rounded-lg border border-brand/50 px-4 py-2 text-sm text-brand-text hover:border-brand"
         >
           Export CSV
         </a>
@@ -142,29 +153,29 @@ export default async function PartnerEarningsPage({
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card title="Opening balance">
-          <p className="text-lg font-semibold">{formatNaira(openingBalance)}</p>
+          <p className="text-lg font-semibold text-text-primary">{formatNaira(openingBalance)}</p>
         </Card>
         <Card title="Commissions">
-          <p className="text-lg font-semibold">{formatNaira(commissionsSum)}</p>
+          <p className="text-lg font-semibold text-text-primary">{formatNaira(commissionsSum)}</p>
         </Card>
         <Card title="Reversals">
-          <p className="text-lg font-semibold text-red-400">-{formatNaira(reversalsSum)}</p>
+          <p className="text-lg font-semibold text-danger">-{formatNaira(reversalsSum)}</p>
         </Card>
         <Card title="Payouts">
-          <p className="text-lg font-semibold">-{formatNaira(payoutsSum)}</p>
+          <p className="text-lg font-semibold text-text-primary">-{formatNaira(payoutsSum)}</p>
         </Card>
         <Card title="Closing balance">
-          <p className="text-lg font-semibold">{formatNaira(closingBalance)}</p>
+          <p className="text-lg font-semibold text-text-primary">{formatNaira(closingBalance)}</p>
         </Card>
       </div>
 
       <div className="mt-6">
         <Card title="Commission transactions in this period">
           {inRange.length === 0 ? (
-            <p className="text-sm text-slate-400">No commission activity in this period.</p>
+            <p className="text-sm text-text-secondary">No commission activity in this period.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Commission</th>
                   <th className="pb-2">Event</th>
@@ -175,12 +186,14 @@ export default async function PartnerEarningsPage({
               </thead>
               <tbody>
                 {inRange.map((c) => (
-                  <tr key={c.id} className="border-t border-slate-800">
-                    <td className="py-2 font-mono text-xs">{c.commissionNumber}</td>
-                    <td className="py-2 text-slate-400">{c.eventType}</td>
-                    <td className="py-2">{formatNaira(c.amountKobo)}</td>
-                    <td className="py-2 text-slate-400">{c.status}</td>
-                    <td className="py-2 text-slate-400">
+                  <tr key={c.id} className="border-t border-border hover:bg-surface-sunken/50">
+                    <td className="py-2 font-mono text-xs text-text-primary">{c.commissionNumber}</td>
+                    <td className="py-2 text-text-secondary">{c.eventType}</td>
+                    <td className="py-2 text-text-primary">{formatNaira(c.amountKobo)}</td>
+                    <td className="py-2">
+                      <Badge tone={STATUS_TONE[c.status] ?? "neutral"}>{c.status}</Badge>
+                    </td>
+                    <td className="py-2 text-text-muted">
                       {new Date(c.createdAt).toLocaleDateString("en-NG")}
                     </td>
                   </tr>

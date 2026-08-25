@@ -51,10 +51,10 @@ export default async function AdminPartnerDetailPage({
     <div>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-text-primary">
             {partner.firstName} {partner.lastName}
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             {partner.partnerNumber ?? "Not yet approved"} · {partner.user.email} · {partner.status}
             {tier && ` · Tier: ${tier.name}`}
           </p>
@@ -66,7 +66,7 @@ export default async function AdminPartnerDetailPage({
                 <input type="hidden" name="partnerId" value={partner.id} />
                 <button
                   type="submit"
-                  className="rounded-lg border border-green-800 px-3 py-2 text-xs text-green-400 hover:border-green-600"
+                  className="rounded-lg border border-success/40 px-3 py-2 text-xs text-success hover:border-success"
                 >
                   Approve
                 </button>
@@ -75,7 +75,7 @@ export default async function AdminPartnerDetailPage({
                 <input type="hidden" name="partnerId" value={partner.id} />
                 <button
                   type="submit"
-                  className="rounded-lg border border-red-900 px-3 py-2 text-xs text-red-400 hover:border-red-700"
+                  className="rounded-lg border border-danger/40 px-3 py-2 text-xs text-danger hover:border-danger"
                 >
                   Reject
                 </button>
@@ -87,7 +87,7 @@ export default async function AdminPartnerDetailPage({
               <input type="hidden" name="partnerId" value={partner.id} />
               <button
                 type="submit"
-                className="rounded-lg border border-amber-800 px-3 py-2 text-xs text-amber-400 hover:border-amber-600"
+                className="rounded-lg border border-warning/40 px-3 py-2 text-xs text-warning hover:border-warning"
               >
                 Suspend
               </button>
@@ -98,7 +98,7 @@ export default async function AdminPartnerDetailPage({
               <input type="hidden" name="partnerId" value={partner.id} />
               <button
                 type="submit"
-                className="rounded-lg border border-green-800 px-3 py-2 text-xs text-green-400 hover:border-green-600"
+                className="rounded-lg border border-success/40 px-3 py-2 text-xs text-success hover:border-success"
               >
                 Reactivate
               </button>
@@ -109,7 +109,7 @@ export default async function AdminPartnerDetailPage({
               <input type="hidden" name="partnerId" value={partner.id} />
               <button
                 type="submit"
-                className="rounded-lg border border-red-900 px-3 py-2 text-xs text-red-400 hover:border-red-700"
+                className="rounded-lg border border-danger/40 px-3 py-2 text-xs text-danger hover:border-danger"
               >
                 Close
               </button>
@@ -120,42 +120,42 @@ export default async function AdminPartnerDetailPage({
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Contact">
-          <p className="text-sm text-slate-300">{partner.phone}</p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-secondary">{partner.phone}</p>
+          <p className="text-sm text-text-secondary">
             {[partner.city, partner.state, partner.country].filter(Boolean).join(", ")}
           </p>
           {partner.organization && (
-            <p className="text-sm text-slate-400">{partner.organization}</p>
+            <p className="text-sm text-text-secondary">{partner.organization}</p>
           )}
         </Card>
         <Card title="Students referred">
-          <p className="text-2xl font-semibold">{referrals}</p>
+          <p className="text-2xl font-semibold text-text-primary">{referrals}</p>
         </Card>
         <Card title="Schools referred">
-          <p className="text-2xl font-semibold">{schoolLeads.length}</p>
+          <p className="text-2xl font-semibold text-text-primary">{schoolLeads.length}</p>
         </Card>
         <Card title="Lifetime earnings">
-          <p className="text-2xl font-semibold">{formatNaira(lifetime._sum.amountKobo ?? 0)}</p>
+          <p className="text-2xl font-semibold text-text-primary">{formatNaira(lifetime._sum.amountKobo ?? 0)}</p>
         </Card>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card title="Payout details">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-text-secondary">
             Method: {partner.preferredPaymentMethod ?? "Not set"}
           </p>
-          <p className="text-sm text-slate-400">Bank: {partner.bankName ?? "—"}</p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-secondary">Bank: {partner.bankName ?? "—"}</p>
+          <p className="text-sm text-text-secondary">
             Account: {partner.bankAccountName ?? "—"} {partner.bankAccountNumber ?? ""}
           </p>
         </Card>
         <Card title="Fraud flags">
           {fraudFlags.length === 0 ? (
-            <p className="text-sm text-slate-400">No fraud flags.</p>
+            <p className="text-sm text-text-secondary">No fraud flags.</p>
           ) : (
             <ul className="space-y-1 text-sm">
               {fraudFlags.map((f) => (
-                <li key={f.id} className="text-amber-400">
+                <li key={f.id} className="text-warning">
                   {f.reason} — {f.status}
                 </li>
               ))}
@@ -172,11 +172,11 @@ export default async function AdminPartnerDetailPage({
               name="adminNotes"
               defaultValue={partner.adminNotes ?? ""}
               rows={3}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             />
             <button
               type="submit"
-              className="rounded-lg border border-slate-700 px-4 py-2 text-xs text-slate-300 hover:border-slate-500"
+              className="rounded-lg border border-border-strong px-4 py-2 text-xs text-text-secondary hover:border-text-muted"
             >
               Save notes
             </button>
@@ -187,10 +187,10 @@ export default async function AdminPartnerDetailPage({
       <div className="mt-6">
         <Card title="School leads">
           {schoolLeads.length === 0 ? (
-            <p className="text-sm text-slate-400">No school leads.</p>
+            <p className="text-sm text-text-secondary">No school leads.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Lead</th>
                   <th className="pb-2">School</th>
@@ -199,10 +199,10 @@ export default async function AdminPartnerDetailPage({
               </thead>
               <tbody>
                 {schoolLeads.map((l) => (
-                  <tr key={l.id} className="border-t border-slate-800">
-                    <td className="py-2 font-mono text-xs">{l.leadNumber}</td>
-                    <td className="py-2">{l.schoolName}</td>
-                    <td className="py-2 text-slate-400">{l.status}</td>
+                  <tr key={l.id} className="border-t border-border">
+                    <td className="py-2 font-mono text-xs text-text-primary">{l.leadNumber}</td>
+                    <td className="py-2 text-text-primary">{l.schoolName}</td>
+                    <td className="py-2 text-text-secondary">{l.status}</td>
                   </tr>
                 ))}
               </tbody>
@@ -214,10 +214,10 @@ export default async function AdminPartnerDetailPage({
       <div className="mt-6">
         <Card title="Recent commissions">
           {commissions.length === 0 ? (
-            <p className="text-sm text-slate-400">No commissions yet.</p>
+            <p className="text-sm text-text-secondary">No commissions yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Commission</th>
                   <th className="pb-2">Event</th>
@@ -227,11 +227,11 @@ export default async function AdminPartnerDetailPage({
               </thead>
               <tbody>
                 {commissions.map((c) => (
-                  <tr key={c.id} className="border-t border-slate-800">
-                    <td className="py-2 font-mono text-xs">{c.commissionNumber}</td>
-                    <td className="py-2 text-slate-400">{c.eventType}</td>
-                    <td className="py-2">{formatNaira(c.amountKobo)}</td>
-                    <td className="py-2 text-slate-400">{c.status}</td>
+                  <tr key={c.id} className="border-t border-border">
+                    <td className="py-2 font-mono text-xs text-text-primary">{c.commissionNumber}</td>
+                    <td className="py-2 text-text-secondary">{c.eventType}</td>
+                    <td className="py-2 text-text-primary">{formatNaira(c.amountKobo)}</td>
+                    <td className="py-2 text-text-secondary">{c.status}</td>
                   </tr>
                 ))}
               </tbody>
@@ -243,10 +243,10 @@ export default async function AdminPartnerDetailPage({
       <div className="mt-6">
         <Card title="Payout history">
           {payouts.length === 0 ? (
-            <p className="text-sm text-slate-400">No payouts yet.</p>
+            <p className="text-sm text-text-secondary">No payouts yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Payout</th>
                   <th className="pb-2">Amount</th>
@@ -255,10 +255,10 @@ export default async function AdminPartnerDetailPage({
               </thead>
               <tbody>
                 {payouts.map((p) => (
-                  <tr key={p.id} className="border-t border-slate-800">
-                    <td className="py-2 font-mono text-xs">{p.payoutNumber}</td>
-                    <td className="py-2">{formatNaira(p.amountKobo)}</td>
-                    <td className="py-2 text-slate-400">{p.status}</td>
+                  <tr key={p.id} className="border-t border-border">
+                    <td className="py-2 font-mono text-xs text-text-primary">{p.payoutNumber}</td>
+                    <td className="py-2 text-text-primary">{formatNaira(p.amountKobo)}</td>
+                    <td className="py-2 text-text-secondary">{p.status}</td>
                   </tr>
                 ))}
               </tbody>

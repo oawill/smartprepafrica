@@ -20,8 +20,8 @@ export default async function TermsPage() {
 
       <main className="flex-1">
         <section className="mx-auto max-w-3xl px-6 py-16">
-          <h1 className="text-3xl font-semibold">Terms & Conditions</h1>
-          <p className="mt-2 text-xs text-slate-500">
+          <h1 className="text-h1 font-semibold text-text-primary">Terms & Conditions</h1>
+          <p className="mt-2 text-xs text-text-muted">
             Version {doc.version} · Last Updated:{" "}
             {new Date(doc.effectiveAt).toLocaleDateString("en-NG", {
               year: "numeric",

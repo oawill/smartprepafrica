@@ -14,8 +14,8 @@ export default async function PartnerProgramTermsPage() {
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-3xl font-semibold">{doc.title}</h1>
-      <p className="mt-2 text-xs text-slate-500">
+      <h1 className="text-h1 font-semibold text-text-primary">{doc.title}</h1>
+      <p className="mt-2 text-xs text-text-muted">
         Version {doc.version} · Last Updated:{" "}
         {new Date(doc.effectiveAt).toLocaleDateString("en-NG", {
           year: "numeric",

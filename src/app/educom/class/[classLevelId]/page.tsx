@@ -29,16 +29,16 @@ export default async function ClassLevelPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to SmartPrepAfrica Learning
       </Link>
 
-      <p className="mt-4 text-xs uppercase tracking-wide text-slate-500">{classLevel.curriculum.name}</p>
-      <h1 className="mt-1 text-3xl font-semibold">{classLevel.name}</h1>
-      <p className="mt-2 text-slate-400">Choose a subject to see available courses and lessons.</p>
+      <p className="mt-4 text-xs uppercase tracking-wide text-text-muted">{classLevel.curriculum.name}</p>
+      <h1 className="mt-1 text-h1 font-semibold text-text-primary">{classLevel.name}</h1>
+      <p className="mt-2 text-text-secondary">Choose a subject to see available courses and lessons.</p>
 
       {subjects.length === 0 ? (
-        <p className="mt-8 rounded-lg border border-slate-800 bg-slate-900 p-5 text-sm text-slate-400">
+        <p className="mt-8 rounded-lg border border-border bg-surface-raised p-5 text-sm text-text-secondary">
           No courses have been published for {classLevel.name} yet.
         </p>
       ) : (
@@ -47,10 +47,10 @@ export default async function ClassLevelPage({
             <Link
               key={s.id}
               href={`/educom?classLevelId=${classLevel.id}&subjectId=${s.id}`}
-              className="rounded-xl border border-slate-800 bg-slate-900 p-5 hover:border-slate-600"
+              className="rounded-xl border border-border bg-surface-raised p-5 hover:border-border-strong"
             >
-              <p className="font-medium text-slate-100">{s.name}</p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="font-medium text-text-primary">{s.name}</p>
+              <p className="mt-1 text-xs text-text-muted">
                 {countBySubjectId.get(s.id) ?? 0} course{(countBySubjectId.get(s.id) ?? 0) === 1 ? "" : "s"}
               </p>
             </Link>

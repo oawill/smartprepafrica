@@ -3,6 +3,7 @@ import { Card } from "@/components/dashboard/card";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { hasPermission } from "@/lib/admin/permissions";
 import { AuditExportButton } from "@/components/admin/audit-export-button";
+import { Badge } from "@/components/ui/badge";
 
 type MergedEntry = {
   id: string;
@@ -75,8 +76,8 @@ export default async function AuditLogPage({
     <div>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Audit log</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-h2 font-semibold text-text-primary">Audit log</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             Every sensitive administrative action, merged from the general and Partner-program audit trails.
             Never editable or deletable from this screen.
           </p>
@@ -103,15 +104,15 @@ export default async function AuditLogPage({
               name="action"
               defaultValue={action}
               placeholder="Filter by action…"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="resourceType"
               defaultValue={resourceType}
               placeholder="Resource type (e.g. Question)…"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
-            <button type="submit" className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500">
+            <button type="submit" className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted">
               Filter
             </button>
           </form>
@@ -121,7 +122,7 @@ export default async function AuditLogPage({
       <div className="mt-6">
         <Card title={`${merged.length} most recent`}>
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
+            <thead className="text-xs text-text-muted">
               <tr>
                 <th className="pb-2">When</th>
                 <th className="pb-2">Actor</th>
@@ -132,20 +133,18 @@ export default async function AuditLogPage({
             </thead>
             <tbody>
               {merged.map((m) => (
-                <tr key={`${m.source}-${m.id}`} className="border-t border-slate-800">
-                  <td className="py-2 text-slate-500">{m.createdAt.toLocaleString("en-NG")}</td>
-                  <td className="py-2 text-slate-300">{nameById.get(m.actorUserId ?? "") ?? "System"}</td>
-                  <td className="py-2 text-slate-300">{m.action}</td>
-                  <td className="py-2 text-slate-400">
+                <tr key={`${m.source}-${m.id}`} className="border-t border-border hover:bg-surface-sunken/50">
+                  <td className="py-2 text-text-muted">{m.createdAt.toLocaleString("en-NG")}</td>
+                  <td className="py-2 text-text-secondary">{nameById.get(m.actorUserId ?? "") ?? "System"}</td>
+                  <td className="py-2 text-text-secondary">{m.action}</td>
+                  <td className="py-2 text-text-secondary">
                     {m.resourceType}
-                    {m.resourceId && <span className="ml-1 font-mono text-xs text-slate-600">{m.resourceId.slice(0, 10)}</span>}
+                    {m.resourceId && <span className="ml-1 font-mono text-xs text-text-muted">{m.resourceId.slice(0, 10)}</span>}
                   </td>
-                  <td
-                    className={`py-2 ${
-                      m.result === "DENIED" || m.result === "FAILURE" ? "text-red-400" : "text-green-400"
-                    }`}
-                  >
-                    {m.result}
+                  <td className="py-2">
+                    <Badge tone={m.result === "DENIED" || m.result === "FAILURE" ? "danger" : "success"}>
+                      {m.result}
+                    </Badge>
                   </td>
                 </tr>
               ))}

@@ -30,8 +30,8 @@ export default async function AdminCompensationPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Compensation rules</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-2xl font-semibold text-text-primary">Compensation rules</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Changes here never alter commissions already earned — each edit creates a new version and
         only affects future events.
       </p>
@@ -39,7 +39,7 @@ export default async function AdminCompensationPage() {
       <div className="mt-6 space-y-4">
         {activeRules.map((rule) => (
           <Card key={rule.id} title={`${rule.name} (v${rule.version})`}>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-text-muted">
               {rule.calcType === "FIXED"
                 ? `Fixed: ${formatNaira(rule.fixedAmountKobo ?? 0)}`
                 : `${rule.percentage}%`}{" "}
@@ -51,12 +51,12 @@ export default async function AdminCompensationPage() {
                 name="name"
                 defaultValue={rule.name}
                 placeholder="Name"
-                className="col-span-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="col-span-2 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
               <select
                 name="eventType"
                 defaultValue={rule.eventType}
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               >
                 {eventTypes.map((et) => (
                   <option key={et} value={et}>
@@ -67,7 +67,7 @@ export default async function AdminCompensationPage() {
               <select
                 name="calcType"
                 defaultValue={rule.calcType}
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               >
                 <option value="FIXED">Fixed amount</option>
                 <option value="PERCENTAGE">Percentage</option>
@@ -78,7 +78,7 @@ export default async function AdminCompensationPage() {
                 step="0.01"
                 defaultValue={rule.fixedAmountKobo ? rule.fixedAmountKobo / 100 : undefined}
                 placeholder="Amount (₦)"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
               <input
                 name="percentage"
@@ -86,18 +86,18 @@ export default async function AdminCompensationPage() {
                 step="0.1"
                 defaultValue={rule.percentage ?? undefined}
                 placeholder="Percentage"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
               <input
                 name="qualificationHoldDays"
                 type="number"
                 defaultValue={rule.qualificationHoldDays}
                 placeholder="Hold days"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Save new version
               </button>
@@ -113,18 +113,18 @@ export default async function AdminCompensationPage() {
               name="ruleKey"
               placeholder="rule_key (stable id)"
               required
-              className="col-span-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="col-span-2 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="name"
               placeholder="Display name"
               required
-              className="col-span-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="col-span-2 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <select
               name="eventType"
               defaultValue="CAMPAIGN_BONUS"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             >
               {eventTypes.map((et) => (
                 <option key={et} value={et}>
@@ -135,7 +135,7 @@ export default async function AdminCompensationPage() {
             <select
               name="calcType"
               defaultValue="FIXED"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             >
               <option value="FIXED">Fixed amount</option>
               <option value="PERCENTAGE">Percentage</option>
@@ -145,18 +145,18 @@ export default async function AdminCompensationPage() {
               type="number"
               step="0.01"
               placeholder="Amount (₦)"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="qualificationHoldDays"
               type="number"
               defaultValue={14}
               placeholder="Hold days"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="col-span-2 rounded-lg border border-orange-700 px-4 py-2 text-sm text-orange-300 hover:border-orange-500"
+              className="col-span-2 rounded-lg border border-brand/40 px-4 py-2 text-sm text-brand-text hover:border-brand"
             >
               Create rule
             </button>
@@ -167,7 +167,7 @@ export default async function AdminCompensationPage() {
       <div className="mt-6">
         <Card title="Version history">
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
+            <thead className="text-xs text-text-muted">
               <tr>
                 <th className="pb-2">Rule key</th>
                 <th className="pb-2">Version</th>
@@ -178,20 +178,20 @@ export default async function AdminCompensationPage() {
             </thead>
             <tbody>
               {allRules.map((r) => (
-                <tr key={r.id} className="border-t border-slate-800">
-                  <td className="py-2 font-mono text-xs">{r.ruleKey}</td>
-                  <td className="py-2">v{r.version}</td>
-                  <td className="py-2 text-slate-400">
+                <tr key={r.id} className="border-t border-border">
+                  <td className="py-2 font-mono text-xs text-text-primary">{r.ruleKey}</td>
+                  <td className="py-2 text-text-primary">v{r.version}</td>
+                  <td className="py-2 text-text-secondary">
                     {r.calcType === "FIXED" ? formatNaira(r.fixedAmountKobo ?? 0) : `${r.percentage}%`}
                   </td>
                   <td className="py-2">
                     {r.isActive ? (
-                      <span className="text-green-400">Active</span>
+                      <span className="text-success">Active</span>
                     ) : (
-                      <span className="text-slate-500">Superseded</span>
+                      <span className="text-text-muted">Superseded</span>
                     )}
                   </td>
-                  <td className="py-2 text-slate-400">
+                  <td className="py-2 text-text-secondary">
                     {new Date(r.createdAt).toLocaleDateString("en-NG")}
                   </td>
                 </tr>

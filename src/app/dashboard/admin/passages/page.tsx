@@ -66,20 +66,20 @@ export default async function AdminPassagesPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Passages</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             Shared reading passages for English Comprehension &amp; Literature. {total} total.
           </p>
         </div>
         <Link
           href="/dashboard/admin/passages/new"
-          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           + New passage
         </Link>
       </div>
 
       {params.error && (
-        <div className="mt-4 rounded-lg border border-red-900 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+        <div className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-4 py-3 text-sm text-danger">
           {params.error}
         </div>
       )}
@@ -91,12 +91,12 @@ export default async function AdminPassagesPage({
               name="q"
               defaultValue={q}
               placeholder="Title, passage code…"
-              className="min-w-[220px] flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="min-w-[220px] flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none placeholder:text-text-muted focus:border-brand"
             />
             <select
               name="status"
               defaultValue={params.status ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="">Any status</option>
               <option value="DRAFT">Draft</option>
@@ -108,7 +108,7 @@ export default async function AdminPassagesPage({
             <select
               name="exam"
               defaultValue={params.exam ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="">Any exam</option>
               <option value="WAEC">WAEC</option>
@@ -119,7 +119,7 @@ export default async function AdminPassagesPage({
             <select
               name="subjectId"
               defaultValue={params.subjectId ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="">Any subject</option>
               {subjects.map((s) => (
@@ -130,7 +130,7 @@ export default async function AdminPassagesPage({
             </select>
             <button
               type="submit"
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
             >
               Search
             </button>
@@ -141,25 +141,25 @@ export default async function AdminPassagesPage({
       <div className="mt-6">
         <Card title={`${passages.length} passage${passages.length === 1 ? "" : "s"} on this page`}>
           {passages.length === 0 ? (
-            <p className="text-sm text-slate-500">No passages match this filter yet.</p>
+            <p className="text-sm text-text-muted">No passages match this filter yet.</p>
           ) : (
             <div className="space-y-2">
               {passages.map((p) => (
                 <Link
                   key={p.id}
                   href={`/dashboard/admin/passages/${p.id}`}
-                  className="flex items-center justify-between gap-4 rounded-lg border border-slate-800 px-4 py-3 hover:border-slate-600"
+                  className="flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3 hover:border-border-strong"
                 >
                   <div>
-                    <p className="text-sm font-medium text-slate-200">
+                    <p className="text-sm font-medium text-text-primary">
                       {p.title ?? p.code ?? p.id}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-text-muted">
                       {p.code} · {p.subject.name} · {p.exam} · {p.type.replace(/_/g, " ")} ·{" "}
                       {p._count.questions} question{p._count.questions === 1 ? "" : "s"}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
+                  <span className="shrink-0 rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary">
                     {p.status}
                   </span>
                 </Link>
@@ -173,16 +173,16 @@ export default async function AdminPassagesPage({
         <div className="mt-4 flex items-center justify-center gap-2 text-sm">
           <Link
             href={pageHref({ page: String(Math.max(1, page - 1)) })}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             ← Prev
           </Link>
-          <span className="text-slate-500">
+          <span className="text-text-muted">
             Page {page} of {totalPages}
           </span>
           <Link
             href={pageHref({ page: String(Math.min(totalPages, page + 1)) })}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             Next →
           </Link>

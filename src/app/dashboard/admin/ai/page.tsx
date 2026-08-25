@@ -128,11 +128,11 @@ export default async function AdminAiDashboard() {
 
   return (
     <div>
-      <Link href="/dashboard/admin" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/dashboard/admin" className="text-sm text-text-secondary hover:text-text-primary">
         ← Admin dashboard
       </Link>
       <h1 className="mt-4 text-2xl font-semibold">AI Study Coach</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-text-secondary">
         Usage, cost, and quality analytics. Individual conversation content is never shown here.
       </p>
 
@@ -151,7 +151,7 @@ export default async function AdminAiDashboard() {
         </Card>
         <Card title="Token consumption">
           <p className="text-3xl font-semibold">{totalTokens.toLocaleString()}</p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             {(tokenTotals._sum.inputTokens ?? 0).toLocaleString()} in ·{" "}
             {(tokenTotals._sum.outputTokens ?? 0).toLocaleString()} out
           </p>
@@ -160,13 +160,13 @@ export default async function AdminAiDashboard() {
           <p className="text-3xl font-semibold">
             {formatNairaFromKobo(tokenTotals._sum.estimatedCostKobo ?? 0)}
           </p>
-          <p className="text-xs text-slate-500">Rough estimate, not a billing record.</p>
+          <p className="text-xs text-text-muted">Rough estimate, not a billing record.</p>
         </Card>
         <Card title="Average response rating">
           <p className="text-3xl font-semibold">
             {avgRating !== null ? avgRating.toFixed(2) : "—"}
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             {thumbsUp} 👍 · {thumbsDown} 👎 ({ratings.length} rated)
           </p>
         </Card>
@@ -174,20 +174,20 @@ export default async function AdminAiDashboard() {
           <p className="text-3xl font-semibold">
             {errorCount} / {blockedCount}
           </p>
-          <p className="text-xs text-slate-500">Stream errors / usage-limit blocks</p>
+          <p className="text-xs text-text-muted">Stream errors / usage-limit blocks</p>
         </Card>
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Most used subjects">
           {conversationsBySubject.length === 0 ? (
-            <p className="text-sm text-slate-400">No subject-linked conversations yet.</p>
+            <p className="text-sm text-text-secondary">No subject-linked conversations yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {conversationsBySubject.map((c) => (
-                <li key={c.subjectId} className="flex justify-between text-slate-300">
+                <li key={c.subjectId} className="flex justify-between text-text-secondary">
                   <span>{subjectNameById.get(c.subjectId!) ?? "Unknown"}</span>
-                  <span className="text-slate-500">{c._count._all} conversations</span>
+                  <span className="text-text-muted">{c._count._all} conversations</span>
                 </li>
               ))}
             </ul>
@@ -195,15 +195,15 @@ export default async function AdminAiDashboard() {
         </Card>
         <Card title="Most asked-about lessons">
           {conversationsByLesson.length === 0 ? (
-            <p className="text-sm text-slate-400">No lesson-linked conversations yet.</p>
+            <p className="text-sm text-text-secondary">No lesson-linked conversations yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {conversationsByLesson.map((c) => {
                 const lesson = lessonById.get(c.lessonId!);
                 return (
-                  <li key={c.lessonId} className="flex justify-between text-slate-300">
+                  <li key={c.lessonId} className="flex justify-between text-text-secondary">
                     <span>{lesson?.title ?? "Unknown"}{lesson?.topic ? ` — ${lesson.topic}` : ""}</span>
-                    <span className="text-slate-500">{c._count._all} conversations</span>
+                    <span className="text-text-muted">{c._count._all} conversations</span>
                   </li>
                 );
               })}
@@ -216,9 +216,9 @@ export default async function AdminAiDashboard() {
         <Card title="Usage by subscription plan">
           <ul className="space-y-1.5 text-sm">
             {ALL_PLANS.map((plan) => (
-              <li key={plan} className="flex justify-between text-slate-300">
+              <li key={plan} className="flex justify-between text-text-secondary">
                 <span>{PLAN_LABELS[plan]}</span>
-                <span className="text-slate-500">{usageByPlan.get(plan) ?? 0} requests</span>
+                <span className="text-text-muted">{usageByPlan.get(plan) ?? 0} requests</span>
               </li>
             ))}
           </ul>
@@ -234,22 +234,22 @@ export default async function AdminAiDashboard() {
                 <form
                   key={plan}
                   action={updatePlanLimit}
-                  className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2"
                 >
                   <input type="hidden" name="plan" value={plan} />
-                  <span className="w-20 text-sm text-slate-300">{PLAN_LABELS[plan]}</span>
+                  <span className="w-20 text-sm text-text-secondary">{PLAN_LABELS[plan]}</span>
                   <input
                     type="number"
                     name="dailyMessageLimit"
                     min={0}
                     defaultValue={current ?? ""}
                     placeholder="not set"
-                    className="w-28 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-sm outline-none focus:border-orange-500"
+                    className="w-28 rounded-lg border border-border-strong bg-surface-raised px-2 py-1 text-sm text-text-primary outline-none focus:border-brand"
                   />
-                  <span className="text-xs text-slate-500">messages / day</span>
+                  <span className="text-xs text-text-muted">messages / day</span>
                   <button
                     type="submit"
-                    className="ml-auto rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-slate-500"
+                    className="ml-auto rounded-lg border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-text-muted"
                   >
                     Save
                   </button>

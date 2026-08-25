@@ -19,17 +19,17 @@ const partnerTypeOptions = [
 ] as const;
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
-const labelClass = "block text-sm text-slate-300";
+  "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand";
+const labelClass = "block text-sm text-text-secondary";
 
 export default function PartnerApplyPage() {
   const [state, formAction, isPending] = useActionState(applyAsPartner, initialState);
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
-      <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-8">
-        <h1 className="text-xl font-semibold">Become a SmartPrepAfrica.com Partner</h1>
-        <p className="mt-1 text-sm text-slate-400">
+      <div className="w-full max-w-xl rounded-2xl border border-border bg-surface-raised p-8">
+        <h1 className="text-h2 font-semibold text-text-primary">Become a SmartPrepAfrica.com Partner</h1>
+        <p className="mt-1 text-sm text-text-secondary">
           Refer students and schools to SmartPrepAfrica.com and earn commission on successful conversions.
         </p>
 
@@ -182,26 +182,26 @@ export default function PartnerApplyPage() {
             <input id="referralSource" name="referralSource" type="text" className={inputClass} />
           </div>
 
-          <label className="flex items-start gap-2 text-xs text-slate-400">
+          <label className="flex items-start gap-2 text-xs text-text-secondary">
             <input type="checkbox" name="agreeToTerms" required className="mt-0.5" />
             <span>
               By creating an account, you agree to the{" "}
-              <Link href="/terms" target="_blank" className="text-orange-400 hover:underline">
+              <Link href="/terms" target="_blank" className="text-brand-text hover:underline">
                 Terms & Conditions
               </Link>{" "}
               and acknowledge the{" "}
-              <Link href="/privacy" target="_blank" className="text-orange-400 hover:underline">
+              <Link href="/privacy" target="_blank" className="text-brand-text hover:underline">
                 Privacy Policy
               </Link>
               .
             </span>
           </label>
 
-          <label className="flex items-start gap-2 text-xs text-slate-400">
+          <label className="flex items-start gap-2 text-xs text-text-secondary">
             <input type="checkbox" name="termsAccepted" required className="mt-0.5" />
             <span>
               I agree to the{" "}
-              <Link href="/partners/terms" target="_blank" className="text-orange-400 hover:underline">
+              <Link href="/partners/terms" target="_blank" className="text-brand-text hover:underline">
                 SmartPrepAfrica.com Partner Program Terms
               </Link>{" "}
               and understand that commissions are payable only for qualifying conversions under
@@ -209,20 +209,20 @@ export default function PartnerApplyPage() {
             </span>
           </label>
 
-          {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+          {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
           <button
             type="submit"
             disabled={isPending}
-            className="w-full rounded-lg bg-orange-500 py-2 text-sm font-medium text-slate-950 transition hover:bg-orange-400 disabled:opacity-60"
+            className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
           >
             {isPending ? "Submitting…" : "Submit application"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-400">
+        <p className="mt-6 text-center text-sm text-text-secondary">
           Already a partner?{" "}
-          <Link href="/login" className="text-orange-400 hover:underline">
+          <Link href="/login" className="text-brand-text hover:underline">
             Log in
           </Link>
         </p>

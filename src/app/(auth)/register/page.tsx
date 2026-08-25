@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Label, Input, FieldError } from "@/components/ui/form";
 
 const roleOptions = [
   { value: "STUDENT", label: "Student" },
@@ -109,17 +110,17 @@ export default function RegisterPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8">
-        <h1 className="text-xl font-semibold">Create your account</h1>
-        <p className="mt-1 text-sm text-slate-400">Start preparing smarter today.</p>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-surface-raised p-8">
+        <h1 className="text-h2 font-semibold text-text-primary">Create your account</h1>
+        <p className="mt-1 text-sm text-text-secondary">Start preparing smarter today.</p>
 
         {referral.ref && (
-          <p className="mt-4 rounded-lg border border-orange-800 bg-orange-950/30 px-3 py-2 text-xs text-orange-300">
+          <p className="mt-4 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-xs text-brand-text">
             You were referred by a SmartPrepAfrica.com partner. 🎉
           </p>
         )}
         {schoolInvite && (
-          <p className="mt-4 rounded-lg border border-orange-800 bg-orange-950/30 px-3 py-2 text-xs text-orange-300">
+          <p className="mt-4 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-xs text-brand-text">
             You&apos;re registering <strong>{schoolInvite.schoolName}</strong> via a SmartPrepAfrica.com
             partner invitation.
           </p>
@@ -128,15 +129,15 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {!schoolInvite && (
             <fieldset>
-              <legend className="text-sm text-slate-300">I am a:</legend>
+              <legend className="text-sm text-text-secondary">I am a:</legend>
               <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
                 {roleOptions.map((option) => (
                   <label
                     key={option.value}
                     className={`cursor-pointer rounded-lg border px-2 py-2 text-center text-xs font-medium transition ${
                       role === option.value
-                        ? "border-orange-500 bg-orange-500/10 text-white"
-                        : "border-slate-700 text-slate-400 hover:border-slate-500"
+                        ? "border-brand bg-brand/10 text-text-primary"
+                        : "border-border-strong text-text-secondary hover:border-text-muted"
                     }`}
                   >
                     <input
@@ -155,25 +156,14 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-sm text-slate-300" htmlFor="name">
-              Full name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              minLength={2}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
-            />
+            <Label htmlFor="name">Full name</Label>
+            <Input id="name" name="name" type="text" required minLength={2} />
           </div>
 
           {role === "SCHOOL_ADMIN" && (
             <div>
-              <label className="block text-sm text-slate-300" htmlFor="schoolName">
-                School name
-              </label>
-              <input
+              <Label htmlFor="schoolName">School name</Label>
+              <Input
                 id="schoolName"
                 name="schoolName"
                 type="text"
@@ -181,66 +171,49 @@ export default function RegisterPage() {
                 minLength={2}
                 readOnly={!!schoolInvite}
                 defaultValue={schoolInvite?.schoolName}
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500 read-only:text-slate-400"
+                className="read-only:text-text-muted"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm text-slate-300" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
-            />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" type="email" required />
           </div>
           <div>
-            <label className="block text-sm text-slate-300" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
-            />
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" name="password" type="password" required minLength={8} />
           </div>
 
-          <label className="flex items-start gap-2 text-xs text-slate-400">
+          <label className="flex items-start gap-2 text-xs text-text-secondary">
             <input type="checkbox" name="agreeToTerms" required className="mt-0.5" />
             <span>
               By creating an account, you agree to the{" "}
-              <Link href="/terms" target="_blank" className="text-orange-400 hover:underline">
+              <Link href="/terms" target="_blank" className="text-brand-text hover:underline">
                 Terms & Conditions
               </Link>{" "}
               and acknowledge the{" "}
-              <Link href="/privacy" target="_blank" className="text-orange-400 hover:underline">
+              <Link href="/privacy" target="_blank" className="text-brand-text hover:underline">
                 Privacy Policy
               </Link>
               .
             </span>
           </label>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <FieldError>{error}</FieldError>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-orange-500 py-2 text-sm font-medium text-slate-950 transition hover:bg-orange-400 disabled:opacity-60"
+            className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
           >
             {loading ? "Creating account…" : "Create account"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-400">
+        <p className="mt-6 text-center text-sm text-text-secondary">
           Already have an account?{" "}
-          <Link href="/login" className="text-orange-400 hover:underline">
+          <Link href="/login" className="text-brand-text hover:underline">
             Log in
           </Link>
         </p>

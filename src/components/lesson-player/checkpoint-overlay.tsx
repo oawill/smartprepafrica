@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { PlayerCheckpoint } from "@/components/lesson-player/types";
 import type { CheckpointAnswerResult } from "@/app/educom/lesson-player-actions";
+import { AnswerOption, type AnswerOptionState } from "@/components/exam/answer-option";
+import { CheckIcon, XIcon } from "@/components/ui/icons";
 
 const MAX_ATTEMPTS = 2;
 
@@ -44,50 +46,53 @@ export function CheckpointOverlay({
   const locked = !!result && !canRetry;
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col justify-center bg-slate-950/95 p-6">
-      <p className="text-xs font-semibold uppercase tracking-wide text-orange-400">Quick Check</p>
-      <h3 className="mt-2 text-lg font-medium text-slate-100">{checkpoint.prompt}</h3>
+    <div className="absolute inset-0 z-10 flex flex-col justify-center overflow-y-auto bg-surface/95 p-6">
+      <p className="text-xs font-semibold uppercase tracking-wide text-brand-text">Quick Check</p>
+      <h3 className="mt-2 text-question font-medium text-text-primary">{checkpoint.prompt}</h3>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-2" role="list">
         {checkpoint.options.map((option) => {
           const isSelected = selected === option.key;
           const isCorrectOption = revealedCorrectAnswer && result && option.key === result.correctOption;
           const showWrong = result && isSelected && !result.isCorrect;
+          const state: AnswerOptionState = isCorrectOption
+            ? "correct"
+            : showWrong
+              ? "incorrect"
+              : isSelected
+                ? "selected"
+                : "default";
           return (
-            <button
+            <AnswerOption
               key={option.key}
-              type="button"
-              onClick={() => submit(option.key)}
+              optionKey={option.key}
+              state={state}
               disabled={submitting || locked}
-              className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm ${
-                isCorrectOption
-                  ? "border-green-600 bg-green-500/10 text-green-200"
-                  : showWrong
-                    ? "border-red-700 bg-red-500/10 text-red-200"
-                    : isSelected
-                      ? "border-orange-500 bg-orange-500/10 text-white"
-                      : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"
-              }`}
+              onClick={() => submit(option.key)}
             >
-              <span className="font-semibold">{option.key}</span>
-              <span>{option.text}</span>
-            </button>
+              {option.text}
+            </AnswerOption>
           );
         })}
       </div>
 
       {result && (
         <div className="mt-4">
-          <p className={`text-sm font-medium ${result.isCorrect ? "text-green-400" : "text-amber-400"}`}>
+          <p
+            className={`flex items-center gap-1.5 text-sm font-medium ${
+              result.isCorrect ? "text-success" : "text-warning"
+            }`}
+          >
+            {result.isCorrect ? <CheckIcon className="h-4 w-4" /> : <XIcon className="h-4 w-4" />}
             {result.isCorrect ? "Correct — well done." : "Not quite."}
           </p>
-          {result.explanation && <p className="mt-1 text-sm text-slate-300">{result.explanation}</p>}
+          {result.explanation && <p className="mt-1 text-sm text-text-secondary">{result.explanation}</p>}
           <div className="mt-4 flex gap-2">
             {canRetry && (
               <button
                 type="button"
                 onClick={tryAgain}
-                className="rounded-full border border-slate-700 px-5 py-2 text-sm text-slate-300 hover:border-slate-500"
+                className="rounded-full border border-border-strong px-5 py-2 text-sm text-text-secondary hover:border-text-muted"
               >
                 Try again
               </button>
@@ -96,7 +101,7 @@ export function CheckpointOverlay({
               <button
                 type="button"
                 onClick={onContinue}
-                className="rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Continue
               </button>

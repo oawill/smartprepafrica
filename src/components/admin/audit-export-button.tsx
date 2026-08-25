@@ -35,7 +35,7 @@ export function AuditExportButton({ rows }: { rows: Row[] }) {
     <button
       type="button"
       onClick={handleExport}
-      className="shrink-0 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+      className="shrink-0 rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
     >
       Export CSV
     </button>

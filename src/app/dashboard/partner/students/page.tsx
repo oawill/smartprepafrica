@@ -37,8 +37,8 @@ export default async function PartnerStudentsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">My students</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">My students</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Everyone who registered through your referral link. Only the information you need to
         track your referrals is shown here — no academic records or private details.
       </p>
@@ -46,10 +46,10 @@ export default async function PartnerStudentsPage() {
       <div className="mt-6">
         <Card title={`${referrals.length} referred student${referrals.length === 1 ? "" : "s"}`}>
           {referrals.length === 0 ? (
-            <p className="text-sm text-slate-400">No students referred yet.</p>
+            <p className="text-sm text-text-secondary">No students referred yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Name</th>
                   <th className="pb-2">Registered</th>
@@ -59,19 +59,19 @@ export default async function PartnerStudentsPage() {
               </thead>
               <tbody>
                 {referrals.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-800">
+                  <tr key={r.id} className="border-t border-border text-text-primary">
                     <td className="py-2">{r.user?.name ?? "—"}</td>
-                    <td className="py-2 text-slate-400">
+                    <td className="py-2 text-text-secondary">
                       {r.registeredAt
                         ? new Date(r.registeredAt).toLocaleDateString("en-NG")
                         : "—"}
                     </td>
-                    <td className="py-2 text-slate-400">{r.campaign?.name ?? "Direct"}</td>
+                    <td className="py-2 text-text-secondary">{r.campaign?.name ?? "Direct"}</td>
                     <td className="py-2">
                       {r.userId && paidUserIds.has(r.userId) ? (
-                        <span className="text-green-400">Paid</span>
+                        <span className="text-success">Paid</span>
                       ) : (
-                        <span className="text-slate-500">Registered</span>
+                        <span className="text-text-muted">Registered</span>
                       )}
                     </td>
                   </tr>

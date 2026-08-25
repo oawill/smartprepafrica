@@ -18,24 +18,24 @@ export default async function PartnerMarketingPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Marketing materials</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Marketing materials</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Ready-to-use assets and suggested messages for promoting SmartPrepAfrica.com.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {assets.length === 0 ? (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-secondary">
             No marketing materials have been published yet — check back soon.
           </p>
         ) : (
           assets.map((asset) => (
             <Card key={asset.id} title={asset.title}>
               {asset.description && (
-                <p className="text-sm text-slate-400">{asset.description}</p>
+                <p className="text-sm text-text-secondary">{asset.description}</p>
               )}
               {asset.content && (
-                <p className="mt-2 rounded-lg border border-slate-800 bg-slate-950 p-3 text-sm text-slate-300">
+                <p className="mt-2 rounded-lg border border-border bg-surface p-3 text-sm text-text-secondary">
                   {asset.content}
                 </p>
               )}
@@ -44,7 +44,7 @@ export default async function PartnerMarketingPage() {
                   href={asset.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-block text-sm text-orange-400 hover:underline"
+                  className="mt-2 inline-block text-sm text-brand-text hover:underline"
                 >
                   Open asset →
                 </a>

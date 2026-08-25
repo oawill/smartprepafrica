@@ -49,22 +49,22 @@ export default async function LearningAnalyticsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Learning analytics</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Learning analytics</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Aggregate rollups over enrollment, watch-progress, and mastery data.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Published lessons">
           <p className="text-3xl font-semibold">{publishedLessonCount}</p>
-          <p className="mt-1 text-xs text-slate-500">{videoLessonCount} video</p>
+          <p className="mt-1 text-xs text-text-muted">{videoLessonCount} video</p>
         </Card>
         <Card title="Total enrollments">
           <p className="text-3xl font-semibold">{totalEnrollments}</p>
         </Card>
         <Card title="Lesson completion rate">
           <p className="text-3xl font-semibold">{Math.round(completionRate)}%</p>
-          <p className="mt-1 text-xs text-slate-500">{completedProgressCount} of {totalProgressRows} started lessons</p>
+          <p className="mt-1 text-xs text-text-muted">{completedProgressCount} of {totalProgressRows} started lessons</p>
         </Card>
         <Card title="Average video watched">
           <p className="text-3xl font-semibold">
@@ -76,15 +76,15 @@ export default async function LearningAnalyticsPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Average mastery by subject">
           {masteryBySubject.length === 0 ? (
-            <p className="text-sm text-slate-500">No mastery data yet.</p>
+            <p className="text-sm text-text-muted">No mastery data yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {masteryBySubject
                 .sort((a, b) => (b._avg.masteryScore ?? 0) - (a._avg.masteryScore ?? 0))
                 .map((m) => (
-                  <li key={m.subjectId} className="flex justify-between text-slate-300">
+                  <li key={m.subjectId} className="flex justify-between text-text-secondary">
                     <span>{subjectNameById.get(m.subjectId) ?? m.subjectId}</span>
-                    <span className="text-slate-500">
+                    <span className="text-text-muted">
                       {Math.round(m._avg.masteryScore ?? 0)}% · {m._count} students
                     </span>
                   </li>
@@ -95,13 +95,13 @@ export default async function LearningAnalyticsPage() {
 
         <Card title="Weakest concepts platform-wide">
           {weakestTopics.length === 0 ? (
-            <p className="text-sm text-slate-500">No mastery data yet.</p>
+            <p className="text-sm text-text-muted">No mastery data yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {weakestTopics.map((t) => (
-                <li key={`${t.subjectId}-${t.topic}`} className="flex justify-between text-slate-300">
+                <li key={`${t.subjectId}-${t.topic}`} className="flex justify-between text-text-secondary">
                   <span>{t.topic}</span>
-                  <span className="text-slate-500">
+                  <span className="text-text-muted">
                     {Math.round(t._avg.masteryScore ?? 0)}% · {t._count} students
                   </span>
                 </li>

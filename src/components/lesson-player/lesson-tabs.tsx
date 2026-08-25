@@ -64,14 +64,14 @@ export function LessonTabs({
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-full border border-slate-800 p-1">
+        <div className="flex gap-1 rounded-full border border-border p-1">
           {tabs.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium sm:px-4 sm:text-sm ${
-                tab === t.key ? "bg-orange-500 text-slate-950" : "text-slate-400 hover:text-slate-200"
+                tab === t.key ? "bg-brand text-brand-foreground" : "text-text-muted hover:text-text-secondary"
               }`}
             >
               {t.label}
@@ -110,17 +110,17 @@ export function LessonTabs({
                   onEnded={() => onVideoEnded?.()}
                 />
               ) : (
-                <p className="rounded-lg border border-slate-800 bg-slate-900 p-6 text-sm text-slate-400">
+                <p className="rounded-lg border border-border bg-surface-raised p-6 text-sm text-text-secondary">
                   No video is available for this lesson yet.
                 </p>
               )}
 
               {learningObjectives.length > 0 && (
-                <div className="mt-4 rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div className="mt-4 rounded-lg border border-border bg-surface-raised p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
                     Students will learn
                   </p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-text-secondary">
                     {learningObjectives.map((o, i) => (
                       <li key={i}>{o}</li>
                     ))}
@@ -131,7 +131,7 @@ export function LessonTabs({
 
             {chapters.length > 0 && (
               <aside className="shrink-0 lg:w-72">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Chapters</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Chapters</p>
                 <div className="mt-2">
                   <ChapterList
                     chapters={chapters}
@@ -145,17 +145,17 @@ export function LessonTabs({
         )}
 
         {tab === "notes" && (
-          <div className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+          <div className="rounded-lg border border-border bg-surface-raised p-5">
             {notesMarkdown ? (
               <MessageContent content={notesMarkdown} />
             ) : (
-              <p className="text-sm text-slate-500">No notes have been added for this lesson yet.</p>
+              <p className="text-sm text-text-muted">No notes have been added for this lesson yet.</p>
             )}
           </div>
         )}
 
         {tab === "transcript" && (
-          <div className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+          <div className="rounded-lg border border-border bg-surface-raised p-5">
             <TranscriptView chapters={chapters} transcriptFull={transcriptFull} currentSeconds={currentSeconds} />
           </div>
         )}

@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { asOptions } from "@/lib/practice-types";
 import { examLabels, examSlugFor } from "@/lib/exam-slugs";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
+import { AnswerOption, type AnswerOptionState } from "@/components/exam/answer-option";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ResultsPage({
   params,
@@ -51,7 +53,7 @@ export default async function ResultsPage({
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <div className="flex items-center justify-between gap-4">
-        <Link href="/practice" className="text-sm text-slate-400 hover:text-white">
+        <Link href="/practice" className="text-sm text-text-secondary hover:text-text-primary">
           ← Back to exams
         </Link>
         <AiCoachPanel
@@ -66,19 +68,19 @@ export default async function ResultsPage({
         />
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
-        <p className="text-xs uppercase tracking-wide text-slate-500">
+      <div className="mt-4 rounded-2xl border border-border bg-surface-raised p-8 text-center">
+        <p className="text-xs uppercase tracking-wide text-text-muted">
           {examLabels[attempt.exam]} · {attempt.mode.replace("_", " ")}
         </p>
-        <p className="mt-2 text-5xl font-semibold text-orange-400">
+        <p className="mt-2 text-5xl font-semibold text-brand-text">
           {Math.round(attempt.score ?? 0)}%
         </p>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-text-secondary">
           {correctCount} of {attempt.totalItems} correct
         </p>
         <Link
           href={`/practice/${examSlugFor(attempt.exam)}`}
-          className="mt-4 inline-block rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          className="mt-4 inline-block rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           Retest
         </Link>
@@ -86,22 +88,22 @@ export default async function ResultsPage({
 
       {weakTopics.length > 0 && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <p className="text-sm font-medium text-slate-300">Weak concepts</p>
+          <div className="rounded-xl border border-border bg-surface-raised p-5">
+            <p className="text-sm font-medium text-text-secondary">Weak concepts</p>
             <ul className="mt-2 space-y-1 text-sm">
               {weakTopics.map(([topic, missed]) => (
-                <li key={topic} className="flex justify-between text-slate-300">
+                <li key={topic} className="flex justify-between text-text-secondary">
                   <span>{topic}</span>
-                  <span className="text-slate-500">{missed} missed</span>
+                  <span className="text-text-muted">{missed} missed</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-xl border border-orange-800 bg-orange-950/30 p-5">
-            <p className="text-sm font-medium text-orange-300">Recommended review</p>
+          <div className="rounded-xl border border-brand/40 bg-brand/10 p-5">
+            <p className="text-sm font-medium text-brand-text">Recommended review</p>
             {recommendedLessons.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-text-secondary">
                 No lessons cover these topics yet.
               </p>
             ) : (
@@ -110,11 +112,11 @@ export default async function ResultsPage({
                   <li key={lesson.id}>
                     <Link
                       href={`/educom/${lesson.module.course.id}/lessons/${lesson.id}`}
-                      className="text-orange-300 hover:underline"
+                      className="text-brand-text hover:underline"
                     >
                       {lesson.title}
                     </Link>
-                    <span className="text-slate-500"> — {lesson.module.course.title}</span>
+                    <span className="text-text-muted"> — {lesson.module.course.title}</span>
                   </li>
                 ))}
               </ul>
@@ -129,50 +131,38 @@ export default async function ResultsPage({
           return (
             <div
               key={response.id}
-              className="rounded-xl border border-slate-800 bg-slate-900 p-5"
+              className="rounded-xl border border-border bg-surface-raised p-5"
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-slate-500">Question {i + 1}</p>
-                {response.flagged && (
-                  <span className="rounded-full border border-amber-700 bg-amber-900/30 px-2.5 py-0.5 text-[11px] font-medium text-amber-300">
-                    Flagged for review
-                  </span>
-                )}
+                <p className="text-xs text-text-muted">Question {i + 1}</p>
+                {response.flagged && <Badge tone="warning">Flagged for review</Badge>}
               </div>
               {response.question.passageGroup && (
-                <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">
+                <p className="mt-1 text-[11px] uppercase tracking-wide text-text-muted">
                   {response.question.passageGroup.title ?? "Passage-based question"}
                 </p>
               )}
-              <p className="mt-1 font-medium">{response.question.prompt}</p>
+              <p className="mt-1 text-question font-medium text-text-primary">{response.question.prompt}</p>
 
-              <div className="mt-3 space-y-1.5 text-sm">
+              <div className="mt-3 space-y-1.5" role="list">
                 {options.map((option) => {
-                  const isCorrectOption =
-                    option.key === response.question.correctOption;
+                  const isCorrectOption = option.key === response.question.correctOption;
                   const isSelected = option.key === response.selectedOption;
+                  const state: AnswerOptionState = isCorrectOption
+                    ? "correct"
+                    : isSelected
+                      ? "incorrect"
+                      : "default";
                   return (
-                    <div
-                      key={option.key}
-                      className={`rounded-lg px-3 py-2 ${
-                        isCorrectOption
-                          ? "bg-green-900/40 text-green-300"
-                          : isSelected
-                            ? "bg-red-900/40 text-red-300"
-                            : "text-slate-400"
-                      }`}
-                    >
-                      <span className="font-semibold">{option.key}.</span>{" "}
-                      {option.text}
-                      {isCorrectOption && " ✓"}
-                      {isSelected && !isCorrectOption && " (your answer)"}
-                    </div>
+                    <AnswerOption key={option.key} optionKey={option.key} state={state}>
+                      <span className="text-answer">{option.text}</span>
+                    </AnswerOption>
                   );
                 })}
               </div>
 
               {response.question.explanation && (
-                <p className="mt-3 text-xs text-slate-500">
+                <p className="mt-3 text-sm text-text-secondary">
                   {response.question.explanation}
                 </p>
               )}
@@ -183,7 +173,7 @@ export default async function ResultsPage({
                     context={{}}
                     defaultMode="ASK"
                     triggerLabel="Ask AI Coach"
-                    triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-orange-700 px-3 py-1.5 text-xs font-medium text-orange-300 hover:border-orange-500"
+                    triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-brand/50 px-3 py-1.5 text-xs font-medium text-brand-text hover:border-brand"
                     suggestedPrompts={[
                       "Why was my answer wrong?",
                       "Explain the solution",

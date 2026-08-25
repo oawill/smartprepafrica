@@ -4,6 +4,7 @@ import { auth, signOut } from "@/lib/auth";
 import { roleLabel, navForRole } from "@/lib/roles";
 import { Logo } from "@/components/brand/logo";
 import { MobileDashboardNav } from "@/components/dashboard/mobile-nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export default async function DashboardLayout({
   children,
@@ -34,15 +35,18 @@ export default async function DashboardLayout({
         signOutAction={handleSignOut}
       />
 
-      <aside className="hidden w-56 flex-col border-r border-slate-800 bg-slate-900 p-4 sm:flex">
-        <Logo size="sm" />
+      <aside className="hidden w-56 flex-col border-r border-border bg-surface-raised p-4 sm:flex">
+        <div className="flex items-center justify-between">
+          <Logo size="sm" />
+          <ThemeToggle />
+        </div>
 
         <nav className="mt-8 flex flex-col gap-1 text-sm">
           {navItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className="rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white"
+              className="rounded-lg px-3 py-2 text-text-secondary hover:bg-surface-sunken hover:text-text-primary"
             >
               {item.label}
             </Link>
@@ -50,12 +54,12 @@ export default async function DashboardLayout({
         </nav>
 
         <div className="mt-auto space-y-3">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             Signed in as{" "}
-            <span className="text-slate-300">{roleLabel[role]}</span>
+            <span className="text-text-secondary">{roleLabel[role]}</span>
           </p>
           <form action={handleSignOut}>
-            <button className="w-full rounded-lg border border-slate-700 py-2 text-xs text-slate-300 hover:border-slate-500">
+            <button className="w-full rounded-lg border border-border-strong py-2 text-xs text-text-secondary hover:border-text-muted">
               Sign out
             </button>
           </form>

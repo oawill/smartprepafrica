@@ -33,8 +33,8 @@ export default async function AdminDisputesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">School attribution disputes</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-2xl font-semibold text-text-primary">School attribution disputes</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         A school&apos;s partner attribution is never overwritten automatically — these are cases
         where a second partner&apos;s lead reached School Registered for a school another partner
         is already attributed to.
@@ -43,17 +43,17 @@ export default async function AdminDisputesPage() {
       <div className="mt-6">
         <Card title={`Open disputes (${openDisputes.length})`}>
           {openDisputes.length === 0 ? (
-            <p className="text-sm text-slate-400">No open disputes.</p>
+            <p className="text-sm text-text-secondary">No open disputes.</p>
           ) : (
             <div className="space-y-3">
               {openDisputes.map((d) => (
-                <div key={d.id} className="rounded-lg border border-amber-900 p-4">
-                  <p className="font-medium">{d.school.name}</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                <div key={d.id} className="rounded-lg border border-warning/40 bg-warning-surface p-4">
+                  <p className="font-medium text-text-primary">{d.school.name}</p>
+                  <p className="mt-1 text-xs text-text-muted">
                     Incumbent: {d.incumbentPartner.firstName} {d.incumbentPartner.lastName} (
                     {d.incumbentPartner.partnerNumber})
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-text-muted">
                     Challenger: {d.challengerPartner.firstName} {d.challengerPartner.lastName} (
                     {d.challengerPartner.partnerNumber}) — lead {d.challengerLead.leadNumber}, first
                     submitted {new Date(d.challengerLead.createdAt).toLocaleDateString("en-NG")}
@@ -63,13 +63,13 @@ export default async function AdminDisputesPage() {
                     <input
                       name="resolution"
                       placeholder="Decision note"
-                      className="flex-1 min-w-[200px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs outline-none focus:border-orange-500"
+                      className="flex-1 min-w-[200px] rounded-lg border border-border-strong bg-surface px-3 py-1.5 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                     />
                     <button
                       type="submit"
                       name="decision"
                       value="INCUMBENT"
-                      className="rounded-lg border border-green-800 px-3 py-1.5 text-xs text-green-400 hover:border-green-600"
+                      className="rounded-lg border border-success/40 px-3 py-1.5 text-xs text-success hover:border-success"
                     >
                       Keep incumbent
                     </button>
@@ -77,7 +77,7 @@ export default async function AdminDisputesPage() {
                       type="submit"
                       name="decision"
                       value="CHALLENGER"
-                      className="rounded-lg border border-blue-800 px-3 py-1.5 text-xs text-blue-400 hover:border-blue-600"
+                      className="rounded-lg border border-info/40 px-3 py-1.5 text-xs text-info hover:border-info"
                     >
                       Reassign to challenger
                     </button>
@@ -92,10 +92,10 @@ export default async function AdminDisputesPage() {
       <div className="mt-6">
         <Card title="Resolved">
           {resolvedDisputes.length === 0 ? (
-            <p className="text-sm text-slate-400">No disputes resolved yet.</p>
+            <p className="text-sm text-text-secondary">No disputes resolved yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">School</th>
                   <th className="pb-2">Decision</th>
@@ -103,9 +103,9 @@ export default async function AdminDisputesPage() {
               </thead>
               <tbody>
                 {resolvedDisputes.map((d) => (
-                  <tr key={d.id} className="border-t border-slate-800">
-                    <td className="py-2">{d.school.name}</td>
-                    <td className="py-2 text-slate-400">{d.status}</td>
+                  <tr key={d.id} className="border-t border-border">
+                    <td className="py-2 text-text-primary">{d.school.name}</td>
+                    <td className="py-2 text-text-secondary">{d.status}</td>
                   </tr>
                 ))}
               </tbody>

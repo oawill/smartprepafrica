@@ -117,7 +117,7 @@ export default async function SchoolDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{school.name}</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             Enroll students, monitor cohort performance, and manage your
             school&apos;s SmartPrepAfrica access.
           </p>
@@ -125,13 +125,13 @@ export default async function SchoolDashboard() {
         <div className="flex shrink-0 gap-2">
           <Link
             href={`/educom/schools/${school.id}`}
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             View public profile
           </Link>
           <a
             href="/api/school/roster.csv"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             Export roster CSV
           </a>
@@ -164,18 +164,18 @@ export default async function SchoolDashboard() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Students requiring attention (avg score < 40%)">
           {needsAttention.length === 0 ? (
-            <p className="text-sm text-slate-400">None right now.</p>
+            <p className="text-sm text-text-secondary">None right now.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {needsAttention.map(({ student, avg }) => (
                 <li key={student.id} className="flex justify-between">
                   <Link
                     href={`/dashboard/school/students/${student.id}`}
-                    className="text-slate-200 hover:text-orange-400"
+                    className="text-text-primary hover:text-brand-text"
                   >
                     {student.user.name}
                   </Link>
-                  <span className="text-red-400">{Math.round(avg)}%</span>
+                  <span className="text-danger">{Math.round(avg)}%</span>
                 </li>
               ))}
             </ul>
@@ -183,18 +183,18 @@ export default async function SchoolDashboard() {
         </Card>
         <Card title="Top-performing students">
           {topPerformers.length === 0 ? (
-            <p className="text-sm text-slate-400">No scored attempts yet.</p>
+            <p className="text-sm text-text-secondary">No scored attempts yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {topPerformers.map(({ student, avg }) => (
                 <li key={student.id} className="flex justify-between">
                   <Link
                     href={`/dashboard/school/students/${student.id}`}
-                    className="text-slate-200 hover:text-orange-400"
+                    className="text-text-primary hover:text-brand-text"
                   >
                     {student.user.name}
                   </Link>
-                  <span className="text-green-400">{Math.round(avg)}%</span>
+                  <span className="text-success">{Math.round(avg)}%</span>
                 </li>
               ))}
             </ul>
@@ -206,7 +206,7 @@ export default async function SchoolDashboard() {
         <Card title="School profile">
           <form action={updateSchoolProfile} className="space-y-3">
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="name">
+              <label className="block text-xs text-text-secondary" htmlFor="name">
                 Name
               </label>
               <input
@@ -214,22 +214,22 @@ export default async function SchoolDashboard() {
                 name="name"
                 defaultValue={school.name}
                 required
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="address">
+              <label className="block text-xs text-text-secondary" htmlFor="address">
                 Address
               </label>
               <input
                 id="address"
                 name="address"
                 defaultValue={school.address ?? ""}
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="logoUrl">
+              <label className="block text-xs text-text-secondary" htmlFor="logoUrl">
                 Logo URL
               </label>
               <input
@@ -237,11 +237,11 @@ export default async function SchoolDashboard() {
                 name="logoUrl"
                 defaultValue={school.logoUrl ?? ""}
                 placeholder="https://…"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="coverImageUrl">
+              <label className="block text-xs text-text-secondary" htmlFor="coverImageUrl">
                 Cover image URL
               </label>
               <input
@@ -249,18 +249,18 @@ export default async function SchoolDashboard() {
                 name="coverImageUrl"
                 defaultValue={school.coverImageUrl ?? ""}
                 placeholder="https://…"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="state">
+              <label className="block text-xs text-text-secondary" htmlFor="state">
                 State
               </label>
               <select
                 id="state"
                 name="state"
                 defaultValue={school.state ?? ""}
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               >
                 <option value="">Select a state…</option>
                 {NIGERIAN_STATES.map((s) => (
@@ -271,7 +271,7 @@ export default async function SchoolDashboard() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-400" htmlFor="description">
+              <label className="block text-xs text-text-secondary" htmlFor="description">
                 Public description
               </label>
               <textarea
@@ -280,12 +280,12 @@ export default async function SchoolDashboard() {
                 defaultValue={school.description ?? ""}
                 rows={3}
                 placeholder="What makes your school worth learning from, wherever a student is based?"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Save
             </button>
@@ -294,17 +294,17 @@ export default async function SchoolDashboard() {
 
         <Card title="Classes">
           {school.classes.length === 0 ? (
-            <p className="text-sm text-slate-400">No classes yet.</p>
+            <p className="text-sm text-text-secondary">No classes yet.</p>
           ) : (
             <ul className="space-y-1.5">
               {school.classes.map((c) => (
                 <li key={c.id}>
                   <Link
                     href={`/dashboard/school/classes/${c.id}`}
-                    className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm hover:border-slate-600"
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-border-strong"
                   >
                     <span>{c.name}</span>
-                    <span className="text-orange-400">View →</span>
+                    <span className="text-brand-text">View →</span>
                   </Link>
                 </li>
               ))}
@@ -316,11 +316,11 @@ export default async function SchoolDashboard() {
               name="className"
               required
               placeholder="New class name (e.g. SS2 Gold)"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Create
             </button>
@@ -330,7 +330,7 @@ export default async function SchoolDashboard() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Add a teacher">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             The teacher must already have a SmartPrepAfrica Teacher account.
           </p>
           <form action={addTeacherByEmail} className="mt-2 flex gap-2">
@@ -339,11 +339,11 @@ export default async function SchoolDashboard() {
               name="teacherEmail"
               required
               placeholder="teacher@example.com"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Add
             </button>
@@ -351,7 +351,7 @@ export default async function SchoolDashboard() {
         </Card>
 
         <Card title="Add a student">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             The student must already have a SmartPrepAfrica Student account.
           </p>
           <form action={addStudentByEmail} className="mt-2 flex gap-2">
@@ -360,11 +360,11 @@ export default async function SchoolDashboard() {
               name="studentEmail"
               required
               placeholder="student@example.com"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Add
             </button>
@@ -380,16 +380,16 @@ export default async function SchoolDashboard() {
                 const available = p.vouchers.filter((v) => v.status === "ACTIVE").length;
                 const redeemed = p.vouchers.filter((v) => v.status === "REDEEMED").length;
                 return (
-                  <div key={p.id} className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+                  <div key={p.id} className="rounded-lg border border-border bg-surface p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-slate-100">{p.name}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="font-medium text-text-primary">{p.name}</p>
+                        <p className="text-xs text-text-muted">
                           Sponsored by {p.sponsor.organization ?? p.sponsor.user.name} ·{" "}
                           {PLAN_LABELS[p.plan]}
                         </p>
                       </div>
-                      <p className="text-sm text-slate-300">
+                      <p className="text-sm text-text-secondary">
                         {redeemed} used · {available} available
                       </p>
                     </div>
@@ -399,7 +399,7 @@ export default async function SchoolDashboard() {
                         <select
                           name="studentProfileId"
                           required
-                          className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                          className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                         >
                           <option value="">Select a student…</option>
                           {students.map((s) => (
@@ -410,7 +410,7 @@ export default async function SchoolDashboard() {
                         </select>
                         <button
                           type="submit"
-                          className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                          className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                         >
                           Assign seat
                         </button>

@@ -56,9 +56,9 @@ export default async function QuestionDetailPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            {question.questionNumber ?? question.id} <span className="text-base font-normal text-slate-500">· {question.status}</span>
+            {question.questionNumber ?? question.id} <span className="text-base font-normal text-text-muted">· {question.status}</span>
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             {question.subject.name} · {question.exam}
             {creator && ` · Created by ${creator.name}`}
             {reviewer && ` · Reviewed by ${reviewer.name}`}
@@ -68,7 +68,7 @@ export default async function QuestionDetailPage({
           {question.status === "DRAFT" && hasPermission(adminRole, "questions.create") && (
             <form action={submitForReview}>
               <input type="hidden" name="id" value={question.id} />
-              <button type="submit" className="rounded-lg border border-blue-800 px-3 py-2 text-xs text-blue-400 hover:border-blue-600">
+              <button type="submit" className="rounded-lg border border-info/40 px-3 py-2 text-xs text-info hover:border-info">
                 Submit for review
               </button>
             </form>
@@ -77,7 +77,7 @@ export default async function QuestionDetailPage({
             hasPermission(adminRole, "questions.approve") && (
               <form action={approveQuestion}>
                 <input type="hidden" name="id" value={question.id} />
-                <button type="submit" className="rounded-lg border border-green-800 px-3 py-2 text-xs text-green-400 hover:border-green-600">
+                <button type="submit" className="rounded-lg border border-success/40 px-3 py-2 text-xs text-success hover:border-success">
                   Approve
                 </button>
               </form>
@@ -85,7 +85,7 @@ export default async function QuestionDetailPage({
           {question.status === "NEEDS_REVIEW" && hasPermission(adminRole, "questions.approve") && (
             <form action={sendBackForChanges}>
               <input type="hidden" name="id" value={question.id} />
-              <button type="submit" className="rounded-lg border border-amber-800 px-3 py-2 text-xs text-amber-400 hover:border-amber-600">
+              <button type="submit" className="rounded-lg border border-warning/40 px-3 py-2 text-xs text-warning hover:border-warning">
                 Send back for changes
               </button>
             </form>
@@ -93,7 +93,7 @@ export default async function QuestionDetailPage({
           {question.status === "APPROVED" && hasPermission(adminRole, "questions.publish") && (
             <form action={publishQuestion}>
               <input type="hidden" name="id" value={question.id} />
-              <button type="submit" className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-slate-950 hover:bg-orange-400">
+              <button type="submit" className="rounded-lg bg-brand px-3 py-2 text-xs font-medium text-brand-foreground hover:bg-brand-hover">
                 Publish
               </button>
             </form>
@@ -101,7 +101,7 @@ export default async function QuestionDetailPage({
           {question.status !== "ARCHIVED" && hasPermission(adminRole, "questions.archive") && (
             <form action={archiveQuestion}>
               <input type="hidden" name="id" value={question.id} />
-              <button type="submit" className="rounded-lg border border-red-900 px-3 py-2 text-xs text-red-400 hover:border-red-700">
+              <button type="submit" className="rounded-lg border border-danger/40 px-3 py-2 text-xs text-danger hover:border-danger">
                 Archive
               </button>
             </form>
@@ -109,7 +109,7 @@ export default async function QuestionDetailPage({
           {question.status === "ARCHIVED" && hasPermission(adminRole, "questions.archive") && (
             <form action={restoreQuestion}>
               <input type="hidden" name="id" value={question.id} />
-              <button type="submit" className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+              <button type="submit" className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted">
                 Restore to draft
               </button>
             </form>
@@ -117,7 +117,7 @@ export default async function QuestionDetailPage({
           {hasPermission(adminRole, "questions.create") && (
             <form action={duplicateQuestion}>
               <input type="hidden" name="id" value={question.id} />
-              <button type="submit" className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+              <button type="submit" className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted">
                 Duplicate
               </button>
             </form>
@@ -126,13 +126,13 @@ export default async function QuestionDetailPage({
       </div>
 
       {error && (
-        <div className="mt-4 rounded-lg border border-red-900 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+        <div className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {question.duplicateOfId && duplicateOf && (
-        <div className="mt-4 rounded-lg border border-amber-800 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+        <div className="mt-4 rounded-lg border border-warning/40 bg-warning-surface px-4 py-3 text-sm text-warning">
           Flagged as a possible duplicate of{" "}
           <Link href={`/dashboard/admin/questions/${duplicateOf.id}`} className="underline">
             {duplicateOf.questionNumber ?? duplicateOf.id}
@@ -170,7 +170,7 @@ export default async function QuestionDetailPage({
               }}
             />
           ) : (
-            <p className="text-sm text-slate-500">Your admin role does not have permission to edit questions.</p>
+            <p className="text-sm text-text-muted">Your admin role does not have permission to edit questions.</p>
           )}
         </Card>
       </div>

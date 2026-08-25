@@ -14,8 +14,8 @@ export default async function PartnerLeaderboardPage() {
   if (!settings.leaderboardEnabled) {
     return (
       <div>
-        <h1 className="text-2xl font-semibold">Leaderboard</h1>
-        <p className="mt-2 text-sm text-slate-400">The leaderboard is currently disabled.</p>
+        <h1 className="text-h2 font-semibold text-text-primary">Leaderboard</h1>
+        <p className="mt-2 text-sm text-text-secondary">The leaderboard is currently disabled.</p>
       </div>
     );
   }
@@ -40,18 +40,18 @@ export default async function PartnerLeaderboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Partner leaderboard</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Partner leaderboard</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Ranked by paid students referred. You can hide yourself from this list in your profile.
       </p>
 
       <div className="mt-6">
         <Card title="Top partners">
           {ranked.length === 0 ? (
-            <p className="text-sm text-slate-400">No partners on the leaderboard yet.</p>
+            <p className="text-sm text-text-secondary">No partners on the leaderboard yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">#</th>
                   <th className="pb-2">Partner</th>
@@ -63,13 +63,13 @@ export default async function PartnerLeaderboardPage() {
                 {ranked.map((r, i) => (
                   <tr
                     key={r.partner.id}
-                    className={`border-t border-slate-800 ${r.partner.id === currentPartner?.id ? "bg-slate-800/40" : ""}`}
+                    className={`border-t border-border text-text-primary ${r.partner.id === currentPartner?.id ? "bg-brand/10" : ""}`}
                   >
                     <td className="py-2">{i + 1}</td>
                     <td className="py-2">
                       {r.partner.firstName} {r.partner.lastName.charAt(0)}.
                     </td>
-                    <td className="py-2 text-slate-400">{r.tier?.name ?? "—"}</td>
+                    <td className="py-2 text-text-secondary">{r.tier?.name ?? "—"}</td>
                     <td className="py-2 font-semibold">{r.paidStudents}</td>
                   </tr>
                 ))}

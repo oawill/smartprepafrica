@@ -4,7 +4,7 @@ import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { createSubject, renameSubject, renameOrMergeTopic } from "@/app/dashboard/admin/subjects/actions";
 
 const inputClass =
-  "rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
+  "rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
 
 export default async function AdminSubjectsPage() {
   await requireAdminPagePermission("subjects.manage");
@@ -28,8 +28,8 @@ export default async function AdminSubjectsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Subjects & topics</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Subjects & topics</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Exam types (WAEC, NECO, UTME, Post-UTME) are a fixed set built into the platform.
         Subjects and topics are managed here.
       </p>
@@ -38,7 +38,7 @@ export default async function AdminSubjectsPage() {
         <Card title="Add subject">
           <form action={createSubject} className="flex gap-2">
             <input name="name" placeholder="e.g. Further Mathematics" required className={`flex-1 ${inputClass}`} />
-            <button type="submit" className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400">
+            <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover">
               Add
             </button>
           </form>
@@ -56,14 +56,14 @@ export default async function AdminSubjectsPage() {
               <form action={renameSubject} className="flex gap-2">
                 <input type="hidden" name="id" value={subject.id} />
                 <input name="name" defaultValue={subject.name} required className={`flex-1 ${inputClass}`} />
-                <button type="submit" className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+                <button type="submit" className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted">
                   Rename
                 </button>
               </form>
 
               {topics.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-xs font-medium text-slate-500">Topics</p>
+                  <p className="text-xs font-medium text-text-muted">Topics</p>
                   <div className="mt-2 space-y-2">
                     {topics.map((topic) => (
                       <form
@@ -73,10 +73,10 @@ export default async function AdminSubjectsPage() {
                       >
                         <input type="hidden" name="subjectId" value={subject.id} />
                         <input type="hidden" name="from" value={topic.name} />
-                        <span className="text-slate-300">
-                          {topic.name} <span className="text-xs text-slate-500">({topic.count})</span>
+                        <span className="text-text-secondary">
+                          {topic.name} <span className="text-xs text-text-muted">({topic.count})</span>
                         </span>
-                        <span className="text-slate-600">→</span>
+                        <span className="text-text-muted">→</span>
                         <input
                           name="to"
                           placeholder="Rename to / merge into…"
@@ -84,7 +84,7 @@ export default async function AdminSubjectsPage() {
                         />
                         <button
                           type="submit"
-                          className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-500"
+                          className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted"
                         >
                           Apply
                         </button>

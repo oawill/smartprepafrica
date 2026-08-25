@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { getPlatformSettings } from "@/lib/legal/settings";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const columns = [
   {
@@ -42,25 +43,26 @@ export async function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-slate-800">
+    <footer className="border-t border-border">
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <Logo size="sm" />
-            <p className="mt-3 max-w-xs text-sm text-slate-500">
+            <p className="mt-3 max-w-xs text-sm text-text-muted">
               Prepare smarter, pass better, achieve more.
             </p>
+            <ThemeToggle className="mt-4" />
           </div>
 
           {columns.map((column) => (
             <div key={column.heading}>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <h3 className="text-label font-semibold uppercase tracking-wide text-text-muted">
                 {column.heading}
               </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {column.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-slate-400 hover:text-white">
+                    <Link href={link.href} className="text-text-secondary hover:text-text-primary">
                       {link.label}
                     </Link>
                   </li>
@@ -70,7 +72,7 @@ export async function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 border-t border-slate-800 pt-6 text-center text-xs text-slate-500">
+        <div className="mt-10 border-t border-border pt-6 text-center text-xs text-text-muted">
           <p className="mb-1">SmartPrepAfrica.com is a {legalName} company.</p>
           © {year} {legalName}. All rights reserved.
         </div>

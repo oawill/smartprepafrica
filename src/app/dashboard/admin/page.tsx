@@ -127,18 +127,18 @@ export default async function AdminDashboard({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Platform health</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-h2 font-semibold text-text-primary">Platform health</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             Central control center for SmartPrepAfrica.com.
           </p>
         </div>
-        <div className="flex gap-1 rounded-lg border border-slate-800 bg-slate-900 p-1 text-xs">
+        <div className="flex gap-1 rounded-lg border border-border bg-surface-raised p-1 text-xs">
           {RANGE_KEYS.map((key) => (
             <Link
               key={key}
               href={`/dashboard/admin?range=${key}`}
               className={`rounded-md px-3 py-1.5 ${
-                range === key ? "bg-orange-500 text-slate-950" : "text-slate-300 hover:text-white"
+                range === key ? "bg-brand text-brand-foreground" : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {DATE_RANGE_LABELS[key]}
@@ -147,7 +147,7 @@ export default async function AdminDashboard({
         </div>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Users</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Users</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Total students">
           <p className="text-3xl font-semibold">{totalStudents}</p>
@@ -169,7 +169,7 @@ export default async function AdminDashboard({
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Education</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Education</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Total questions">
           <p className="text-3xl font-semibold">{totalQuestions}</p>
@@ -191,7 +191,7 @@ export default async function AdminDashboard({
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Schools</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Schools</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Registered">
           <p className="text-3xl font-semibold">{schoolsRegistered}</p>
@@ -207,7 +207,7 @@ export default async function AdminDashboard({
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Revenue</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Revenue</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Paid subscribers">
           <p className="text-3xl font-semibold">{paidSubscribers}</p>
@@ -223,7 +223,7 @@ export default async function AdminDashboard({
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">AI</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">AI</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Coach users (30d)">
           <p className="text-3xl font-semibold">{aiCoachUsers.length}</p>
@@ -239,9 +239,9 @@ export default async function AdminDashboard({
         </Card>
         <Card title="Most-asked subjects">
           {topSubjectIds.length === 0 ? (
-            <p className="text-sm text-slate-500">No AI Coach conversations yet.</p>
+            <p className="text-sm text-text-muted">No AI Coach conversations yet.</p>
           ) : (
-            <ul className="text-sm text-slate-300">
+            <ul className="text-sm text-text-secondary">
               {topAiSubjects.map((s) => (
                 <li key={s.subjectId}>
                   {subjectNameById.get(s.subjectId!) ?? "Unknown"} — {s._count._all}
@@ -252,7 +252,7 @@ export default async function AdminDashboard({
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Platform</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Platform</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Open support requests">
           <p className="text-3xl font-semibold">{openSupportRequests}</p>
@@ -261,7 +261,7 @@ export default async function AdminDashboard({
           <p className="text-3xl font-semibold">
             {pendingPartnerApprovals + pendingSchoolApprovals + pendingCourseApprovals}
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             {pendingPartnerApprovals} partners · {pendingSchoolApprovals} schools · {pendingCourseApprovals} courses
           </p>
         </Card>
@@ -270,7 +270,7 @@ export default async function AdminDashboard({
         </Card>
         <Card title="Failed logins (range)">
           <p className="text-3xl font-semibold">{failedLoginsInRange}</p>
-          <p className="text-xs text-slate-500">Basic heuristic — flagged for manual review, not auto-blocked.</p>
+          <p className="text-xs text-text-muted">Basic heuristic — flagged for manual review, not auto-blocked.</p>
         </Card>
       </div>
     </div>

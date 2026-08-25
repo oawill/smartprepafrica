@@ -32,14 +32,14 @@ export default async function ParentDashboard() {
   return (
     <div>
       <h1 className="text-2xl font-semibold">Parent dashboard</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-text-secondary">
         Monitor your child&apos;s exam prep and course progress in one place.
       </p>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Linked children">
           {links.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               No children linked yet. Add a child using their student email
               below to start monitoring progress.
             </p>
@@ -49,18 +49,18 @@ export default async function ParentDashboard() {
                 <li key={link.id}>
                   <Link
                     href={`/dashboard/parent/children/${link.studentId}`}
-                    className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm hover:border-slate-600"
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 text-sm hover:border-border-strong"
                   >
                     <span>
-                      <span className="font-medium text-slate-100">
+                      <span className="font-medium text-text-primary">
                         {link.student.user.name}
                       </span>
-                      <span className="block text-xs text-slate-500">
+                      <span className="block text-xs text-text-muted">
                         {link.student.school?.name ?? "No school"}
                         {link.student.class ? ` · ${link.student.class.name}` : ""}
                       </span>
                     </span>
-                    <span className="text-orange-400">View →</span>
+                    <span className="text-brand-text">View →</span>
                   </Link>
                 </li>
               ))}
@@ -73,11 +73,11 @@ export default async function ParentDashboard() {
               name="childEmail"
               required
               placeholder="Child's student email"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Link child
             </button>
@@ -86,16 +86,16 @@ export default async function ParentDashboard() {
 
         <Card title="Payment history">
           {payments.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               No payments yet. Purchase a subscription or sponsor your
               child&apos;s access from their profile page.
             </p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {payments.map((p) => (
-                <li key={p.id} className="flex justify-between text-slate-300">
+                <li key={p.id} className="flex justify-between text-text-secondary">
                   <span>{p.createdAt.toLocaleDateString()}</span>
-                  <span className="text-slate-500">
+                  <span className="text-text-muted">
                     ₦{(p.amountKobo / 100).toLocaleString()} · {p.status}
                   </span>
                 </li>

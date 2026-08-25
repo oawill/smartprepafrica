@@ -9,8 +9,8 @@ export default async function BulkUploadPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Bulk upload questions</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Bulk upload questions</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         CSV only. Every row is validated before anything is imported — nothing is written to the
         question bank until you confirm. Imported rows always start as drafts and still need
         review and publishing.

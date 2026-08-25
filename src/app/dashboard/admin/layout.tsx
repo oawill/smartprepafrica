@@ -7,6 +7,7 @@ import { navForAdminRole } from "@/lib/admin/nav";
 import { Logo } from "@/components/brand/logo";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { MobileDashboardNav } from "@/components/dashboard/mobile-nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await requireAdminPage();
@@ -23,19 +24,22 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="flex min-h-screen flex-1 flex-col sm:flex-row">
       <MobileDashboardNav navItems={flatItems} roleLabel={roleLabel} signOutAction={handleSignOut} />
 
-      <aside className="hidden w-64 flex-col border-r border-slate-800 bg-slate-900 p-4 sm:flex">
-        <Logo size="sm" />
+      <aside className="hidden w-64 flex-col border-r border-border bg-surface-raised p-4 sm:flex">
+        <div className="flex items-center justify-between">
+          <Logo size="sm" />
+          <ThemeToggle />
+        </div>
         <div className="mt-6 flex-1 overflow-y-auto">
           <AdminNav groups={groups} />
         </div>
-        <div className="mt-4 space-y-3 border-t border-slate-800 pt-4">
-          <p className="text-xs text-slate-500">
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
+          <p className="text-xs text-text-muted">
             Signed in as
             <br />
-            <span className="text-slate-300">{session.user.name}</span> · {roleLabel}
+            <span className="text-text-secondary">{session.user.name}</span> · {roleLabel}
           </p>
           <form action={handleSignOut}>
-            <button className="w-full rounded-lg border border-slate-700 py-2 text-xs text-slate-300 hover:border-slate-500">
+            <button className="w-full rounded-lg border border-border-strong py-2 text-xs text-text-secondary hover:border-text-muted">
               Sign out
             </button>
           </form>
@@ -43,19 +47,19 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="hidden items-center justify-between border-b border-slate-800 bg-slate-950 px-6 py-3 sm:flex">
+        <header className="hidden items-center justify-between border-b border-border bg-surface px-6 py-3 sm:flex">
           <div>
-            <p className="text-sm font-semibold text-slate-200">SmartPrepAfrica.com Administration</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm font-semibold text-text-primary">SmartPrepAfrica.com Administration</p>
+            <p className="text-xs text-text-muted">
               {session.user.name} · {roleLabel}
             </p>
           </div>
-          <div className="flex gap-4 text-xs text-slate-400">
-            <Link href="/dashboard/admin/security/login-activity" className="hover:text-slate-200">
+          <div className="flex gap-4 text-xs text-text-secondary">
+            <Link href="/dashboard/admin/security/login-activity" className="hover:text-text-primary">
               Security
             </Link>
             <form action={handleSignOut}>
-              <button type="submit" className="hover:text-slate-200">
+              <button type="submit" className="hover:text-text-primary">
                 Sign out
               </button>
             </form>

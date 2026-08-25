@@ -8,7 +8,7 @@ export function BulkResultBanner({ result, onDismiss }: { result: BulkResult; on
   return (
     <div
       className={`mb-4 rounded-lg border px-4 py-3 text-sm ${
-        hasFailures ? "border-amber-800 bg-amber-500/5 text-amber-300" : "border-green-900 bg-green-500/5 text-green-400"
+        hasFailures ? "border-warning/40 bg-warning-surface text-warning" : "border-success/40 bg-success-surface text-success"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -18,7 +18,7 @@ export function BulkResultBanner({ result, onDismiss }: { result: BulkResult; on
             {hasFailures && ` ${result.failed.length} could not be updated.`}
           </p>
           {hasFailures && (
-            <ul className="mt-2 space-y-0.5 text-xs text-amber-400/80">
+            <ul className="mt-2 space-y-0.5 text-xs text-warning/80">
               {result.failed.slice(0, 10).map((f) => (
                 <li key={f.id}>
                   <span className="font-mono">{f.id.slice(0, 10)}…</span> — {f.reason}
@@ -28,7 +28,7 @@ export function BulkResultBanner({ result, onDismiss }: { result: BulkResult; on
             </ul>
           )}
         </div>
-        <button type="button" onClick={onDismiss} className="shrink-0 text-xs text-slate-400 hover:text-slate-200">
+        <button type="button" onClick={onDismiss} className="shrink-0 text-xs text-text-muted hover:text-text-primary">
           Dismiss
         </button>
       </div>

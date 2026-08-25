@@ -81,18 +81,18 @@ export default async function AdminQuestionsPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Questions</h1>
-          <p className="mt-1 text-sm text-slate-400">{total} total — {PAGE_SIZE} shown per page.</p>
+          <p className="mt-1 text-sm text-text-secondary">{total} total — {PAGE_SIZE} shown per page.</p>
         </div>
         <Link
           href="/dashboard/admin/questions/new"
-          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           + New question
         </Link>
       </div>
 
       {params.error && (
-        <div className="mt-4 rounded-lg border border-red-900 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+        <div className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-4 py-3 text-sm text-danger">
           {params.error}
         </div>
       )}
@@ -104,12 +104,12 @@ export default async function AdminQuestionsPage({
               name="q"
               defaultValue={q}
               placeholder="Text, question ID, topic…"
-              className="min-w-[220px] flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="min-w-[220px] flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none placeholder:text-text-muted focus:border-brand"
             />
             <select
               name="status"
               defaultValue={params.status ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="">Any status</option>
               <option value="DRAFT">Draft</option>
@@ -121,7 +121,7 @@ export default async function AdminQuestionsPage({
             <select
               name="exam"
               defaultValue={params.exam ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="">Any exam</option>
               <option value="WAEC">WAEC</option>
@@ -132,7 +132,7 @@ export default async function AdminQuestionsPage({
             <select
               name="subjectId"
               defaultValue={params.subjectId ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="">Any subject</option>
               {subjects.map((s) => (
@@ -143,7 +143,7 @@ export default async function AdminQuestionsPage({
             </select>
             <button
               type="submit"
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
             >
               Search
             </button>
@@ -161,16 +161,16 @@ export default async function AdminQuestionsPage({
         <div className="mt-4 flex items-center justify-center gap-2 text-sm">
           <Link
             href={pageHref({ page: String(Math.max(1, page - 1)) })}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             ← Prev
           </Link>
-          <span className="text-slate-500">
+          <span className="text-text-muted">
             Page {page} of {totalPages}
           </span>
           <Link
             href={pageHref({ page: String(Math.min(totalPages, page + 1)) })}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             Next →
           </Link>

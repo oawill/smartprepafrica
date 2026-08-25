@@ -6,9 +6,9 @@ import { Card } from "@/components/dashboard/card";
 import { getStudentInsights } from "@/lib/student-insights";
 
 const alertStyles: Record<string, string> = {
-  warning: "border-amber-800 bg-amber-900/30 text-amber-300",
-  info: "border-slate-700 bg-slate-800/50 text-slate-300",
-  success: "border-green-800 bg-green-900/30 text-green-300",
+  warning: "border-warning/40 bg-warning-surface text-warning",
+  info: "border-border-strong bg-surface-sunken text-text-secondary",
+  success: "border-success/40 bg-success-surface text-success",
 };
 
 export default async function SchoolStudentDetailPage({
@@ -36,11 +36,11 @@ export default async function SchoolStudentDetailPage({
 
   return (
     <div>
-      <Link href="/dashboard/school" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/dashboard/school" className="text-sm text-text-secondary hover:text-text-primary">
         ← School dashboard
       </Link>
       <h1 className="mt-4 text-2xl font-semibold">{student.user.name}</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-text-secondary">
         {student.user.email}
         {student.class ? ` · ${student.class.name}` : " · No class assigned"}
       </p>
@@ -75,15 +75,15 @@ export default async function SchoolStudentDetailPage({
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Recent exam attempts">
           {insights.examSummary.recent.length === 0 ? (
-            <p className="text-sm text-slate-400">No exam attempts yet.</p>
+            <p className="text-sm text-text-secondary">No exam attempts yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {insights.examSummary.recent.map((a, i) => (
-                <li key={i} className="flex justify-between text-slate-300">
+                <li key={i} className="flex justify-between text-text-secondary">
                   <span>
                     {a.exam} · {a.mode.toLowerCase().replace("_", " ")}
                   </span>
-                  <span className="text-slate-500">
+                  <span className="text-text-muted">
                     {a.score !== null ? `${Math.round(a.score)}%` : "—"}
                   </span>
                 </li>
@@ -93,13 +93,13 @@ export default async function SchoolStudentDetailPage({
         </Card>
         <Card title="Weak topics">
           {insights.weakTopics.length === 0 ? (
-            <p className="text-sm text-slate-400">No weak topics identified yet.</p>
+            <p className="text-sm text-text-secondary">No weak topics identified yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {insights.weakTopics.map(({ topic, missed }) => (
-                <li key={topic} className="flex justify-between text-slate-300">
+                <li key={topic} className="flex justify-between text-text-secondary">
                   <span>{topic}</span>
-                  <span className="text-slate-500">{missed} missed</span>
+                  <span className="text-text-muted">{missed} missed</span>
                 </li>
               ))}
             </ul>
@@ -110,19 +110,19 @@ export default async function SchoolStudentDetailPage({
       <div className="mt-6">
         <Card title="Course progress">
           {insights.courseProgress.length === 0 ? (
-            <p className="text-sm text-slate-400">Not enrolled in any courses yet.</p>
+            <p className="text-sm text-text-secondary">Not enrolled in any courses yet.</p>
           ) : (
             <div className="space-y-3">
               {insights.courseProgress.map((c) => (
                 <div key={c.courseId}>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-200">{c.title}</span>
-                    <span className="text-slate-500">
+                    <span className="text-text-primary">{c.title}</span>
+                    <span className="text-text-muted">
                       {c.completedLessons}/{c.totalLessons} lessons
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
-                    <div className="h-full bg-green-500" style={{ width: `${c.pct}%` }} />
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-sunken">
+                    <div className="h-full bg-success" style={{ width: `${c.pct}%` }} />
                   </div>
                 </div>
               ))}

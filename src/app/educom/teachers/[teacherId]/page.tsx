@@ -43,18 +43,18 @@ export default async function TeacherProfilePage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
 
       <div className="mt-4">
         <h1 className="text-3xl font-semibold">{teacher.user.name}</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-text-secondary">
           {subjectNames.length > 0 ? `${subjectNames.join(", ")} Teacher` : "Teacher"}
           {teacher.school && (
             <>
               {" · "}
-              <Link href={`/educom/schools/${teacher.school.id}`} className="text-orange-400 hover:underline">
+              <Link href={`/educom/schools/${teacher.school.id}`} className="text-brand-text hover:underline">
                 {teacher.school.name}
               </Link>
               {teacher.school.state && ` — ${teacher.school.state}`}
@@ -63,9 +63,9 @@ export default async function TeacherProfilePage({
         </p>
       </div>
 
-      {teacher.bio && <p className="mt-4 text-slate-300">{teacher.bio}</p>}
+      {teacher.bio && <p className="mt-4 text-text-secondary">{teacher.bio}</p>}
 
-      <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-400">
+      <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-text-secondary">
         {teacher.qualifications && <span>{teacher.qualifications}</span>}
         {teacher.yearsExperience !== null && (
           <span>{teacher.yearsExperience} years experience</span>
@@ -81,8 +81,8 @@ export default async function TeacherProfilePage({
             type="submit"
             className={
               isFollowing
-                ? "rounded-full border border-slate-700 px-5 py-2 text-sm text-slate-300 hover:border-slate-500"
-                : "rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                ? "rounded-full border border-border-strong px-5 py-2 text-sm text-text-secondary hover:border-text-muted"
+                : "rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             }
           >
             {isFollowing ? "Following ✓" : "Follow"}
@@ -93,17 +93,17 @@ export default async function TeacherProfilePage({
       <div className="mt-10">
         <h2 className="text-lg font-semibold">Courses</h2>
         {teacher.courses.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-400">No published courses yet.</p>
+          <p className="mt-2 text-sm text-text-secondary">No published courses yet.</p>
         ) : (
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {teacher.courses.map((course) => (
               <Link
                 key={course.id}
                 href={`/educom/${course.id}`}
-                className="rounded-lg border border-slate-800 bg-slate-900 p-4 hover:border-slate-600"
+                className="rounded-lg border border-border bg-surface-raised p-4 hover:border-border-strong"
               >
-                <p className="font-medium text-slate-100">{course.title}</p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="font-medium text-text-primary">{course.title}</p>
+                <p className="mt-1 text-xs text-text-muted">
                   {course._count.enrollments} learner{course._count.enrollments === 1 ? "" : "s"}
                 </p>
               </Link>

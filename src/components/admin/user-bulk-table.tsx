@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BulkActionBar } from "@/components/admin/bulk-action-bar";
 import { BulkResultBanner } from "@/components/admin/bulk-result-banner";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { bulkSuspendUsers, bulkReactivateUsers } from "@/app/dashboard/admin/users/actions";
 import type { BulkAction, BulkResult } from "@/lib/admin/bulk-types";
 
-const statusColor: Record<string, string> = {
-  ACTIVE: "text-green-400",
-  SUSPENDED: "text-red-400",
-  LOCKED: "text-red-500",
-  PENDING_VERIFICATION: "text-amber-400",
-  CLOSED: "text-slate-600",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  ACTIVE: "success",
+  SUSPENDED: "danger",
+  LOCKED: "danger",
+  PENDING_VERIFICATION: "warning",
+  CLOSED: "neutral",
 };
 
 export type BulkUserRow = {
@@ -93,7 +94,7 @@ export function UserBulkTable({
       )}
 
       <table className="w-full text-left text-sm">
-        <thead className="text-xs text-slate-500">
+        <thead className="text-xs text-text-muted">
           <tr>
             {canBulkUpdate && (
               <th className="w-8 pb-2">
@@ -102,7 +103,7 @@ export function UserBulkTable({
                   aria-label="Select all on this page"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="rounded border-slate-600 bg-slate-950"
+                  className="rounded border-border-strong bg-surface"
                 />
               </th>
             )}
@@ -115,7 +116,7 @@ export function UserBulkTable({
         </thead>
         <tbody>
           {users.map((u) => (
-            <tr key={u.id} className="border-t border-slate-800">
+            <tr key={u.id} className="border-t border-border hover:bg-surface-sunken/50">
               {canBulkUpdate && (
                 <td className="py-2">
                   <input
@@ -123,19 +124,21 @@ export function UserBulkTable({
                     aria-label={`Select ${u.name}`}
                     checked={selected.has(u.id)}
                     onChange={() => toggle(u.id)}
-                    className="rounded border-slate-600 bg-slate-950"
+                    className="rounded border-border-strong bg-surface"
                   />
                 </td>
               )}
-              <td className="py-2">
+              <td className="py-2 text-text-primary">
                 {u.name}
-                {u.studentNumber && <span className="ml-2 font-mono text-xs text-slate-500">{u.studentNumber}</span>}
+                {u.studentNumber && <span className="ml-2 font-mono text-xs text-text-muted">{u.studentNumber}</span>}
               </td>
-              <td className="py-2 text-slate-400">{u.email}</td>
-              <td className="py-2 text-slate-400">{u.detail}</td>
-              <td className={`py-2 ${statusColor[u.status] ?? ""}`}>{u.status}</td>
+              <td className="py-2 text-text-secondary">{u.email}</td>
+              <td className="py-2 text-text-secondary">{u.detail}</td>
+              <td className="py-2">
+                <Badge tone={STATUS_TONE[u.status] ?? "neutral"}>{u.status}</Badge>
+              </td>
               <td className="py-2 text-right">
-                <Link href={`/dashboard/admin/users/${roleSlug}/${u.id}`} className="text-xs text-orange-400 hover:underline">
+                <Link href={`/dashboard/admin/users/${roleSlug}/${u.id}`} className="text-xs text-brand-text hover:underline">
                   View →
                 </Link>
               </td>

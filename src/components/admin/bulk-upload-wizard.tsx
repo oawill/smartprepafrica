@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toCsv } from "@/lib/csv";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import {
   validateBulkUpload,
   commitBulkUpload,
@@ -11,10 +12,10 @@ import {
 
 type Step = "upload" | "validate" | "preview" | "confirm" | "report";
 
-const statusColor: Record<string, string> = {
-  OK: "text-green-400",
-  WARNING: "text-amber-400",
-  ERROR: "text-red-400",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  OK: "success",
+  WARNING: "warning",
+  ERROR: "danger",
 };
 
 function downloadCsv(filename: string, csv: string) {
@@ -111,7 +112,7 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
           <span
             key={s.key}
             className={`rounded-full px-3 py-1 ${
-              i <= currentIndex ? "bg-orange-500/10 text-orange-400" : "bg-slate-900 text-slate-600"
+              i <= currentIndex ? "bg-brand/10 text-brand-text" : "bg-surface-raised text-text-muted"
             }`}
           >
             {s.label}
@@ -120,7 +121,7 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
       </div>
 
       {error && (
-        <div className="mt-4 rounded-lg border border-red-900 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+        <div className="mt-4 rounded-lg border border-danger/30 bg-danger-surface px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -130,12 +131,12 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
           <button
             type="button"
             onClick={() => downloadCsv("question-upload-template.csv", templateCsv)}
-            className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
           >
             Download CSV template
           </button>
           <div>
-            <label className="block text-sm text-slate-300">Upload a filled-in CSV file</label>
+            <label className="block text-sm text-text-secondary">Upload a filled-in CSV file</label>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -143,27 +144,27 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
                 const file = e.target.files?.[0];
                 if (file) handleFile(file);
               }}
-              className="mt-2 text-sm text-slate-400"
+              className="mt-2 text-sm text-text-secondary"
             />
           </div>
         </div>
       )}
 
       {step === "validate" && loading && (
-        <p className="mt-6 text-sm text-slate-400">Validating {fileName}…</p>
+        <p className="mt-6 text-sm text-text-secondary">Validating {fileName}…</p>
       )}
 
       {(step === "preview" || step === "confirm") && !loading && (
         <div className="mt-6">
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <span className="text-green-400">{okCount} ready</span>
-            <span className="text-amber-400">{warningCount} warnings</span>
-            <span className="text-red-400">{errorCount} errors (will be skipped)</span>
+            <span className="text-success">{okCount} ready</span>
+            <span className="text-warning">{warningCount} warnings</span>
+            <span className="text-danger">{errorCount} errors (will be skipped)</span>
           </div>
 
-          <div className="mt-4 max-h-96 overflow-y-auto rounded-xl border border-slate-800">
+          <div className="mt-4 max-h-96 overflow-y-auto rounded-xl border border-border">
             <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 bg-slate-900 text-xs text-slate-500">
+              <thead className="sticky top-0 bg-surface-raised text-xs text-text-muted">
                 <tr>
                   <th className="px-3 py-2">Row</th>
                   <th className="px-3 py-2">Status</th>
@@ -174,14 +175,16 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
               </thead>
               <tbody>
                 {results.map((r) => (
-                  <tr key={r.rowNumber} className="border-t border-slate-800">
-                    <td className="px-3 py-2 text-slate-500">{r.rowNumber}</td>
-                    <td className={`px-3 py-2 ${statusColor[r.status]}`}>{r.status}</td>
-                    <td className="px-3 py-2 text-slate-400">
+                  <tr key={r.rowNumber} className="border-t border-border hover:bg-surface-sunken/50">
+                    <td className="px-3 py-2 text-text-muted">{r.rowNumber}</td>
+                    <td className="px-3 py-2">
+                      <Badge tone={STATUS_TONE[r.status] ?? "neutral"}>{r.status}</Badge>
+                    </td>
+                    <td className="px-3 py-2 text-text-secondary">
                       {r.subjectName} · {r.exam}
                     </td>
-                    <td className="max-w-xs truncate px-3 py-2 text-slate-300">{r.prompt}</td>
-                    <td className="px-3 py-2 text-xs text-slate-500">{r.messages.join(" · ")}</td>
+                    <td className="max-w-xs truncate px-3 py-2 text-text-secondary">{r.prompt}</td>
+                    <td className="px-3 py-2 text-xs text-text-muted">{r.messages.join(" · ")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -193,7 +196,7 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
               <button
                 type="button"
                 onClick={downloadErrorReport}
-                className="rounded-lg border border-red-900 px-4 py-2 text-sm text-red-400 hover:border-red-700"
+                className="rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger hover:border-danger"
               >
                 Download error report
               </button>
@@ -201,7 +204,7 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
             <button
               type="button"
               onClick={reset}
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
             >
               Start over
             </button>
@@ -212,7 +215,7 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
                 setStep("confirm");
                 handleImport();
               }}
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400 disabled:opacity-50"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover disabled:opacity-50"
             >
               {loading ? "Importing…" : `Import ${okCount + warningCount} question(s) as drafts`}
             </button>
@@ -222,7 +225,7 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
 
       {step === "report" && report && (
         <div className="mt-6 space-y-4">
-          <div className="rounded-lg border border-green-900 bg-green-500/5 px-4 py-3 text-sm text-green-400">
+          <div className="rounded-lg border border-success/30 bg-success-surface px-4 py-3 text-sm text-success">
             Imported {report.importedCount} question(s) as drafts. Skipped {report.skippedCount} row(s) with errors.
           </div>
           <div className="flex flex-wrap gap-2">
@@ -230,21 +233,21 @@ export function BulkUploadWizard({ templateCsv }: { templateCsv: string }) {
               <button
                 type="button"
                 onClick={downloadErrorReport}
-                className="rounded-lg border border-red-900 px-4 py-2 text-sm text-red-400 hover:border-red-700"
+                className="rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger hover:border-danger"
               >
                 Download error report
               </button>
             )}
             <Link
               href="/dashboard/admin/questions?status=DRAFT"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Review imported drafts →
             </Link>
             <button
               type="button"
               onClick={reset}
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
             >
               Upload another file
             </button>

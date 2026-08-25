@@ -5,8 +5,8 @@ import { Card } from "@/components/dashboard/card";
 import { updatePartnerProfile } from "@/app/dashboard/partner/profile/actions";
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
-const labelClass = "block text-sm text-slate-300";
+  "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand";
+const labelClass = "block text-sm text-text-secondary";
 
 export default async function PartnerProfilePage() {
   const session = await auth();
@@ -18,7 +18,7 @@ export default async function PartnerProfilePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Profile</h1>
+      <h1 className="text-h2 font-semibold text-text-primary">Profile</h1>
 
       <div className="mt-6">
         <Card title="Contact & payout details">
@@ -113,7 +113,7 @@ export default async function PartnerProfilePage() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
               <input
                 type="checkbox"
                 name="hideFromLeaderboard"
@@ -124,7 +124,7 @@ export default async function PartnerProfilePage() {
 
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Save changes
             </button>

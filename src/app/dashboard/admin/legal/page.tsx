@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { getActiveDocument } from "@/lib/legal/documents";
 import { saveLegalDocument } from "@/app/dashboard/admin/legal/actions";
+import { Badge } from "@/components/ui/badge";
 
 const documentTypes = [
   { type: "TERMS" as const, label: "Terms & Conditions" },
@@ -26,8 +27,8 @@ export default async function AdminLegalDocumentsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Legal documents</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Legal documents</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Editing a document never changes what a user already agreed to — saving creates a new
         version and the previous one is preserved for the audit trail.
       </p>
@@ -43,17 +44,17 @@ export default async function AdminLegalDocumentsPage() {
               <input
                 name="title"
                 defaultValue={doc?.title ?? documentTypes.find((d) => d.type === type)?.label}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               />
               <textarea
                 name="content"
                 defaultValue={doc?.content ?? ""}
                 rows={10}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs outline-none focus:border-orange-500"
+                className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 font-mono text-xs text-text-primary outline-none focus:border-brand"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Save new version
               </button>
@@ -65,7 +66,7 @@ export default async function AdminLegalDocumentsPage() {
       <div className="mt-6">
         <Card title="Version history">
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
+            <thead className="text-xs text-text-muted">
               <tr>
                 <th className="pb-2">Type</th>
                 <th className="pb-2">Version</th>
@@ -75,17 +76,13 @@ export default async function AdminLegalDocumentsPage() {
             </thead>
             <tbody>
               {allVersions.map((v) => (
-                <tr key={v.id} className="border-t border-slate-800">
-                  <td className="py-2">{v.type}</td>
-                  <td className="py-2">v{v.version}</td>
+                <tr key={v.id} className="border-t border-border">
+                  <td className="py-2 text-text-primary">{v.type}</td>
+                  <td className="py-2 text-text-primary">v{v.version}</td>
                   <td className="py-2">
-                    {v.isActive ? (
-                      <span className="text-green-400">Active</span>
-                    ) : (
-                      <span className="text-slate-500">Superseded</span>
-                    )}
+                    {v.isActive ? <Badge tone="success">Active</Badge> : <Badge tone="neutral">Superseded</Badge>}
                   </td>
-                  <td className="py-2 text-slate-400">
+                  <td className="py-2 text-text-secondary">
                     {new Date(v.effectiveAt).toLocaleDateString("en-NG")}
                   </td>
                 </tr>

@@ -37,8 +37,8 @@ export default async function PartnerDashboard() {
   if (partner.status !== "APPROVED") {
     return (
       <div>
-        <h1 className="text-2xl font-semibold">Partner application: {partner.status}</h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <h1 className="text-h2 font-semibold text-text-primary">Partner application: {partner.status}</h1>
+        <p className="mt-2 text-sm text-text-secondary">
           {partner.status === "PENDING"
             ? "Your application is awaiting admin review. We'll notify you once it's approved."
             : partner.status === "REJECTED"
@@ -105,11 +105,11 @@ export default async function PartnerDashboard() {
   return (
     <div>
       <div>
-        <h1 className="text-2xl font-semibold">Welcome, {partner.firstName}.</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Partner ID: <span className="font-mono text-slate-300">{partner.partnerNumber}</span>
+        <h1 className="text-h2 font-semibold text-text-primary">Welcome, {partner.firstName}.</h1>
+        <p className="mt-1 text-sm text-text-secondary">
+          Partner ID: <span className="font-mono text-text-secondary">{partner.partnerNumber}</span>
           {" · "}Partner Since: {partnerSince}
-          {" · "}Status: <span className="text-green-400">Active</span>
+          {" · "}Status: <span className="text-success">Active</span>
           {tier && <> · Tier: {tier.name}</>}
         </p>
       </div>
@@ -121,14 +121,14 @@ export default async function PartnerDashboard() {
               {unreadNotifications.map((n) => (
                 <div
                   key={n.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2"
                 >
-                  <p className="text-sm text-slate-300">{n.message}</p>
+                  <p className="text-sm text-text-secondary">{n.message}</p>
                   <form action={markNotificationRead}>
                     <input type="hidden" name="notificationId" value={n.id} />
                     <button
                       type="submit"
-                      className="shrink-0 text-xs text-slate-500 hover:text-slate-300"
+                      className="shrink-0 text-xs text-text-muted hover:text-text-secondary"
                     >
                       Dismiss
                     </button>
@@ -137,7 +137,7 @@ export default async function PartnerDashboard() {
               ))}
             </div>
             <form action={markAllNotificationsRead} className="mt-2">
-              <button type="submit" className="text-xs text-orange-400 hover:underline">
+              <button type="submit" className="text-xs text-brand-text hover:underline">
                 Mark all as read
               </button>
             </form>
@@ -178,55 +178,55 @@ export default async function PartnerDashboard() {
               name="schoolName"
               placeholder="School name"
               required
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="contactName"
               placeholder="Contact name"
               required
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="phone"
               placeholder="Phone"
               required
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="email"
               placeholder="Email (optional)"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="state"
               placeholder="State (optional)"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="city"
               placeholder="City (optional)"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="estimatedStudents"
               type="number"
               placeholder="Estimated students"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="estimatedTeachers"
               type="number"
               placeholder="Estimated teachers"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <textarea
               name="notes"
               placeholder="Notes (optional)"
-              className="sm:col-span-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="sm:col-span-2 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="sm:col-span-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="sm:col-span-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Add lead
             </button>
@@ -237,19 +237,19 @@ export default async function PartnerDashboard() {
       <div className="mt-6">
         <Card title="My school leads">
           {schoolLeads.length === 0 ? (
-            <p className="text-sm text-slate-400">No school leads yet.</p>
+            <p className="text-sm text-text-secondary">No school leads yet.</p>
           ) : (
             <div className="space-y-4">
               {schoolLeads.map((lead) => (
-                <div key={lead.id} className="rounded-lg border border-slate-800 p-4">
+                <div key={lead.id} className="rounded-lg border border-border p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="font-medium">{lead.schoolName}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-medium text-text-primary">{lead.schoolName}</p>
+                      <p className="text-xs text-text-muted">
                         {lead.leadNumber} · {lead.contactName} · {lead.phone}
                       </p>
                     </div>
-                    <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">
+                    <span className="rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary">
                       {stageLabels[lead.status] ?? lead.status}
                     </span>
                   </div>
@@ -264,7 +264,7 @@ export default async function PartnerDashboard() {
                           <input type="hidden" name="toStatus" value={stage} />
                           <button
                             type="submit"
-                            className="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-slate-500"
+                            className="rounded-lg border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-text-muted"
                           >
                             Mark {stageLabels[stage]}
                           </button>
@@ -275,7 +275,7 @@ export default async function PartnerDashboard() {
                           <input type="hidden" name="leadId" value={lead.id} />
                           <button
                             type="submit"
-                            className="rounded-lg border border-orange-700 px-3 py-1 text-xs text-orange-300 hover:border-orange-500"
+                            className="rounded-lg border border-brand/50 px-3 py-1 text-xs text-brand-text hover:border-brand"
                           >
                             Generate invitation link
                           </button>
@@ -285,7 +285,7 @@ export default async function PartnerDashboard() {
                   )}
 
                   {lead.invitationToken && lead.status !== "SCHOOL_REGISTERED" && (
-                    <p className="mt-3 break-all rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-orange-300">
+                    <p className="mt-3 break-all rounded-lg border border-border bg-surface px-3 py-2 font-mono text-xs text-brand-text">
                       {baseUrl}/schools/invite/{lead.invitationToken}
                     </p>
                   )}

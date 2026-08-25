@@ -43,9 +43,9 @@ export default async function LessonDetailPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            {lesson.title} <span className="text-base font-normal text-slate-500">· {lesson.moderationStatus}</span>
+            {lesson.title} <span className="text-base font-normal text-text-muted">· {lesson.moderationStatus}</span>
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             {lesson.module.course.title} · {lesson.module.title} · {lesson.type}
             {lesson.courseTopic && ` · ${lesson.courseTopic.title}`}
             {lesson.topic && ` · Practice topic: ${lesson.topic}`}
@@ -56,7 +56,7 @@ export default async function LessonDetailPage({
             hasPermission(adminRole, "lessons.approve") && (
               <form action={approveLesson}>
                 <input type="hidden" name="id" value={lesson.id} />
-                <button type="submit" className="rounded-lg border border-green-800 px-3 py-2 text-xs text-green-400 hover:border-green-600">
+                <button type="submit" className="rounded-lg border border-success/40 px-3 py-2 text-xs text-success hover:border-success">
                   Approve
                 </button>
               </form>
@@ -64,7 +64,7 @@ export default async function LessonDetailPage({
           {lesson.moderationStatus === "APPROVED" && hasPermission(adminRole, "lessons.publish") && (
             <form action={publishLesson}>
               <input type="hidden" name="id" value={lesson.id} />
-              <button type="submit" className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-slate-950 hover:bg-orange-400">
+              <button type="submit" className="rounded-lg bg-brand px-3 py-2 text-xs font-medium text-brand-foreground hover:bg-brand-hover">
                 Publish
               </button>
             </form>
@@ -72,7 +72,7 @@ export default async function LessonDetailPage({
           {lesson.moderationStatus !== "SUSPENDED" && hasPermission(adminRole, "lessons.edit") && (
             <form action={archiveLesson}>
               <input type="hidden" name="id" value={lesson.id} />
-              <button type="submit" className="rounded-lg border border-red-900 px-3 py-2 text-xs text-red-400 hover:border-red-700">
+              <button type="submit" className="rounded-lg border border-danger/40 px-3 py-2 text-xs text-danger hover:border-danger">
                 Archive
               </button>
             </form>
@@ -80,7 +80,7 @@ export default async function LessonDetailPage({
           {lesson.moderationStatus === "SUSPENDED" && hasPermission(adminRole, "lessons.edit") && (
             <form action={restoreLesson}>
               <input type="hidden" name="id" value={lesson.id} />
-              <button type="submit" className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+              <button type="submit" className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted">
                 Restore to draft
               </button>
             </form>
@@ -89,13 +89,13 @@ export default async function LessonDetailPage({
       </div>
 
       {error && (
-        <div className="mt-4 rounded-lg border border-red-900 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+        <div className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {lesson.moderationReason && (
-        <div className="mt-4 rounded-lg border border-amber-800 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+        <div className="mt-4 rounded-lg border border-warning/40 bg-warning-surface px-4 py-3 text-sm text-warning">
           Reviewer note: {lesson.moderationReason}
         </div>
       )}
@@ -109,9 +109,9 @@ export default async function LessonDetailPage({
                 name="reason"
                 required
                 placeholder="What needs to change?"
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none placeholder:text-text-muted focus:border-brand"
               />
-              <button type="submit" className="shrink-0 rounded-lg border border-amber-800 px-4 py-2 text-sm text-amber-400 hover:border-amber-600">
+              <button type="submit" className="shrink-0 rounded-lg border border-warning/40 px-4 py-2 text-sm text-warning hover:border-warning">
                 Send back
               </button>
             </form>
@@ -125,16 +125,16 @@ export default async function LessonDetailPage({
             {source ? (
               <div>
                 {/* eslint-disable-next-line jsx-a11y/media-has-caption -- captionsUrl track is added conditionally below when present */}
-                <video controls src={source.playbackUrl} poster={source.thumbnailUrl ?? undefined} className="w-full rounded-lg border border-slate-800">
+                <video controls src={source.playbackUrl} poster={source.thumbnailUrl ?? undefined} className="w-full rounded-lg border border-border">
                   {source.captionsUrl && <track kind="captions" src={source.captionsUrl} default />}
                 </video>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-text-muted">
                   {lesson.durationSeconds ? `${Math.round(lesson.durationSeconds / 60)} min` : "Duration not set"}
                   {lesson.videoAttribution && ` · ${lesson.videoAttribution}`}
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-slate-500">No video URL set yet.</p>
+              <p className="text-sm text-text-muted">No video URL set yet.</p>
             )}
           </Card>
         </div>
@@ -143,7 +143,7 @@ export default async function LessonDetailPage({
       {lesson.learningObjectives.length > 0 && (
         <div className="mt-6">
           <Card title="Learning objectives">
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-300">
+            <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
               {lesson.learningObjectives.map((o, i) => (
                 <li key={i}>{o}</li>
               ))}
@@ -157,12 +157,12 @@ export default async function LessonDetailPage({
           <Card title={`Chapters (${lesson.chapters.length})`}>
             <div className="space-y-3">
               {lesson.chapters.map((c) => (
-                <div key={c.id} className="rounded-lg border border-slate-800 px-4 py-3">
-                  <p className="text-sm font-medium text-slate-200">
+                <div key={c.id} className="rounded-lg border border-border px-4 py-3">
+                  <p className="text-sm font-medium text-text-primary">
                     {Math.floor(c.startSeconds / 60)}:{String(c.startSeconds % 60).padStart(2, "0")} — {c.title}
                   </p>
                   {c.checkpoints.length > 0 && (
-                    <ul className="mt-2 space-y-1 pl-4 text-xs text-slate-400">
+                    <ul className="mt-2 space-y-1 pl-4 text-xs text-text-secondary">
                       {c.checkpoints.map((cp) => (
                         <li key={cp.id}>
                           Checkpoint at {Math.floor((cp.atSeconds ?? 0) / 60)}:
@@ -181,7 +181,7 @@ export default async function LessonDetailPage({
       {allCheckpoints.length === 0 && lesson.type === "VIDEO" && (
         <div className="mt-6">
           <Card title="Checkpoints">
-            <p className="text-sm text-slate-500">No in-video checkpoints have been added yet.</p>
+            <p className="text-sm text-text-muted">No in-video checkpoints have been added yet.</p>
           </Card>
         </div>
       )}
@@ -189,7 +189,7 @@ export default async function LessonDetailPage({
       {lesson.quizQuestions.length > 0 && (
         <div className="mt-6">
           <Card title={`Quiz questions (${lesson.quizQuestions.length})`}>
-            <ul className="space-y-1 text-sm text-slate-300">
+            <ul className="space-y-1 text-sm text-text-secondary">
               {lesson.quizQuestions.map((q, i) => (
                 <li key={q.id}>
                   {i + 1}. {q.prompt}
@@ -203,7 +203,7 @@ export default async function LessonDetailPage({
       {lesson.notesMarkdown && (
         <div className="mt-6">
           <Card title="Notes">
-            <pre className="whitespace-pre-wrap text-sm text-slate-300">{lesson.notesMarkdown}</pre>
+            <pre className="whitespace-pre-wrap text-sm text-text-secondary">{lesson.notesMarkdown}</pre>
           </Card>
         </div>
       )}

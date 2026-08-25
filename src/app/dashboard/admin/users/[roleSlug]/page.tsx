@@ -74,8 +74,8 @@ export default async function AdminUsersByRolePage({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{label}</h1>
-      <p className="mt-1 text-sm text-slate-400">{total} total.</p>
+      <h1 className="text-h2 font-semibold text-text-primary">{label}</h1>
+      <p className="mt-1 text-sm text-text-secondary">{total} total.</p>
 
       <div className="mt-6">
         <Card title="Search">
@@ -84,9 +84,9 @@ export default async function AdminUsersByRolePage({
               name="q"
               defaultValue={q}
               placeholder="Name, email, ID…"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
-            <button type="submit" className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500">
+            <button type="submit" className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted">
               Search
             </button>
           </form>
@@ -103,16 +103,16 @@ export default async function AdminUsersByRolePage({
         <div className="mt-4 flex items-center justify-center gap-2 text-sm">
           <Link
             href={`/dashboard/admin/users/${roleSlug}?page=${Math.max(1, page - 1)}${q ? `&q=${q}` : ""}`}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             ← Prev
           </Link>
-          <span className="text-slate-500">
+          <span className="text-text-muted">
             Page {page} of {totalPages}
           </span>
           <Link
             href={`/dashboard/admin/users/${roleSlug}?page=${Math.min(totalPages, page + 1)}${q ? `&q=${q}` : ""}`}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             Next →
           </Link>

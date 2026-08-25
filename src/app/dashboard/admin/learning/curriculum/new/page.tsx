@@ -2,16 +2,16 @@ import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { createCurriculum } from "@/app/dashboard/admin/learning/curriculum/actions";
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
-const labelClass = "block text-xs text-slate-400";
+  "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
+const labelClass = "block text-xs text-text-secondary";
 
 export default async function NewCurriculumPage() {
   await requireAdminPagePermission("curriculum.manage");
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">New curriculum</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">New curriculum</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         e.g. &ldquo;Nigerian Secondary School (WAEC/NECO/UTME)&rdquo; — you&apos;ll add class levels (SS1, SS2, ...) on
         the next page.
       </p>
@@ -35,7 +35,7 @@ export default async function NewCurriculumPage() {
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
           >
             Create curriculum
           </button>

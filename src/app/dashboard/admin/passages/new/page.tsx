@@ -9,8 +9,8 @@ export default async function NewPassagePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">New passage</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">New passage</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Created as a draft. Submit it for review before it can be approved and published — then attach
         questions to it from the passage&apos;s detail page.
       </p>

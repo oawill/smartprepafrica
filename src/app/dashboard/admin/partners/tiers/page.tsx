@@ -13,8 +13,8 @@ export default async function AdminTiersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Partner tiers</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-2xl font-semibold text-text-primary">Partner tiers</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         A partner's tier is always computed live from their current qualified-paid-student count
         — changing a threshold here never leaves stale data.
       </p>
@@ -25,44 +25,44 @@ export default async function AdminTiersPage() {
             <form action={upsertTier} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <input type="hidden" name="name" value={tier.name} />
               <div>
-                <label className="text-xs text-slate-500">Min paid students</label>
+                <label className="text-xs text-text-muted">Min paid students</label>
                 <input
                   name="minPaidStudents"
                   type="number"
                   defaultValue={tier.minPaidStudents}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                  className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500">Sort order</label>
+                <label className="text-xs text-text-muted">Sort order</label>
                 <input
                   name="sortOrder"
                   type="number"
                   defaultValue={tier.sortOrder}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                  className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500">Bonus %</label>
+                <label className="text-xs text-text-muted">Bonus %</label>
                 <input
                   name="bonusPercentage"
                   type="number"
                   step="0.1"
                   defaultValue={tier.bonusPercentage}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                  className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500">Perks</label>
+                <label className="text-xs text-text-muted">Perks</label>
                 <input
                   name="perks"
                   defaultValue={tier.perks ?? ""}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                  className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
                 />
               </div>
               <button
                 type="submit"
-                className="col-span-2 sm:col-span-4 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="col-span-2 sm:col-span-4 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Save
               </button>
@@ -78,35 +78,35 @@ export default async function AdminTiersPage() {
               name="name"
               placeholder="Tier name"
               required
-              className="col-span-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="col-span-2 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="minPaidStudents"
               type="number"
               placeholder="Min paid students"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="sortOrder"
               type="number"
               placeholder="Sort order"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="bonusPercentage"
               type="number"
               step="0.1"
               placeholder="Bonus %"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <input
               name="perks"
               placeholder="Perks"
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button
               type="submit"
-              className="col-span-2 sm:col-span-4 rounded-lg border border-orange-700 px-4 py-2 text-sm text-orange-300 hover:border-orange-500"
+              className="col-span-2 sm:col-span-4 rounded-lg border border-brand/40 px-4 py-2 text-sm text-brand-text hover:border-brand"
             >
               Add tier
             </button>

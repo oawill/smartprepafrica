@@ -20,7 +20,7 @@ export default async function PassagePreviewPage({
 
   if (passage.questions.length === 0) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-12 text-sm text-slate-400">
+      <div className="mx-auto max-w-3xl px-6 py-12 text-sm text-text-secondary">
         This passage has no attached questions yet — attach at least one to preview the student
         experience.
       </div>

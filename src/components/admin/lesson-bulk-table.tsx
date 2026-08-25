@@ -5,18 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BulkActionBar } from "@/components/admin/bulk-action-bar";
 import { BulkResultBanner } from "@/components/admin/bulk-result-banner";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { bulkApproveLessons, bulkPublishLessons } from "@/app/dashboard/admin/learning/lessons/actions";
 import type { BulkAction, BulkResult } from "@/lib/admin/bulk-types";
 
-const statusColor: Record<string, string> = {
-  DRAFT: "text-slate-500",
-  SUBMITTED: "text-amber-400",
-  UNDER_REVIEW: "text-amber-400",
-  APPROVED: "text-blue-400",
-  PUBLISHED: "text-green-400",
-  REJECTED: "text-red-400",
-  NEEDS_CHANGES: "text-amber-400",
-  SUSPENDED: "text-red-500",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  DRAFT: "neutral",
+  SUBMITTED: "warning",
+  UNDER_REVIEW: "warning",
+  APPROVED: "info",
+  PUBLISHED: "success",
+  REJECTED: "danger",
+  NEEDS_CHANGES: "warning",
+  SUSPENDED: "danger",
 };
 
 export type BulkLessonRow = {
@@ -100,7 +101,7 @@ export function LessonBulkTable({
       )}
 
       <table className="w-full text-left text-sm">
-        <thead className="text-xs text-slate-500">
+        <thead className="text-xs text-text-muted">
           <tr>
             {canBulkUpdate && (
               <th className="w-8 pb-2">
@@ -109,7 +110,7 @@ export function LessonBulkTable({
                   aria-label="Select all on this page"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="rounded border-slate-600 bg-slate-950"
+                  className="rounded border-border-strong bg-surface"
                 />
               </th>
             )}
@@ -123,7 +124,7 @@ export function LessonBulkTable({
         </thead>
         <tbody>
           {lessons.map((lesson) => (
-            <tr key={lesson.id} className="border-t border-slate-800">
+            <tr key={lesson.id} className="border-t border-border hover:bg-surface-sunken/50">
               {canBulkUpdate && (
                 <td className="py-2">
                   <input
@@ -131,17 +132,19 @@ export function LessonBulkTable({
                     aria-label={`Select ${lesson.title}`}
                     checked={selected.has(lesson.id)}
                     onChange={() => toggle(lesson.id)}
-                    className="rounded border-slate-600 bg-slate-950"
+                    className="rounded border-border-strong bg-surface"
                   />
                 </td>
               )}
-              <td className="py-2 text-slate-200">{lesson.title}</td>
-              <td className="py-2 text-slate-400">{lesson.courseTitle}</td>
-              <td className="py-2 text-slate-400">{lesson.type}</td>
-              <td className="py-2 text-slate-400">{lesson.topic ?? "—"}</td>
-              <td className={`py-2 ${statusColor[lesson.status] ?? ""}`}>{lesson.status}</td>
+              <td className="py-2 text-text-primary">{lesson.title}</td>
+              <td className="py-2 text-text-secondary">{lesson.courseTitle}</td>
+              <td className="py-2 text-text-secondary">{lesson.type}</td>
+              <td className="py-2 text-text-secondary">{lesson.topic ?? "—"}</td>
+              <td className="py-2">
+                <Badge tone={STATUS_TONE[lesson.status] ?? "neutral"}>{lesson.status}</Badge>
+              </td>
               <td className="py-2 text-right">
-                <Link href={`/dashboard/admin/learning/lessons/${lesson.id}`} className="text-xs text-orange-400 hover:underline">
+                <Link href={`/dashboard/admin/learning/lessons/${lesson.id}`} className="text-xs text-brand-text hover:underline">
                   View →
                 </Link>
               </td>

@@ -25,7 +25,7 @@ export default async function CertificatePage({
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <Link href="/" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back home
       </Link>
 
@@ -64,7 +64,7 @@ export default async function CertificatePage({
         </p>
       </div>
 
-      <p className="mt-4 text-center text-xs text-slate-500">
+      <p className="mt-4 text-center text-xs text-text-muted">
         Anyone with this link can verify this certificate&apos;s authenticity.
       </p>
     </div>

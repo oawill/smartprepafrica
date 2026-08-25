@@ -26,9 +26,9 @@ export function TranscriptView({
 
   if (chaptersWithTranscript.length === 0) {
     return transcriptFull ? (
-      <p className="whitespace-pre-wrap text-sm leading-7 text-slate-300">{transcriptFull}</p>
+      <p className="whitespace-pre-wrap text-sm leading-7 text-text-secondary">{transcriptFull}</p>
     ) : (
-      <p className="text-sm text-slate-500">No transcript available for this lesson yet.</p>
+      <p className="text-sm text-text-muted">No transcript available for this lesson yet.</p>
     );
   }
 
@@ -42,10 +42,10 @@ export function TranscriptView({
           <div
             key={chapter.id}
             ref={isActive ? activeRef : undefined}
-            className={`rounded-lg p-3 ${isActive ? "bg-orange-500/10 ring-1 ring-orange-500/30" : ""}`}
+            className={`rounded-lg p-3 ${isActive ? "bg-brand/10 ring-1 ring-brand/30" : ""}`}
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{chapter.title}</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-slate-300">{chapter.transcriptSegment}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{chapter.title}</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-text-secondary">{chapter.transcriptSegment}</p>
           </div>
         );
       })}

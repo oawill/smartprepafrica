@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
+import { Badge } from "@/components/ui/badge";
 import type { Prisma } from "@prisma/client";
 
 const PAGE_SIZE = 50;
@@ -32,8 +33,8 @@ export default async function LoginActivityPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Login activity</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Login activity</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         {total} attempts recorded. Passwords, OTPs, and tokens are never logged here.
       </p>
 
@@ -44,18 +45,18 @@ export default async function LoginActivityPage({
               name="email"
               defaultValue={email}
               placeholder="Filter by email…"
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <select
               name="result"
               defaultValue={result ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             >
               <option value="">Any result</option>
               <option value="success">Success</option>
               <option value="failure">Failure</option>
             </select>
-            <button type="submit" className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500">
+            <button type="submit" className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted">
               Filter
             </button>
           </form>
@@ -65,7 +66,7 @@ export default async function LoginActivityPage({
       <div className="mt-6">
         <Card title={`${entries.length} on this page`}>
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
+            <thead className="text-xs text-text-muted">
               <tr>
                 <th className="pb-2">When</th>
                 <th className="pb-2">Email</th>
@@ -76,14 +77,14 @@ export default async function LoginActivityPage({
             </thead>
             <tbody>
               {entries.map((e) => (
-                <tr key={e.id} className="border-t border-slate-800">
-                  <td className="py-2 text-slate-500">{new Date(e.createdAt).toLocaleString("en-NG")}</td>
-                  <td className="py-2 text-slate-300">{e.email}</td>
-                  <td className={`py-2 ${e.success ? "text-green-400" : "text-red-400"}`}>
-                    {e.success ? "Success" : "Failed"}
+                <tr key={e.id} className="border-t border-border hover:bg-surface-sunken/50">
+                  <td className="py-2 text-text-muted">{new Date(e.createdAt).toLocaleString("en-NG")}</td>
+                  <td className="py-2 text-text-secondary">{e.email}</td>
+                  <td className="py-2">
+                    <Badge tone={e.success ? "success" : "danger"}>{e.success ? "Success" : "Failed"}</Badge>
                   </td>
-                  <td className="py-2 text-slate-500">{e.failureReason ?? "—"}</td>
-                  <td className="max-w-xs truncate py-2 text-xs text-slate-500">{e.userAgent ?? "—"}</td>
+                  <td className="py-2 text-text-muted">{e.failureReason ?? "—"}</td>
+                  <td className="max-w-xs truncate py-2 text-xs text-text-muted">{e.userAgent ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -92,7 +93,7 @@ export default async function LoginActivityPage({
       </div>
 
       {totalPages > 1 && (
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-sm text-text-muted">
           Page {page} of {totalPages}
         </p>
       )}

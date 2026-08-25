@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import {
   verifyAndActivateSchool,
@@ -8,12 +9,12 @@ import {
   closeSchool,
 } from "@/app/dashboard/admin/schools/actions";
 
-const statusColor: Record<string, string> = {
-  PENDING: "text-amber-400",
-  VERIFICATION_REQUIRED: "text-amber-400",
-  ACTIVE: "text-green-400",
-  SUSPENDED: "text-red-400",
-  CLOSED: "text-slate-600",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  PENDING: "warning",
+  VERIFICATION_REQUIRED: "warning",
+  ACTIVE: "success",
+  SUSPENDED: "danger",
+  CLOSED: "neutral",
 };
 
 export default async function AdminSchoolsPage() {
@@ -26,22 +27,24 @@ export default async function AdminSchoolsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Schools</h1>
-      <p className="mt-1 text-sm text-slate-400">{schools.length} registered.</p>
+      <h1 className="text-2xl font-semibold text-text-primary">Schools</h1>
+      <p className="mt-1 text-sm text-text-secondary">{schools.length} registered.</p>
 
       <div className="mt-6 space-y-3">
         {schools.map((s) => (
           <Card key={s.id} title={`${s.name} ${s.schoolNumber ? `(${s.schoolNumber})` : ""}`}>
-            <p className="text-sm text-slate-400">
-              {s.state ?? "—"} · {s._count.courses} courses · {s._count.teachers} teachers · {s._count.students} students ·{" "}
-              <span className={statusColor[s.status] ?? ""}>{s.status}</span>
+            <p className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+              <span>
+                {s.state ?? "—"} · {s._count.courses} courses · {s._count.teachers} teachers · {s._count.students} students
+              </span>
+              <Badge tone={STATUS_TONE[s.status] ?? "neutral"}>{s.status}</Badge>
             </p>
-            {s.statusReason && <p className="mt-1 text-xs text-slate-500">Reason on file: {s.statusReason}</p>}
+            {s.statusReason && <p className="mt-1 text-xs text-text-muted">Reason on file: {s.statusReason}</p>}
             <div className="mt-3 flex flex-wrap gap-2">
               {s.status !== "ACTIVE" && (
                 <form action={verifyAndActivateSchool}>
                   <input type="hidden" name="schoolId" value={s.id} />
-                  <button type="submit" className="rounded-lg border border-green-800 px-3 py-1.5 text-xs text-green-400 hover:border-green-600">
+                  <button type="submit" className="rounded-lg border border-success/40 px-3 py-1.5 text-xs text-success hover:border-success">
                     Verify & activate
                   </button>
                 </form>
@@ -51,9 +54,9 @@ export default async function AdminSchoolsPage() {
                 <input
                   name="reason"
                   placeholder="What's missing…"
-                  className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs outline-none focus:border-orange-500"
+                  className="w-40 rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                 />
-                <button type="submit" className="rounded-lg border border-amber-800 px-3 py-1.5 text-xs text-amber-400 hover:border-amber-600">
+                <button type="submit" className="rounded-lg border border-warning/40 px-3 py-1.5 text-xs text-warning hover:border-warning">
                   Request verification
                 </button>
               </form>
@@ -63,9 +66,9 @@ export default async function AdminSchoolsPage() {
                   <input
                     name="reason"
                     placeholder="Reason to suspend…"
-                    className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs outline-none focus:border-orange-500"
+                    className="w-40 rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                   />
-                  <button type="submit" className="rounded-lg border border-red-900 px-3 py-1.5 text-xs text-red-400 hover:border-red-700">
+                  <button type="submit" className="rounded-lg border border-danger/40 px-3 py-1.5 text-xs text-danger hover:border-danger">
                     Suspend
                   </button>
                 </form>
@@ -76,9 +79,9 @@ export default async function AdminSchoolsPage() {
                   <input
                     name="reason"
                     placeholder="Reason to close…"
-                    className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs outline-none focus:border-orange-500"
+                    className="w-40 rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                   />
-                  <button type="submit" className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-500">
+                  <button type="submit" className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted">
                     Close
                   </button>
                 </form>

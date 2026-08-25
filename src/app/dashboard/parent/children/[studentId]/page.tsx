@@ -11,9 +11,9 @@ import { PLAN_LABELS, PLAN_PRICING_KOBO, formatNaira } from "@/lib/plans";
 const purchasablePlans = ["BASIC", "PREMIUM"] as const;
 
 const alertStyles: Record<string, string> = {
-  warning: "border-amber-800 bg-amber-900/30 text-amber-300",
-  info: "border-slate-700 bg-slate-800/50 text-slate-300",
-  success: "border-green-800 bg-green-900/30 text-green-300",
+  warning: "border-warning/40 bg-warning-surface text-warning",
+  info: "border-border-strong bg-surface-sunken text-text-secondary",
+  success: "border-success/40 bg-success-surface text-success",
 };
 
 export default async function ChildDetailPage({
@@ -72,12 +72,12 @@ export default async function ChildDetailPage({
 
   return (
     <div>
-      <Link href="/dashboard/parent" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/dashboard/parent" className="text-sm text-text-secondary hover:text-text-primary">
         ← All children
       </Link>
 
       <h1 className="mt-4 text-2xl font-semibold">{student.user.name}</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-text-secondary">
         {student.school?.name ?? "No school linked"}
         {student.class ? ` · ${student.class.name}` : ""}
         {student.targetExams.length > 0
@@ -86,7 +86,7 @@ export default async function ChildDetailPage({
       </p>
 
       {status === "error" && (
-        <p className="mt-4 rounded-lg border border-red-800 bg-red-900/30 px-4 py-2 text-sm text-red-300">
+        <p className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-4 py-2 text-sm text-danger">
           Something went wrong starting checkout. Please try again.
         </p>
       )}
@@ -119,7 +119,7 @@ export default async function ChildDetailPage({
           <p className="text-3xl font-semibold">
             {insights.studyActivity.attemptsThisWeek} attempts
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             {insights.studyActivity.lessonsCompletedThisWeek} lessons ·{" "}
             {insights.studyActivity.questionsAnsweredThisWeek} questions
           </p>
@@ -132,15 +132,15 @@ export default async function ChildDetailPage({
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Recent exam attempts">
           {insights.examSummary.recent.length === 0 ? (
-            <p className="text-sm text-slate-400">No exam attempts yet.</p>
+            <p className="text-sm text-text-secondary">No exam attempts yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {insights.examSummary.recent.map((a, i) => (
-                <li key={i} className="flex justify-between text-slate-300">
+                <li key={i} className="flex justify-between text-text-secondary">
                   <span>
                     {a.exam} · {a.mode.toLowerCase().replace("_", " ")}
                   </span>
-                  <span className="text-slate-500">
+                  <span className="text-text-muted">
                     {a.score !== null ? `${Math.round(a.score)}%` : "—"}
                   </span>
                 </li>
@@ -151,13 +151,13 @@ export default async function ChildDetailPage({
 
         <Card title="Weak topics">
           {insights.weakTopics.length === 0 ? (
-            <p className="text-sm text-slate-400">No weak topics identified yet.</p>
+            <p className="text-sm text-text-secondary">No weak topics identified yet.</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {insights.weakTopics.map(({ topic, missed }) => (
-                <li key={topic} className="flex justify-between text-slate-300">
+                <li key={topic} className="flex justify-between text-text-secondary">
                   <span>{topic}</span>
-                  <span className="text-slate-500">{missed} missed</span>
+                  <span className="text-text-muted">{missed} missed</span>
                 </li>
               ))}
             </ul>
@@ -168,29 +168,29 @@ export default async function ChildDetailPage({
       {readiness.length > 0 && (
         <div className="mt-6">
           <Card title="AI Coach: Mastery & Study Insights">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-text-muted">
               A high-level summary from {student.user.name.split(" ")[0]}&apos;s AI Study Coach
               activity. Private conversations aren&apos;t shown here — only overall progress.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {readiness.map((r) => (
-                <div key={r.subjectName} className="rounded-lg border border-slate-800 bg-slate-950 p-3">
+                <div key={r.subjectName} className="rounded-lg border border-border bg-surface p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-200">{r.subjectName}</span>
-                    <span className="text-sm font-semibold text-orange-400">{r.readinessPct}%</span>
+                    <span className="text-sm text-text-primary">{r.subjectName}</span>
+                    <span className="text-sm font-semibold text-brand-text">{r.readinessPct}%</span>
                   </div>
                   {r.strongTopics.length > 0 && (
-                    <p className="mt-1 text-xs text-green-400">Strong: {r.strongTopics.join(", ")}</p>
+                    <p className="mt-1 text-xs text-success">Strong: {r.strongTopics.join(", ")}</p>
                   )}
                   {r.weakTopics.length > 0 && (
-                    <p className="mt-1 text-xs text-amber-400">
+                    <p className="mt-1 text-xs text-warning">
                       Recommended focus: {r.weakTopics.join(", ")}
                     </p>
                   )}
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-[11px] text-slate-600">
+            <p className="mt-3 text-[11px] text-text-muted">
               Estimated from practice history — not a guarantee of exam results.
             </p>
           </Card>
@@ -200,7 +200,7 @@ export default async function ChildDetailPage({
       {rankedRecommendations.length > 0 && (
         <div className="mt-6">
           <Card title={`Recommended for ${insights.weakSubjects.join(", ")}`}>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-text-muted">
               {student.user.name.split(" ")[0]} is struggling with{" "}
               {insights.weakSubjects.join(", ")}. Here are courses from
               schools across Nigeria that might help.
@@ -210,10 +210,10 @@ export default async function ChildDetailPage({
                 <Link
                   key={course.id}
                   href={`/educom/${course.id}`}
-                  className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm hover:border-slate-600"
+                  className="rounded-lg border border-border bg-surface px-3 py-2.5 text-sm hover:border-border-strong"
                 >
-                  <p className="text-slate-100">{course.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="text-text-primary">{course.title}</p>
+                  <p className="mt-1 text-xs text-text-muted">
                     {course.school?.name}
                     {course.school?.state && ` — ${course.school.state}`}
                     {avgRating !== null && ` · ${avgRating.toFixed(1)} ★`}
@@ -228,20 +228,20 @@ export default async function ChildDetailPage({
       <div className="mt-6">
         <Card title="Course progress">
           {insights.courseProgress.length === 0 ? (
-            <p className="text-sm text-slate-400">Not enrolled in any courses yet.</p>
+            <p className="text-sm text-text-secondary">Not enrolled in any courses yet.</p>
           ) : (
             <div className="space-y-3">
               {insights.courseProgress.map((c) => (
                 <div key={c.courseId}>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-200">{c.title}</span>
-                    <span className="text-slate-500">
+                    <span className="text-text-primary">{c.title}</span>
+                    <span className="text-text-muted">
                       {c.completedLessons}/{c.totalLessons} lessons
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-sunken">
                     <div
-                      className="h-full bg-green-500"
+                      className="h-full bg-success"
                       style={{ width: `${c.pct}%` }}
                     />
                   </div>
@@ -261,12 +261,12 @@ export default async function ChildDetailPage({
                 <input type="hidden" name="plan" value={plan} />
                 <button
                   type="submit"
-                  className="w-full rounded-lg border border-slate-700 px-4 py-3 text-left text-sm hover:border-orange-500"
+                  className="w-full rounded-lg border border-border-strong px-4 py-3 text-left text-sm hover:border-brand"
                 >
-                  <span className="font-medium text-slate-100">
+                  <span className="font-medium text-text-primary">
                     {PLAN_LABELS[plan]}
                   </span>
-                  <span className="block text-xs text-slate-500">
+                  <span className="block text-xs text-text-muted">
                     {formatNaira(PLAN_PRICING_KOBO[plan]!)} / month
                   </span>
                 </button>

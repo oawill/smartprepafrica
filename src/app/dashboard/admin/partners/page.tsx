@@ -3,14 +3,15 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { formatNaira } from "@/lib/partners/compensation";
 
-const statusColor: Record<string, string> = {
-  PENDING: "text-amber-400",
-  APPROVED: "text-green-400",
-  SUSPENDED: "text-orange-400",
-  REJECTED: "text-red-400",
-  CLOSED: "text-slate-500",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  PENDING: "warning",
+  APPROVED: "info",
+  SUSPENDED: "danger",
+  REJECTED: "danger",
+  CLOSED: "neutral",
 };
 
 export default async function AdminPartnersPage({
@@ -63,51 +64,51 @@ export default async function AdminPartnersPage({
     <div>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Partners</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-semibold text-text-primary">Partners</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             Platform-wide partner program management.
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
           <Link
             href="/dashboard/admin/partners?status=PENDING"
-            className="rounded-lg border border-amber-800 px-3 py-2 text-xs text-amber-400 hover:border-amber-600"
+            className="rounded-lg border border-warning/40 px-3 py-2 text-xs text-warning hover:border-warning"
           >
             Pending applications {pendingPartners > 0 ? `(${pendingPartners})` : ""} →
           </Link>
           <Link
             href="/dashboard/admin/partners/compensation"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             Compensation rules →
           </Link>
           <Link
             href="/dashboard/admin/partners/tiers"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             Tiers →
           </Link>
           <Link
             href="/dashboard/admin/partners/fraud"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             Fraud review {pendingFraudFlags > 0 ? `(${pendingFraudFlags})` : ""} →
           </Link>
           <Link
             href="/dashboard/admin/partners/disputes"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             Disputes →
           </Link>
           <Link
             href="/dashboard/admin/partners/marketing"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             Marketing →
           </Link>
           <Link
             href="/dashboard/admin/partners/settings"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             Settings →
           </Link>
@@ -116,13 +117,13 @@ export default async function AdminPartnersPage({
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Card title="Total partners">
-          <p className="text-3xl font-semibold">{totalPartners}</p>
+          <p className="text-3xl font-semibold text-text-primary">{totalPartners}</p>
         </Card>
         <Card title="Approved partners">
-          <p className="text-3xl font-semibold">{approvedPartners}</p>
+          <p className="text-3xl font-semibold text-text-primary">{approvedPartners}</p>
         </Card>
         <Card title="Total commissions paid">
-          <p className="text-3xl font-semibold">
+          <p className="text-3xl font-semibold text-text-primary">
             {formatNaira(totalCommissionsPaid._sum.amountKobo ?? 0)}
           </p>
         </Card>
@@ -135,12 +136,12 @@ export default async function AdminPartnersPage({
               name="q"
               defaultValue={q}
               placeholder="Name, ID, email, phone, city, state…"
-              className="flex-1 min-w-[220px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="flex-1 min-w-[220px] rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <select
               name="status"
               defaultValue={status}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             >
               <option value="">Any status</option>
               <option value="PENDING">Pending</option>
@@ -151,7 +152,7 @@ export default async function AdminPartnersPage({
             </select>
             <button
               type="submit"
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
             >
               Search
             </button>
@@ -162,7 +163,7 @@ export default async function AdminPartnersPage({
       <div className="mt-6">
         <Card title={`${partners.length} partner${partners.length === 1 ? "" : "s"}`}>
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
+            <thead className="text-xs text-text-muted">
               <tr>
                 <th className="pb-2">Partner</th>
                 <th className="pb-2">Email</th>
@@ -174,23 +175,25 @@ export default async function AdminPartnersPage({
             </thead>
             <tbody>
               {partners.map((p) => (
-                <tr key={p.id} className="border-t border-slate-800">
-                  <td className="py-2">
+                <tr key={p.id} className="border-t border-border hover:bg-surface-sunken/50">
+                  <td className="py-2 text-text-primary">
                     {p.firstName} {p.lastName}
-                    <span className="ml-2 font-mono text-xs text-slate-500">
+                    <span className="ml-2 font-mono text-xs text-text-muted">
                       {p.partnerNumber ?? "—"}
                     </span>
                   </td>
-                  <td className="py-2 text-slate-400">{p.user.email}</td>
-                  <td className="py-2 text-slate-400">{p.partnerType}</td>
-                  <td className="py-2 text-slate-400">
+                  <td className="py-2 text-text-secondary">{p.user.email}</td>
+                  <td className="py-2 text-text-secondary">{p.partnerType}</td>
+                  <td className="py-2 text-text-secondary">
                     {[p.city, p.state].filter(Boolean).join(", ") || "—"}
                   </td>
-                  <td className={`py-2 ${statusColor[p.status] ?? ""}`}>{p.status}</td>
+                  <td className="py-2">
+                    <Badge tone={STATUS_TONE[p.status] ?? "neutral"}>{p.status}</Badge>
+                  </td>
                   <td className="py-2 text-right">
                     <Link
                       href={`/dashboard/admin/partners/${p.id}`}
-                      className="text-xs text-orange-400 hover:underline"
+                      className="text-xs text-brand-text hover:underline"
                     >
                       View →
                     </Link>

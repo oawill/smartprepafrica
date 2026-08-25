@@ -56,10 +56,10 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
-      <h1 className="mt-4 text-3xl font-semibold">Search Courses</h1>
+      <h1 className="mt-4 text-h1 font-semibold text-text-primary">Search Courses</h1>
 
       <form method="GET" className="mt-6">
         <input
@@ -67,32 +67,32 @@ export default async function SearchPage({
           name="q"
           defaultValue={query}
           placeholder="Try “Mathematics” or “Mathematics Rivers State”…"
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-orange-500"
+          className="w-full rounded-lg border border-border-strong bg-surface px-4 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
         />
       </form>
 
       {!hasQuery ? (
-        <p className="mt-8 text-sm text-slate-400">
+        <p className="mt-8 text-sm text-text-secondary">
           Search across courses, schools, and teachers.
         </p>
       ) : (
         <div className="mt-8 space-y-10">
           <section>
-            <h2 className="text-sm font-medium text-slate-300">
+            <h2 className="text-sm font-medium text-text-secondary">
               Courses {courses.length > 0 && `(${courses.length})`}
             </h2>
             {courses.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">No matching courses.</p>
+              <p className="mt-2 text-sm text-text-muted">No matching courses.</p>
             ) : (
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {courses.map((c) => (
                   <Link
                     key={c.id}
                     href={`/educom/${c.id}`}
-                    className="rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+                    className="rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
                   >
-                    <p className="text-slate-100">{c.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="text-text-primary">{c.title}</p>
+                    <p className="mt-1 text-xs text-text-muted">
                       {c.school ? `${c.school.name}${c.school.state ? ` — ${c.school.state}` : ""}` : "SmartPrepAfrica"}
                       {" · "}
                       {c._count.enrollments} learner{c._count.enrollments === 1 ? "" : "s"}
@@ -104,21 +104,21 @@ export default async function SearchPage({
           </section>
 
           <section>
-            <h2 className="text-sm font-medium text-slate-300">
+            <h2 className="text-sm font-medium text-text-secondary">
               Schools {schools.length > 0 && `(${schools.length})`}
             </h2>
             {schools.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">No matching schools.</p>
+              <p className="mt-2 text-sm text-text-muted">No matching schools.</p>
             ) : (
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {schools.map((s) => (
                   <Link
                     key={s.id}
                     href={`/educom/schools/${s.id}`}
-                    className="rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+                    className="rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
                   >
-                    <p className="text-slate-100">{s.name}</p>
-                    <p className="mt-1 text-xs text-slate-500">{s.state ?? "Nigeria"}</p>
+                    <p className="text-text-primary">{s.name}</p>
+                    <p className="mt-1 text-xs text-text-muted">{s.state ?? "Nigeria"}</p>
                   </Link>
                 ))}
               </div>
@@ -126,21 +126,21 @@ export default async function SearchPage({
           </section>
 
           <section>
-            <h2 className="text-sm font-medium text-slate-300">
+            <h2 className="text-sm font-medium text-text-secondary">
               Teachers {teachers.length > 0 && `(${teachers.length})`}
             </h2>
             {teachers.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">No matching teachers.</p>
+              <p className="mt-2 text-sm text-text-muted">No matching teachers.</p>
             ) : (
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {teachers.map((t) => (
                   <Link
                     key={t.id}
                     href={`/educom/teachers/${t.id}`}
-                    className="rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+                    className="rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
                   >
-                    <p className="text-slate-100">{t.user.name}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="text-text-primary">{t.user.name}</p>
+                    <p className="mt-1 text-xs text-text-muted">
                       {t.school ? `${t.school.name}${t.school.state ? ` — ${t.school.state}` : ""}` : "Independent"}
                     </p>
                   </Link>

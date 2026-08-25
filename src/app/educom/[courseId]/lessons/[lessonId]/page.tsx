@@ -8,6 +8,7 @@ import { asOptions } from "@/lib/practice-types";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { LessonTabs } from "@/components/lesson-player/lesson-tabs";
 import { resolveVideoSource } from "@/lib/video/resolve-video-source";
+import { Badge } from "@/components/ui/badge";
 
 function renderContent(content: string) {
   const segments = content.split("```");
@@ -18,7 +19,7 @@ function renderContent(content: string) {
       return (
         <pre
           key={i}
-          className="my-4 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 p-4 text-sm text-slate-300"
+          className="my-4 overflow-x-auto rounded-lg border border-border bg-surface-raised p-4 text-sm text-text-secondary"
         >
           <code>{code}</code>
         </pre>
@@ -28,7 +29,7 @@ function renderContent(content: string) {
       .split("\n\n")
       .filter((p) => p.trim())
       .map((para, j) => (
-        <p key={`${i}-${j}`} className="mt-4 leading-relaxed text-slate-300 first:mt-0">
+        <p key={`${i}-${j}`} className="mt-4 leading-relaxed text-text-secondary first:mt-0">
           {para}
         </p>
       ));
@@ -104,17 +105,17 @@ export default async function LessonPage({
     <div className="mx-auto max-w-3xl px-6 py-12">
       <Link
         href={`/educom/${courseId}`}
-        className="text-sm text-slate-400 hover:text-white"
+        className="text-sm text-text-secondary hover:text-text-primary"
       >
         ← {course.title}
       </Link>
 
       <div className="mt-4 flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             Lesson {currentIndex + 1} of {flatLessons.length}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold">{lesson.title}</h1>
+          <h1 className="mt-1 text-h2 font-semibold text-text-primary">{lesson.title}</h1>
         </div>
         {lesson.type !== "VIDEO" && (
           <AiCoachPanel
@@ -144,9 +145,9 @@ export default async function LessonPage({
             learningObjectives={lesson.learningObjectives}
             practicePanel={
               lesson.topic && course.subjectId ? (
-                <div className="rounded-lg border border-orange-800 bg-orange-950/30 p-4">
-                  <p className="text-sm font-medium text-orange-300">Test what you learned</p>
-                  <p className="mt-1 text-xs text-slate-400">
+                <div className="rounded-lg border border-brand/40 bg-brand/10 p-4">
+                  <p className="text-sm font-medium text-brand-text">Test what you learned</p>
+                  <p className="mt-1 text-xs text-text-secondary">
                     Launch a short SmartPrepAfrica drill on {lesson.topic} using the real question bank.
                   </p>
                   <form action={startAttempt} className="mt-3">
@@ -157,14 +158,14 @@ export default async function LessonPage({
                     <input type="hidden" name="count" value="8" />
                     <button
                       type="submit"
-                      className="rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                      className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                     >
                       Practice: {lesson.topic}
                     </button>
                   </form>
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-text-muted">
                   No practice topic is linked to this lesson yet.
                 </p>
               )
@@ -178,34 +179,34 @@ export default async function LessonPage({
       {lesson.type === "QUIZ" && (
         <div className="mt-6">
           {isComplete ? (
-            <div className="rounded-lg border border-green-800 bg-green-900/30 px-4 py-3 text-sm text-green-300">
+            <div className="rounded-lg border border-success/40 bg-success-surface px-4 py-3 text-sm text-success">
               Quiz score: {Math.round(progress!.score ?? 0)}%
             </div>
           ) : quizQuestions.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               No questions have been added to this quiz yet.
             </p>
           ) : (
             <form action={submitQuiz.bind(null, lesson.id)} className="space-y-5">
               {quizQuestions.map((q, i) => (
-                <div key={q.id} className="rounded-lg border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-sm font-medium text-slate-200">
+                <div key={q.id} className="rounded-lg border border-border bg-surface-raised p-4">
+                  <p className="text-sm font-medium text-text-primary">
                     {i + 1}. {q.prompt}
                   </p>
                   <div className="mt-2 space-y-1.5">
                     {asOptions(q.options).map((option) => (
                       <label
                         key={option.key}
-                        className="flex items-center gap-2 rounded-lg border border-slate-800 px-3 py-2 text-sm text-slate-300 hover:border-slate-600"
+                        className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:border-border-strong"
                       >
                         <input
                           type="radio"
                           name={`question_${q.id}`}
                           value={option.key}
                           required
-                          className="accent-orange-500"
+                          className="accent-brand"
                         />
-                        <span className="font-semibold text-orange-400">{option.key}</span>
+                        <span className="font-semibold text-brand-text">{option.key}</span>
                         {option.text}
                       </label>
                     ))}
@@ -214,7 +215,7 @@ export default async function LessonPage({
               ))}
               <button
                 type="submit"
-                className="rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Submit quiz
               </button>
@@ -229,25 +230,23 @@ export default async function LessonPage({
             <form action={markLessonComplete.bind(null, lesson.id)}>
               <button
                 type="submit"
-                className="rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Mark complete
               </button>
             </form>
           ) : (
-            <span className="rounded-full border border-green-800 bg-green-900/30 px-4 py-2 text-sm text-green-300">
-              ✓ Completed
-            </span>
+            <Badge tone="success">Completed</Badge>
           )}
         </div>
       )}
 
       {lesson.type !== "VIDEO" && lesson.topic && course.subjectId && (
-        <div className="mt-8 rounded-lg border border-orange-800 bg-orange-950/30 p-4">
-          <p className="text-sm font-medium text-orange-300">
+        <div className="mt-8 rounded-lg border border-brand/40 bg-brand/10 p-4">
+          <p className="text-sm font-medium text-brand-text">
             Practice what you learned
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-text-secondary">
             Launch a short SmartPrepAfrica drill on {lesson.topic} using the
             real question bank.
           </p>
@@ -259,7 +258,7 @@ export default async function LessonPage({
             <input type="hidden" name="count" value="8" />
             <button
               type="submit"
-              className="rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Practice: {lesson.topic}
             </button>
@@ -267,11 +266,11 @@ export default async function LessonPage({
         </div>
       )}
 
-      <div className="mt-8 flex items-center justify-between border-t border-slate-800 pt-6">
+      <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
         {prevLesson ? (
           <Link
             href={`/educom/${courseId}/lessons/${prevLesson.id}`}
-            className="text-sm text-slate-400 hover:text-white"
+            className="text-sm text-text-secondary hover:text-text-primary"
           >
             ← {prevLesson.title}
           </Link>
@@ -281,14 +280,14 @@ export default async function LessonPage({
         {nextLesson ? (
           <Link
             href={`/educom/${courseId}/lessons/${nextLesson.id}`}
-            className="text-sm font-medium text-orange-400 hover:text-orange-300"
+            className="text-sm font-medium text-brand-text hover:underline"
           >
             {nextLesson.title} →
           </Link>
         ) : (
           <Link
             href={`/educom/${courseId}`}
-            className="text-sm font-medium text-orange-400 hover:text-orange-300"
+            className="text-sm font-medium text-brand-text hover:underline"
           >
             Back to course overview →
           </Link>

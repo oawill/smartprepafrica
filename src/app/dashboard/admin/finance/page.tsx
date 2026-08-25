@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { refundPayment } from "@/app/dashboard/admin/finance/actions";
 import type { Prisma } from "@prisma/client";
@@ -13,10 +14,10 @@ function formatNaira(kobo: number) {
   );
 }
 
-const statusColor: Record<string, string> = {
-  PENDING: "text-amber-400",
-  SUCCESS: "text-green-400",
-  FAILED: "text-red-400",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  PENDING: "warning",
+  SUCCESS: "success",
+  FAILED: "danger",
 };
 
 export default async function AdminFinancePage({
@@ -50,8 +51,8 @@ export default async function AdminFinancePage({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Finance — Transactions</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Finance — Transactions</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         {total} transactions. Refunds create a new ledger row rather than editing history.
       </p>
 
@@ -61,7 +62,7 @@ export default async function AdminFinancePage({
             <select
               name="status"
               defaultValue={status ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             >
               <option value="">Any status</option>
               <option value="PENDING">Pending</option>
@@ -71,13 +72,13 @@ export default async function AdminFinancePage({
             <select
               name="kind"
               defaultValue={kind ?? ""}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
             >
               <option value="">Charges & refunds</option>
               <option value="CHARGE">Charges only</option>
               <option value="REFUND">Refunds only</option>
             </select>
-            <button type="submit" className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500">
+            <button type="submit" className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted">
               Filter
             </button>
           </form>
@@ -87,7 +88,7 @@ export default async function AdminFinancePage({
       <div className="mt-6">
         <Card title={`${payments.length} on this page`}>
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-slate-500">
+            <thead className="text-xs text-text-muted">
               <tr>
                 <th className="pb-2">Reference</th>
                 <th className="pb-2">User</th>
@@ -100,19 +101,21 @@ export default async function AdminFinancePage({
             </thead>
             <tbody>
               {payments.map((p) => (
-                <tr key={p.id} className="border-t border-slate-800">
-                  <td className="py-2 font-mono text-xs text-slate-500">{p.transactionNumber ?? "—"}</td>
-                  <td className="py-2 text-slate-300">{p.user.name}</td>
-                  <td className={`py-2 ${p.kind === "REFUND" ? "text-red-400" : "text-slate-300"}`}>
+                <tr key={p.id} className="border-t border-border hover:bg-surface-sunken/50">
+                  <td className="py-2 font-mono text-xs text-text-muted">{p.transactionNumber ?? "—"}</td>
+                  <td className="py-2 text-text-secondary">{p.user.name}</td>
+                  <td className={`py-2 ${p.kind === "REFUND" ? "text-danger" : "text-text-secondary"}`}>
                     {p.kind === "REFUND" ? "-" : ""}
                     {formatNaira(p.amountKobo)}
                   </td>
-                  <td className="py-2 text-slate-400">{p.provider}</td>
-                  <td className={`py-2 ${statusColor[p.status] ?? ""}`}>
-                    {p.status}
-                    {p.kind === "REFUND" && <span className="ml-1 text-xs text-slate-500">(refund)</span>}
+                  <td className="py-2 text-text-secondary">{p.provider}</td>
+                  <td className="py-2">
+                    <div className="flex items-center gap-2">
+                      <Badge tone={STATUS_TONE[p.status] ?? "neutral"}>{p.status}</Badge>
+                      {p.kind === "REFUND" && <span className="text-xs text-text-muted">(refund)</span>}
+                    </div>
                   </td>
-                  <td className="py-2 text-slate-500">{new Date(p.createdAt).toLocaleDateString("en-NG")}</td>
+                  <td className="py-2 text-text-muted">{new Date(p.createdAt).toLocaleDateString("en-NG")}</td>
                   <td className="py-2 text-right">
                     {p.kind === "CHARGE" && p.status === "SUCCESS" && !refundedSet.has(p.id) && (
                       <form action={refundPayment} className="flex justify-end gap-1">
@@ -121,9 +124,9 @@ export default async function AdminFinancePage({
                           name="reason"
                           placeholder="Reason…"
                           required
-                          className="w-28 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs outline-none focus:border-orange-500"
+                          className="w-28 rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
                         />
-                        <button type="submit" className="rounded-lg border border-red-900 px-2 py-1 text-xs text-red-400 hover:border-red-700">
+                        <button type="submit" className="rounded-lg border border-danger/40 px-2 py-1 text-xs text-danger hover:border-danger">
                           Refund
                         </button>
                       </form>
@@ -140,16 +143,16 @@ export default async function AdminFinancePage({
         <div className="mt-4 flex items-center justify-center gap-2 text-sm">
           <Link
             href={`/dashboard/admin/finance?page=${Math.max(1, page - 1)}`}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             ← Prev
           </Link>
-          <span className="text-slate-500">
+          <span className="text-text-muted">
             Page {page} of {totalPages}
           </span>
           <Link
             href={`/dashboard/admin/finance?page=${Math.min(totalPages, page + 1)}`}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:border-slate-500"
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-text-secondary hover:border-text-muted"
           >
             Next →
           </Link>

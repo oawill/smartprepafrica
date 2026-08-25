@@ -58,22 +58,22 @@ export default async function AdminUserDetailPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{user.name}</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-text-secondary">
             {user.email} · {ROLE_SLUG_LABEL[roleSlug]}
             {user.studentNumber && ` · ${user.studentNumber}`} ·{" "}
             <span
               className={
                 user.status === "ACTIVE"
-                  ? "text-green-400"
+                  ? "text-success"
                   : user.status === "SUSPENDED" || user.status === "LOCKED"
-                    ? "text-red-400"
-                    : "text-amber-400"
+                    ? "text-danger"
+                    : "text-warning"
               }
             >
               {user.status}
             </span>
           </p>
-          {user.statusReason && <p className="mt-1 text-xs text-slate-500">Reason on file: {user.statusReason}</p>}
+          {user.statusReason && <p className="mt-1 text-xs text-text-muted">Reason on file: {user.statusReason}</p>}
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           {canSuspend && user.status === "ACTIVE" && (
@@ -84,9 +84,9 @@ export default async function AdminUserDetailPage({
                 name="reason"
                 placeholder="Reason to suspend…"
                 required
-                className="w-44 rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-xs outline-none focus:border-orange-500"
+                className="w-44 rounded-lg border border-border-strong bg-surface px-2 py-2 text-xs outline-none placeholder:text-text-muted focus:border-brand"
               />
-              <button type="submit" className="rounded-lg border border-red-900 px-3 py-2 text-xs text-red-400 hover:border-red-700">
+              <button type="submit" className="rounded-lg border border-danger/40 px-3 py-2 text-xs text-danger hover:border-danger">
                 Suspend
               </button>
             </form>
@@ -95,7 +95,7 @@ export default async function AdminUserDetailPage({
             <form action={reactivateUser}>
               <input type="hidden" name="userId" value={user.id} />
               <input type="hidden" name="redirectTo" value={redirectTo} />
-              <button type="submit" className="rounded-lg border border-green-800 px-3 py-2 text-xs text-green-400 hover:border-green-600">
+              <button type="submit" className="rounded-lg border border-success/40 px-3 py-2 text-xs text-success hover:border-success">
                 Reactivate
               </button>
             </form>
@@ -104,7 +104,7 @@ export default async function AdminUserDetailPage({
             <form action={forceSignOut}>
               <input type="hidden" name="userId" value={user.id} />
               <input type="hidden" name="redirectTo" value={redirectTo} />
-              <button type="submit" className="rounded-lg border border-amber-800 px-3 py-2 text-xs text-amber-400 hover:border-amber-600">
+              <button type="submit" className="rounded-lg border border-warning/40 px-3 py-2 text-xs text-warning hover:border-warning">
                 Force sign-out (all devices)
               </button>
             </form>
@@ -115,20 +115,20 @@ export default async function AdminUserDetailPage({
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {user.studentProfile && (
           <Card title="Student profile">
-            <p className="text-sm text-slate-300">School: {user.studentProfile.school?.name ?? "—"}</p>
-            <p className="text-sm text-slate-300">Class: {user.studentProfile.class?.name ?? "—"}</p>
-            <p className="text-sm text-slate-300">Grade: {user.studentProfile.gradeLevel ?? "—"}</p>
+            <p className="text-sm text-text-secondary">School: {user.studentProfile.school?.name ?? "—"}</p>
+            <p className="text-sm text-text-secondary">Class: {user.studentProfile.class?.name ?? "—"}</p>
+            <p className="text-sm text-text-secondary">Grade: {user.studentProfile.gradeLevel ?? "—"}</p>
           </Card>
         )}
         {user.teacherProfile && (
           <Card title="Teacher profile">
-            <p className="text-sm text-slate-300">School: {user.teacherProfile.school?.name ?? "—"}</p>
-            <p className="text-sm text-slate-300">Years experience: {user.teacherProfile.yearsExperience ?? "—"}</p>
+            <p className="text-sm text-text-secondary">School: {user.teacherProfile.school?.name ?? "—"}</p>
+            <p className="text-sm text-text-secondary">Years experience: {user.teacherProfile.yearsExperience ?? "—"}</p>
           </Card>
         )}
         {user.schoolAdminOf.length > 0 && (
           <Card title="Administers">
-            <ul className="text-sm text-slate-300">
+            <ul className="text-sm text-text-secondary">
               {user.schoolAdminOf.map((s) => (
                 <li key={s.id}>{s.name}</li>
               ))}
@@ -137,12 +137,12 @@ export default async function AdminUserDetailPage({
         )}
         {user.sponsorProfile && (
           <Card title="Sponsor profile">
-            <p className="text-sm text-slate-300">Organization: {user.sponsorProfile.organization ?? "—"}</p>
+            <p className="text-sm text-text-secondary">Organization: {user.sponsorProfile.organization ?? "—"}</p>
           </Card>
         )}
         {user.parentLinks.length > 0 && (
           <Card title="Linked children">
-            <ul className="text-sm text-slate-300">
+            <ul className="text-sm text-text-secondary">
               {user.parentLinks.map((l) => (
                 <li key={l.id}>{l.student.user.name}</li>
               ))}
@@ -150,22 +150,22 @@ export default async function AdminUserDetailPage({
           </Card>
         )}
         <Card title="Activity">
-          <p className="text-sm text-slate-300">Exam attempts: {user.examAttempts.length}</p>
-          <p className="text-sm text-slate-300">Course enrollments: {user.enrollments.length}</p>
+          <p className="text-sm text-text-secondary">Exam attempts: {user.examAttempts.length}</p>
+          <p className="text-sm text-text-secondary">Course enrollments: {user.enrollments.length}</p>
         </Card>
         <Card title="Subscription">
           {user.subscriptions[0] ? (
             <>
-              <p className="text-sm text-slate-300">Plan: {user.subscriptions[0].plan}</p>
-              <p className="text-sm text-slate-300">Status: {user.subscriptions[0].status}</p>
+              <p className="text-sm text-text-secondary">Plan: {user.subscriptions[0].plan}</p>
+              <p className="text-sm text-text-secondary">Status: {user.subscriptions[0].status}</p>
               {user.subscriptions[0].expiresAt && (
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-text-secondary">
                   Expires: {new Date(user.subscriptions[0].expiresAt).toLocaleDateString("en-NG")}
                 </p>
               )}
             </>
           ) : (
-            <p className="text-sm text-slate-500">No subscription on record.</p>
+            <p className="text-sm text-text-muted">No subscription on record.</p>
           )}
         </Card>
       </div>

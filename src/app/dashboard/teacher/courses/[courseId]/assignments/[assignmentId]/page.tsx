@@ -32,58 +32,58 @@ export default async function AssignmentSubmissionsPage({
     <div className="mx-auto max-w-2xl px-6 py-12">
       <Link
         href={`/dashboard/teacher/courses/${courseId}`}
-        className="text-sm text-slate-400 hover:text-white"
+        className="text-sm text-text-secondary hover:text-text-primary"
       >
         ← {assignment.course.title}
       </Link>
       <h1 className="mt-4 text-2xl font-semibold">{assignment.title}</h1>
-      <p className="mt-1 text-sm text-slate-400">{assignment.instructions}</p>
+      <p className="mt-1 text-sm text-text-secondary">{assignment.instructions}</p>
 
       <div className="mt-8 space-y-4">
         {assignment.submissions.length === 0 ? (
-          <p className="rounded-xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-400">
+          <p className="rounded-xl border border-border bg-surface-raised p-5 text-sm text-text-secondary">
             No submissions yet.
           </p>
         ) : (
           assignment.submissions.map((sub) => (
-            <div key={sub.id} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+            <div key={sub.id} className="rounded-xl border border-border bg-surface-raised p-5">
               <div className="flex items-center justify-between">
-                <p className="font-medium text-slate-100">{sub.user.name}</p>
-                <p className="text-xs text-slate-500">
+                <p className="font-medium text-text-primary">{sub.user.name}</p>
+                <p className="text-xs text-text-muted">
                   Submitted {sub.submittedAt.toLocaleDateString()}
                 </p>
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-300">{sub.content}</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-text-secondary">{sub.content}</p>
 
               {sub.gradedAt ? (
-                <div className="mt-3 rounded-lg border border-green-800 bg-green-900/30 px-3 py-2 text-sm text-green-300">
+                <div className="mt-3 rounded-lg border border-success/40 bg-success-surface px-3 py-2 text-sm text-success">
                   Grade: {sub.grade}% {sub.feedback && `— ${sub.feedback}`}
                 </div>
               ) : (
                 <form action={gradeSubmission} className="mt-3 flex flex-wrap items-end gap-2">
                   <input type="hidden" name="submissionId" value={sub.id} />
                   <div>
-                    <label className="block text-xs text-slate-400">Grade (%)</label>
+                    <label className="block text-xs text-text-secondary">Grade (%)</label>
                     <input
                       type="number"
                       name="grade"
                       min={0}
                       max={100}
                       required
-                      className="mt-1 w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                      className="mt-1 w-24 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
                     />
                   </div>
                   <div className="flex-1 min-w-[160px]">
-                    <label className="block text-xs text-slate-400">Feedback</label>
+                    <label className="block text-xs text-text-secondary">Feedback</label>
                     <input
                       type="text"
                       name="feedback"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                      className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                    className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                   >
                     Save grade
                   </button>

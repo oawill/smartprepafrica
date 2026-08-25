@@ -16,8 +16,8 @@ export type PassageFormValue = {
 };
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500";
-const labelClass = "block text-xs text-slate-400";
+  "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
+const labelClass = "block text-xs text-text-secondary";
 
 const PASSAGE_TYPE_OPTIONS = [
   { value: "COMPREHENSION", label: "English Comprehension" },
@@ -95,13 +95,13 @@ export function PassageForm({
       </div>
 
       <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 text-sm text-slate-300">
+        <label className="flex items-center gap-2 text-sm text-text-secondary">
           <input
             type="checkbox"
             name="showLineNumbers"
             checked={showLineNumbers}
             onChange={(e) => setShowLineNumbers(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-700 bg-slate-950"
+            className="h-4 w-4 rounded border-border-strong bg-surface"
           />
           Show line numbers
         </label>
@@ -135,11 +135,11 @@ export function PassageForm({
         </div>
         <div>
           <label className={labelClass}>Live preview</label>
-          <div className="mt-1 min-h-[24rem] rounded-lg border border-slate-800 bg-slate-900 p-3">
+          <div className="mt-1 min-h-[24rem] rounded-lg border border-border bg-surface-raised p-3">
             {bodyText.trim() ? (
               <MessageContent content={bodyText} />
             ) : (
-              <p className="text-xs text-slate-600">Preview appears here.</p>
+              <p className="text-xs text-text-muted">Preview appears here.</p>
             )}
           </div>
         </div>
@@ -147,7 +147,7 @@ export function PassageForm({
 
       <button
         type="submit"
-        className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+        className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
       >
         {initial?.id ? "Save changes" : "Create draft"}
       </button>

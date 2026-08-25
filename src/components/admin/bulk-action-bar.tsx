@@ -44,8 +44,8 @@ export function BulkActionBar({
 
   return (
     <>
-      <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-orange-800 bg-orange-500/10 px-4 py-2.5">
-        <span className="text-sm font-medium text-orange-300">
+      <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-brand/40 bg-brand/10 px-4 py-2.5">
+        <span className="text-sm font-medium text-brand-text">
           {selectedIds.length} selected
         </span>
         <div className="flex flex-wrap gap-2">
@@ -59,8 +59,8 @@ export function BulkActionBar({
               }}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
                 action.danger
-                  ? "border border-red-900 text-red-400 hover:border-red-700"
-                  : "border border-slate-700 text-slate-200 hover:border-slate-500"
+                  ? "border border-danger/40 text-danger hover:border-danger"
+                  : "border border-border-strong text-text-primary hover:border-text-muted"
               }`}
             >
               {action.label}
@@ -70,7 +70,7 @@ export function BulkActionBar({
         <button
           type="button"
           onClick={onClear}
-          className="ml-auto text-xs text-slate-400 hover:text-slate-200"
+          className="ml-auto text-xs text-text-muted hover:text-text-primary"
         >
           Clear selection
         </button>
@@ -97,7 +97,7 @@ export function BulkActionBar({
             onChange={(e) => setReason(e.target.value)}
             placeholder="Reason (required)…"
             rows={2}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none placeholder:text-text-muted focus:border-brand"
           />
         )}
       </ConfirmDialog>

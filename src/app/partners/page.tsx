@@ -24,13 +24,13 @@ export default function PartnersLandingPage() {
     <>
       <main className="flex-1">
         <section className="mx-auto max-w-4xl px-6 py-20 text-center">
-          <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
+          <span className="rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary">
             SmartPrepAfrica.com Partner Program
           </span>
-          <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-semibold leading-tight sm:text-5xl">
+          <h1 className="mx-auto mt-6 max-w-2xl text-display font-semibold leading-tight text-text-primary">
             Become a SmartPrepAfrica.com Partner
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-slate-400">
+          <p className="mx-auto mt-4 max-w-xl text-text-secondary">
             Earn while helping students learn. Refer students and schools to SmartPrepAfrica.com
             and get rewarded for the ones who stick around — teachers, consultants, influencers,
             agencies, and anyone with a network worth sharing with.
@@ -38,7 +38,7 @@ export default function PartnersLandingPage() {
           <div className="mt-8 flex justify-center gap-4">
             <Link
               href="/partners/apply"
-              className="rounded-full bg-orange-500 px-6 py-3 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Become a Partner
             </Link>
@@ -46,20 +46,20 @@ export default function PartnersLandingPage() {
         </section>
 
         <section className="mx-auto max-w-5xl px-6 py-12">
-          <h2 className="text-center text-2xl font-semibold">How it works</h2>
+          <h2 className="text-center text-h2 font-semibold text-text-primary">How it works</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((step, i) => (
-              <div key={step.title} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                <span className="text-xs font-medium text-orange-400">Step {i + 1}</span>
-                <p className="mt-1 font-semibold">{step.title}</p>
-                <p className="mt-2 text-sm text-slate-400">{step.body}</p>
+              <div key={step.title} className="rounded-xl border border-border bg-surface-raised p-5">
+                <span className="text-xs font-medium text-brand-text">Step {i + 1}</span>
+                <p className="mt-1 font-semibold text-text-primary">{step.title}</p>
+                <p className="mt-2 text-sm text-text-secondary">{step.body}</p>
               </div>
             ))}
           </div>
         </section>
 
         <section className="mx-auto max-w-4xl px-6 py-16 text-center">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             Commission structure and payout terms are set by SmartPrepAfrica.com and may change; exact rates
             are confirmed once your application is approved. We don&apos;t promise a specific
             income amount.

@@ -13,8 +13,8 @@ export default async function AdminPartnerSettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Partner program settings</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <h1 className="text-h2 font-semibold text-text-primary">Partner program settings</h1>
+      <p className="mt-1 text-sm text-text-secondary">
         Platform-wide configuration for the partner program — no deployment required to change
         these.
       </p>
@@ -23,7 +23,7 @@ export default async function AdminPartnerSettingsPage() {
         <Card title="Configuration">
           <form action={saveProgramSettings} className="space-y-4">
             <div>
-              <label className="block text-sm text-slate-300" htmlFor="attributionWindowDays">
+              <label className="block text-sm text-text-secondary" htmlFor="attributionWindowDays">
                 Attribution window (days)
               </label>
               <input
@@ -31,15 +31,15 @@ export default async function AdminPartnerSettingsPage() {
                 name="attributionWindowDays"
                 type="number"
                 defaultValue={settings.attributionWindowDays}
-                className="mt-1 w-full max-w-xs rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full max-w-xs rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-text-muted">
                 How long a click stays valid for attributing a later registration.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm text-slate-300" htmlFor="minimumPayoutNaira">
+              <label className="block text-sm text-text-secondary" htmlFor="minimumPayoutNaira">
                 Minimum payout (₦)
               </label>
               <input
@@ -47,11 +47,11 @@ export default async function AdminPartnerSettingsPage() {
                 name="minimumPayoutNaira"
                 type="number"
                 defaultValue={settings.minimumPayoutKobo / 100}
-                className="mt-1 w-full max-w-xs rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="mt-1 w-full max-w-xs rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               />
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
               <input
                 type="checkbox"
                 name="requireAdminApproval"
@@ -60,7 +60,7 @@ export default async function AdminPartnerSettingsPage() {
               Require admin approval for new partner applications
             </label>
 
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
               <input
                 type="checkbox"
                 name="leaderboardEnabled"
@@ -71,7 +71,7 @@ export default async function AdminPartnerSettingsPage() {
 
             <button
               type="submit"
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Save settings
             </button>

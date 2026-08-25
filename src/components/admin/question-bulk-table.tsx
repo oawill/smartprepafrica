@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BulkActionBar } from "@/components/admin/bulk-action-bar";
 import { BulkResultBanner } from "@/components/admin/bulk-result-banner";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { bulkArchiveQuestions, bulkPublishQuestions, bulkApproveQuestions } from "@/app/dashboard/admin/questions/actions";
 import type { BulkAction, BulkResult } from "@/lib/admin/bulk-types";
 
-const statusColor: Record<string, string> = {
-  DRAFT: "text-slate-400",
-  NEEDS_REVIEW: "text-amber-400",
-  APPROVED: "text-blue-400",
-  PUBLISHED: "text-green-400",
-  ARCHIVED: "text-slate-600",
+const STATUS_TONE: Record<string, BadgeTone> = {
+  DRAFT: "neutral",
+  NEEDS_REVIEW: "warning",
+  APPROVED: "info",
+  PUBLISHED: "success",
+  ARCHIVED: "neutral",
 };
 
 export type BulkQuestionRow = {
@@ -111,7 +112,7 @@ export function QuestionBulkTable({
       )}
 
       <table className="w-full text-left text-sm">
-        <thead className="text-xs text-slate-500">
+        <thead className="text-xs text-text-muted">
           <tr>
             {canBulkUpdate && (
               <th className="w-8 pb-2">
@@ -120,7 +121,7 @@ export function QuestionBulkTable({
                   aria-label="Select all on this page"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="rounded border-slate-600 bg-slate-950"
+                  className="rounded border-border-strong bg-surface"
                 />
               </th>
             )}
@@ -134,7 +135,7 @@ export function QuestionBulkTable({
         </thead>
         <tbody>
           {questions.map((question) => (
-            <tr key={question.id} className="border-t border-slate-800">
+            <tr key={question.id} className="border-t border-border hover:bg-surface-sunken/50">
               {canBulkUpdate && (
                 <td className="py-2">
                   <input
@@ -142,26 +143,24 @@ export function QuestionBulkTable({
                     aria-label={`Select ${question.questionNumber ?? question.id}`}
                     checked={selected.has(question.id)}
                     onChange={() => toggle(question.id)}
-                    className="rounded border-slate-600 bg-slate-950"
+                    className="rounded border-border-strong bg-surface"
                   />
                 </td>
               )}
-              <td className="py-2 font-mono text-xs text-slate-500">{question.questionNumber ?? "—"}</td>
-              <td className="py-2 text-slate-300">
+              <td className="py-2 font-mono text-xs text-text-muted">{question.questionNumber ?? "—"}</td>
+              <td className="py-2 text-text-secondary">
                 {question.subjectName} · {question.exam}
               </td>
-              <td className="py-2 text-slate-400">{question.topic ?? "—"}</td>
-              <td className="py-2 text-slate-400">{question.difficulty}</td>
-              <td className={`py-2 ${statusColor[question.status] ?? ""}`}>
-                {question.status}
-                {question.duplicateOfId && (
-                  <span className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-400">
-                    possible duplicate
-                  </span>
-                )}
+              <td className="py-2 text-text-secondary">{question.topic ?? "—"}</td>
+              <td className="py-2 text-text-secondary">{question.difficulty}</td>
+              <td className="py-2">
+                <div className="flex items-center gap-2">
+                  <Badge tone={STATUS_TONE[question.status] ?? "neutral"}>{question.status}</Badge>
+                  {question.duplicateOfId && <Badge tone="warning">possible duplicate</Badge>}
+                </div>
               </td>
               <td className="py-2 text-right">
-                <Link href={`/dashboard/admin/questions/${question.id}`} className="text-xs text-orange-400 hover:underline">
+                <Link href={`/dashboard/admin/questions/${question.id}`} className="text-xs text-brand-text hover:underline">
                   View →
                 </Link>
               </td>

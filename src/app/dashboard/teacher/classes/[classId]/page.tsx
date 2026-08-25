@@ -45,19 +45,19 @@ export default async function TeacherClassPage({
 
   return (
     <div>
-      <Link href="/dashboard/teacher" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/dashboard/teacher" className="text-sm text-text-secondary hover:text-text-primary">
         ← Teacher dashboard
       </Link>
-      <h1 className="mt-4 text-2xl font-semibold">{cls.name}</h1>
-      <p className="mt-1 text-sm text-slate-400">{cls.students.length} students</p>
+      <h1 className="mt-4 text-h2 font-semibold text-text-primary">{cls.name}</h1>
+      <p className="mt-1 text-sm text-text-secondary">{cls.students.length} students</p>
 
       <div className="mt-6">
         <Card title="Roster">
           {cls.students.length === 0 ? (
-            <p className="text-sm text-slate-400">No students in this class yet.</p>
+            <p className="text-sm text-text-secondary">No students in this class yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Name</th>
                   <th className="pb-2">Avg CBT score</th>
@@ -66,15 +66,15 @@ export default async function TeacherClassPage({
               </thead>
               <tbody>
                 {cls.students.map((s) => (
-                  <tr key={s.id} className="border-t border-slate-800">
-                    <td className="py-2">{s.user.name}</td>
-                    <td className="py-2 text-slate-400">
+                  <tr key={s.id} className="border-t border-border">
+                    <td className="py-2 text-text-primary">{s.user.name}</td>
+                    <td className="py-2 text-text-secondary">
                       {avgByUser.has(s.user.id) ? `${avgByUser.get(s.user.id)}%` : "—"}
                     </td>
                     <td className="py-2 text-right">
                       <Link
                         href={`/dashboard/teacher/students/${s.id}`}
-                        className="text-orange-400 hover:underline"
+                        className="text-brand-text hover:underline"
                       >
                         View →
                       </Link>

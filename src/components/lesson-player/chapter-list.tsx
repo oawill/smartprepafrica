@@ -30,11 +30,11 @@ export function ChapterList({
             type="button"
             onClick={() => onSeek(chapter.startSeconds)}
             className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm ${
-              isActive ? "bg-orange-500/10 text-orange-300" : "text-slate-300 hover:bg-slate-900"
+              isActive ? "bg-brand/10 text-brand-text" : "text-text-secondary hover:bg-surface-sunken"
             }`}
           >
             <span>{chapter.title}</span>
-            <span className="shrink-0 font-mono text-xs text-slate-500">{formatTime(chapter.startSeconds)}</span>
+            <span className="shrink-0 font-mono text-xs text-text-muted">{formatTime(chapter.startSeconds)}</span>
           </button>
         );
       })}

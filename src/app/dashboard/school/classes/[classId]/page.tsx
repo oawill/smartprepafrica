@@ -54,18 +54,18 @@ export default async function ClassDetailPage({
 
   return (
     <div>
-      <Link href="/dashboard/school" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/dashboard/school" className="text-sm text-text-secondary hover:text-text-primary">
         ← School dashboard
       </Link>
       <h1 className="mt-4 text-2xl font-semibold">{cls.name}</h1>
-      <p className="mt-1 text-sm text-slate-400">{cls.students.length} students</p>
+      <p className="mt-1 text-sm text-text-secondary">{cls.students.length} students</p>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Teachers assigned">
           {cls.teachers.length === 0 ? (
-            <p className="text-sm text-slate-400">No teachers assigned yet.</p>
+            <p className="text-sm text-text-secondary">No teachers assigned yet.</p>
           ) : (
-            <ul className="space-y-1 text-sm text-slate-300">
+            <ul className="space-y-1 text-sm text-text-secondary">
               {cls.teachers.map((t) => (
                 <li key={t.id}>{t.user.name}</li>
               ))}
@@ -77,7 +77,7 @@ export default async function ClassDetailPage({
               <select
                 name="teacherProfileId"
                 required
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               >
                 <option value="">Select a teacher…</option>
                 {schoolTeachers.map((t) => (
@@ -88,7 +88,7 @@ export default async function ClassDetailPage({
               </select>
               <button
                 type="submit"
-                className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Assign
               </button>
@@ -98,7 +98,7 @@ export default async function ClassDetailPage({
 
         <Card title="Add a student to this class">
           {unassignedStudents.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-text-secondary">
               No unassigned students in your school right now.
             </p>
           ) : (
@@ -107,7 +107,7 @@ export default async function ClassDetailPage({
               <select
                 name="studentProfileId"
                 required
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               >
                 <option value="">Select a student…</option>
                 {unassignedStudents.map((s) => (
@@ -118,7 +118,7 @@ export default async function ClassDetailPage({
               </select>
               <button
                 type="submit"
-                className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Add
               </button>
@@ -130,10 +130,10 @@ export default async function ClassDetailPage({
       <div className="mt-6">
         <Card title="Roster">
           {cls.students.length === 0 ? (
-            <p className="text-sm text-slate-400">No students in this class yet.</p>
+            <p className="text-sm text-text-secondary">No students in this class yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-text-muted">
                 <tr>
                   <th className="pb-2">Name</th>
                   <th className="pb-2">Avg CBT score</th>
@@ -142,15 +142,15 @@ export default async function ClassDetailPage({
               </thead>
               <tbody>
                 {cls.students.map((s) => (
-                  <tr key={s.id} className="border-t border-slate-800">
+                  <tr key={s.id} className="border-t border-border">
                     <td className="py-2">{s.user.name}</td>
-                    <td className="py-2 text-slate-400">
+                    <td className="py-2 text-text-secondary">
                       {avgScoreByUser.has(s.user.id) ? `${avgScoreByUser.get(s.user.id)}%` : "—"}
                     </td>
                     <td className="py-2 text-right">
                       <Link
                         href={`/dashboard/school/students/${s.id}`}
-                        className="text-orange-400 hover:underline"
+                        className="text-brand-text hover:underline"
                       >
                         View →
                       </Link>

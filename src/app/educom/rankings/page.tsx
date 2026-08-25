@@ -91,11 +91,11 @@ export default async function RankingsPage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
       <h1 className="mt-4 text-3xl font-semibold">Discover on SmartPrepAfrica.com</h1>
-      <p className="mt-2 max-w-2xl text-slate-400">
+      <p className="mt-2 max-w-2xl text-text-secondary">
         Rankings here are based only on verified SmartPrepAfrica.com activity — real
         learner ratings and real enrollment — never an unverified
         &quot;best school&quot; claim.
@@ -105,7 +105,7 @@ export default async function RankingsPage({
         <select
           name="subject"
           defaultValue={subjectFilter}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+          className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
         >
           <option value="">All subjects</option>
           {subjects.map((s) => (
@@ -116,7 +116,7 @@ export default async function RankingsPage({
         </select>
         <button
           type="submit"
-          className="ml-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          className="ml-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           Filter
         </button>
@@ -127,23 +127,23 @@ export default async function RankingsPage({
           Highly Rated {subjectFilter ? `${subjectFilter} ` : ""}Courses on SmartPrepAfrica.com
         </h2>
         {ratedCourses.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-400">Not enough reviews yet to rank courses.</p>
+          <p className="mt-2 text-sm text-text-secondary">Not enough reviews yet to rank courses.</p>
         ) : (
           <div className="mt-3 space-y-2">
             {ratedCourses.map(({ course, avg, count }) => (
               <Link
                 key={course.id}
                 href={`/educom/${course.id}`}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+                className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>
                   {course.title}
-                  <span className="ml-2 text-xs text-slate-500">
+                  <span className="ml-2 text-xs text-text-muted">
                     {course.school?.name}
                     {course.school?.state && ` — ${course.school.state}`}
                   </span>
                 </span>
-                <span className="text-orange-400">
+                <span className="text-brand-text">
                   {avg!.toFixed(1)} ★ ({count})
                 </span>
               </Link>
@@ -157,20 +157,20 @@ export default async function RankingsPage({
           Highly Rated {subjectFilter ? `${subjectFilter} ` : ""}Schools on SmartPrepAfrica.com
         </h2>
         {ratedSchools.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-400">Not enough reviews yet to rank schools.</p>
+          <p className="mt-2 text-sm text-text-secondary">Not enough reviews yet to rank schools.</p>
         ) : (
           <div className="mt-3 space-y-2">
             {ratedSchools.map(({ school, avg, count }) => (
               <Link
                 key={school.id}
                 href={`/educom/schools/${school.id}`}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+                className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>
                   {school.name}
-                  <span className="ml-2 text-xs text-slate-500">{school.state}</span>
+                  <span className="ml-2 text-xs text-text-muted">{school.state}</span>
                 </span>
-                <span className="text-orange-400">
+                <span className="text-brand-text">
                   {avg!.toFixed(1)} ★ ({count})
                 </span>
               </Link>
@@ -182,20 +182,20 @@ export default async function RankingsPage({
       <section className="mt-10">
         <h2 className="text-lg font-semibold">Highest Rated Teachers</h2>
         {ratedTeachers.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-400">Not enough reviews yet to rank teachers.</p>
+          <p className="mt-2 text-sm text-text-secondary">Not enough reviews yet to rank teachers.</p>
         ) : (
           <div className="mt-3 space-y-2">
             {ratedTeachers.map(({ teacher, avg, count }) => (
               <Link
                 key={teacher.id}
                 href={`/educom/teachers/${teacher.id}`}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+                className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>
                   {teacher.user.name}
-                  <span className="ml-2 text-xs text-slate-500">{teacher.school?.name}</span>
+                  <span className="ml-2 text-xs text-text-muted">{teacher.school?.name}</span>
                 </span>
-                <span className="text-orange-400">
+                <span className="text-brand-text">
                   {avg!.toFixed(1)} ★ ({count})
                 </span>
               </Link>
@@ -207,17 +207,17 @@ export default async function RankingsPage({
       <section className="mt-10">
         <h2 className="text-lg font-semibold">Trending Courses</h2>
         {trending.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-400">No enrollments yet.</p>
+          <p className="mt-2 text-sm text-text-secondary">No enrollments yet.</p>
         ) : (
           <div className="mt-3 space-y-2">
             {trending.map((c) => (
               <Link
                 key={c.id}
                 href={`/educom/${c.id}`}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+                className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>{c.title}</span>
-                <span className="text-slate-500">{c._count.enrollments} learners</span>
+                <span className="text-text-muted">{c._count.enrollments} learners</span>
               </Link>
             ))}
           </div>
@@ -231,10 +231,10 @@ export default async function RankingsPage({
             <Link
               key={c.id}
               href={`/educom/${c.id}`}
-              className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600"
+              className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
             >
               <span>{c.title}</span>
-              <span className="text-slate-500">{c.school?.name}</span>
+              <span className="text-text-muted">{c.school?.name}</span>
             </Link>
           ))}
         </div>

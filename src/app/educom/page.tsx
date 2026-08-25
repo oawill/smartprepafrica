@@ -35,10 +35,10 @@ function CourseCardLink({ course }: { course: CourseCard }) {
   return (
     <Link
       href={`/educom/${course.id}`}
-      className="block rounded-lg border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm text-slate-300 hover:border-slate-600"
+      className="block rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-secondary hover:border-border-strong"
     >
-      <span className="font-medium text-slate-100">{course.title}</span>
-      <span className="mt-1 flex flex-wrap gap-x-2 text-xs text-slate-500">
+      <span className="font-medium text-text-primary">{course.title}</span>
+      <span className="mt-1 flex flex-wrap gap-x-2 text-xs text-text-muted">
         {course.instructorName && <span>{course.instructorName}</span>}
         {course.difficulty && <span>· {course.difficulty}</span>}
         {course.estimatedMinutes && <span>· {course.estimatedMinutes} min</span>}
@@ -148,14 +148,14 @@ export default async function EduComPage({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <Link href="/" className="text-sm text-slate-400 hover:text-white">
+      <Link href="/" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back home
       </Link>
-      <span className="mt-4 inline-block rounded-full bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-400">
+      <span className="mt-4 inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-text">
         SmartPrepAfrica Learning
       </span>
-      <h1 className="mt-3 text-3xl font-semibold">Learn Beyond Your School</h1>
-      <p className="mt-2 max-w-2xl text-slate-400">
+      <h1 className="mt-3 text-h1 font-semibold text-text-primary">Learn Beyond Your School</h1>
+      <p className="mt-2 max-w-2xl text-text-secondary">
         Great teaching shouldn&apos;t depend on where you go to school. Join live classes,
         courses and masterclasses from schools and teachers across Nigeria — one platform,
         many schools, more opportunities.
@@ -163,25 +163,25 @@ export default async function EduComPage({
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href="/educom/schools"
-          className="inline-block rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+          className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           View Schools →
         </Link>
         <Link
           href="/educom/search"
-          className="inline-block rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+          className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           Search →
         </Link>
         <Link
           href="/educom/rankings"
-          className="inline-block rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+          className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           Popular this week →
         </Link>
         <Link
           href="/practice"
-          className="inline-block rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+          className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           SmartPrepAfrica Prep →
         </Link>
@@ -191,29 +191,29 @@ export default async function EduComPage({
 
       {upcomingLiveClasses.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold">Live Now / Starting Soon</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Live Now / Starting Soon</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingLiveClasses.map((lc) => {
               const isLive =
                 now >= lc.scheduledAt && now.getTime() <= lc.scheduledAt.getTime() + lc.durationMinutes * 60000;
               return (
-                <div key={lc.id} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                <div key={lc.id} className="rounded-xl border border-border bg-surface-raised p-4">
                   <span
                     className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                      isLive ? "bg-red-500 text-white" : "bg-slate-800 text-slate-300"
+                      isLive ? "bg-danger text-danger-foreground" : "bg-surface-sunken text-text-secondary"
                     }`}
                   >
                     {isLive ? "Live" : timeUntil(lc.scheduledAt, now)}
                   </span>
-                  <p className="mt-2 font-medium text-slate-100">{lc.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-2 font-medium text-text-primary">{lc.title}</p>
+                  <p className="mt-1 text-xs text-text-muted">
                     {lc.course.title}
                     {lc.course.teacher && ` · ${lc.course.teacher.user.name}`}
                   </p>
                   {lc.course.school && (
                     <Link
                       href={`/educom/schools/${lc.course.school.id}`}
-                      className="mt-1 inline-block text-xs text-orange-400 hover:underline"
+                      className="mt-1 inline-block text-xs text-brand-text hover:underline"
                     >
                       {lc.course.school.name}
                     </Link>
@@ -227,20 +227,20 @@ export default async function EduComPage({
 
       {classLevels.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold">Browse by Class Level</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Browse by Class Level</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {classLevels.map((cl) => (
               <Link
                 key={cl.id}
                 href={`/educom/class/${cl.id}`}
-                className={`rounded-full border px-4 py-2 text-sm hover:border-orange-500 hover:text-orange-300 ${
+                className={`rounded-full border px-4 py-2 text-sm hover:border-brand hover:text-brand-text ${
                   classLevelIdFilter === cl.id
-                    ? "border-orange-500 text-orange-300"
-                    : "border-slate-700 text-slate-300"
+                    ? "border-brand text-brand-text"
+                    : "border-border-strong text-text-secondary"
                 }`}
               >
                 {cl.name}
-                <span className="ml-1.5 text-slate-500">({cl._count.courses})</span>
+                <span className="ml-1.5 text-text-muted">({cl._count.courses})</span>
               </Link>
             ))}
           </div>
@@ -249,20 +249,20 @@ export default async function EduComPage({
 
       {subjects.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold">Explore by Subject</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Explore by Subject</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {subjects.map((subject) => (
               <Link
                 key={subject.id}
                 href={`/educom?subjectId=${subject.id}`}
-                className={`rounded-full border px-4 py-2 text-sm hover:border-orange-500 hover:text-orange-300 ${
+                className={`rounded-full border px-4 py-2 text-sm hover:border-brand hover:text-brand-text ${
                   subjectIdFilter === subject.id
-                    ? "border-orange-500 text-orange-300"
-                    : "border-slate-700 text-slate-300"
+                    ? "border-brand text-brand-text"
+                    : "border-border-strong text-text-secondary"
                 }`}
               >
                 {subject.name}
-                <span className="ml-1.5 text-slate-500">
+                <span className="ml-1.5 text-text-muted">
                   ({courseCountBySubjectId.get(subject.id) ?? 0})
                 </span>
               </Link>
@@ -272,9 +272,9 @@ export default async function EduComPage({
       )}
 
       {(subjectIdFilter || classLevelIdFilter) && (
-        <p className="mt-6 text-sm text-slate-400">
+        <p className="mt-6 text-sm text-text-secondary">
           Filtered by {subjectIdFilter && classLevelIdFilter ? "subject and class level" : subjectIdFilter ? "subject" : "class level"}.{" "}
-          <Link href="/educom" className="text-orange-400 hover:underline">
+          <Link href="/educom" className="text-brand-text hover:underline">
             Clear filter
           </Link>
         </p>
@@ -288,12 +288,12 @@ export default async function EduComPage({
           name="q"
           defaultValue={search}
           placeholder="Search courses…"
-          className="flex-1 min-w-[200px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+          className="flex-1 min-w-[200px] rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
         />
         <select
           name="difficulty"
           defaultValue={difficultyFilter}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+          className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
         >
           <option value="">Any difficulty</option>
           {difficulties.map((d) => (
@@ -305,7 +305,7 @@ export default async function EduComPage({
         <select
           name="price"
           defaultValue={priceFilter}
-          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+          className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
         >
           <option value="">Free & paid</option>
           <option value="free">Free only</option>
@@ -313,24 +313,24 @@ export default async function EduComPage({
         </select>
         <button
           type="submit"
-          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           Filter
         </button>
       </form>
 
       {courses.length === 0 && (
-        <p className="mt-8 text-sm text-slate-400">
+        <p className="mt-8 text-sm text-text-secondary">
           No courses match your search. Try clearing the filters.
         </p>
       )}
 
       {coreSecondary.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold">Core Secondary School</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Core Secondary School</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[...coreBySubject.entries()].map(([subjectName, list]) => (
-              <div key={subjectName} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+              <div key={subjectName} className="rounded-xl border border-border bg-surface-raised p-5">
                 <p className="font-medium">{subjectName}</p>
                 <div className="mt-2 space-y-2">
                   {list.map((c) => (
@@ -345,10 +345,10 @@ export default async function EduComPage({
 
       {examPrep.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold">Exam Preparation</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Exam Preparation</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[...examByType.entries()].map(([examType, list]) => (
-              <div key={examType} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+              <div key={examType} className="rounded-xl border border-border bg-surface-raised p-5">
                 <p className="font-medium">{examType.replace("_", "-")}</p>
                 <div className="mt-2 space-y-2">
                   {list.map((c) => (
@@ -362,15 +362,15 @@ export default async function EduComPage({
       )}
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold">Skills</h2>
+        <h2 className="text-lg font-semibold text-text-primary">Skills</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {skillCategories.map((category) => {
             const categoryCourses = skillsByCategory.get(category.key) ?? [];
             return (
-              <div key={category.key} className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                <p className="font-medium">{category.label}</p>
+              <div key={category.key} className="rounded-xl border border-border bg-surface-raised p-5">
+                <p className="font-medium text-text-primary">{category.label}</p>
                 {categoryCourses.length === 0 ? (
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-text-muted">
                     {search || difficultyFilter || priceFilter
                       ? "No matches in this category."
                       : "Courses coming soon."}

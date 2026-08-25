@@ -121,7 +121,7 @@ export function AiCoachPanel({
         onClick={() => setIsOpen(true)}
         className={
           triggerClassName ??
-          "inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          "inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         }
       >
         <SparkleIcon /> {triggerLabel}
@@ -129,18 +129,18 @@ export function AiCoachPanel({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
-          <div className="flex h-full w-full flex-col border-l border-slate-800 bg-slate-950 sm:w-[440px]">
-            <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+          <div className="flex h-full w-full flex-col border-l border-border bg-surface sm:w-[440px]">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
-                <p className="text-sm font-semibold text-slate-100">AI Study Coach</p>
-                <p className="text-xs text-slate-500">Ask questions, get explanations, practice problems, and personalized study guidance.</p>
+                <p className="text-sm font-semibold text-text-primary">AI Study Coach</p>
+                <p className="text-xs text-text-muted">Ask questions, get explanations, practice problems, and personalized study guidance.</p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
                   onClick={openHistory}
                   title="Conversation history"
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-white"
+                  className="rounded-lg p-2 text-text-muted hover:bg-surface-sunken hover:text-text-primary"
                 >
                   <HistoryIcon />
                 </button>
@@ -148,14 +148,14 @@ export function AiCoachPanel({
                   type="button"
                   onClick={() => setIsOpen(false)}
                   title="Close"
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-white"
+                  className="rounded-lg p-2 text-text-muted hover:bg-surface-sunken hover:text-text-primary"
                 >
                   <CloseIcon />
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 border-b border-slate-800 px-4 py-2">
+            <div className="flex flex-wrap gap-1.5 border-b border-border px-4 py-2">
               {(Object.keys(MODE_LABELS) as AiCoachMode[]).map((m) => (
                 <button
                   key={m}
@@ -163,8 +163,8 @@ export function AiCoachPanel({
                   onClick={() => setMode(m)}
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
                     mode === m
-                      ? "bg-orange-500 text-slate-950"
-                      : "border border-slate-700 text-slate-300 hover:border-slate-500"
+                      ? "bg-brand text-brand-foreground"
+                      : "border border-border-strong text-text-secondary hover:border-text-muted"
                   }`}
                 >
                   {MODE_LABELS[m]}
@@ -177,12 +177,12 @@ export function AiCoachPanel({
                 <button
                   type="button"
                   onClick={startFresh}
-                  className="mb-3 w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                  className="mb-3 w-full rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                 >
                   + New conversation
                 </button>
                 {conversations.length === 0 ? (
-                  <p className="text-sm text-slate-500">No conversations yet.</p>
+                  <p className="text-sm text-text-muted">No conversations yet.</p>
                 ) : (
                   <ul className="space-y-1.5">
                     {conversations.map((c) => (
@@ -190,14 +190,14 @@ export function AiCoachPanel({
                         <button
                           type="button"
                           onClick={() => resumeConversation(c.id)}
-                          className="flex w-full items-center justify-between rounded-lg border border-slate-800 bg-slate-900 px-3 py-2.5 text-left text-sm hover:border-slate-600"
+                          className="flex w-full items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-left text-sm hover:border-border-strong"
                         >
-                          <span className="truncate text-slate-200">{c.title}</span>
+                          <span className="truncate text-text-primary">{c.title}</span>
                           <span
                             role="button"
                             tabIndex={0}
                             onClick={(e) => handleDelete(c.id, e)}
-                            className="ml-2 shrink-0 text-xs text-slate-500 hover:text-red-400"
+                            className="ml-2 shrink-0 text-xs text-text-muted hover:text-danger"
                           >
                             Delete
                           </span>
@@ -246,8 +246,8 @@ function EmptyState({
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
       <SparkleIcon large />
       <div>
-        <p className="text-lg font-semibold text-slate-100">Meet Your AI Study Coach</p>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="text-lg font-semibold text-text-primary">Meet Your AI Study Coach</p>
+        <p className="mt-1 text-sm text-text-secondary">
           Your personal tutor that learns with you. Ask questions, understand difficult topics,
           practice problems, and get personalized guidance based on your learning progress.
         </p>
@@ -258,13 +258,13 @@ function EmptyState({
             key={p}
             type="button"
             onClick={() => onPick(p)}
-            className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-200 hover:border-orange-500"
+            className="rounded-lg border border-border-strong px-4 py-2.5 text-sm text-text-primary hover:border-brand"
           >
             {p}
           </button>
         ))}
       </div>
-      {startError && <p className="text-xs text-red-400">{startError}</p>}
+      {startError && <p className="text-xs text-danger">{startError}</p>}
       <form
         className="mt-auto flex w-full gap-2"
         onSubmit={(e) => {
@@ -276,11 +276,11 @@ function EmptyState({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Ask your AI Study Coach…"
-          className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-orange-500"
+          className="flex-1 rounded-lg border border-border-strong bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
         />
         <button
           type="submit"
-          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           Send
         </button>
@@ -378,7 +378,7 @@ function ChatBody({
             <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
-                  isUser ? "bg-orange-500 text-slate-950" : "bg-slate-900 text-slate-100"
+                  isUser ? "bg-brand text-brand-foreground" : "bg-surface-raised text-text-primary"
                 }`}
               >
                 {isUser ? (
@@ -387,21 +387,21 @@ function ChatBody({
                   <>
                     <MessageContent content={text || "…"} />
                     {status === "ready" && text && (
-                      <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                        <button type="button" onClick={() => copyMessage(text)} className="hover:text-slate-300">
+                      <div className="mt-2 flex items-center gap-3 text-xs text-text-muted">
+                        <button type="button" onClick={() => copyMessage(text)} className="hover:text-text-secondary">
                           Copy
                         </button>
                         <button
                           type="button"
                           onClick={() => submitMessageRating(m.id, 1)}
-                          className="hover:text-green-400"
+                          className="hover:text-success"
                         >
                           👍
                         </button>
                         <button
                           type="button"
                           onClick={() => submitMessageRating(m.id, -1)}
-                          className="hover:text-red-400"
+                          className="hover:text-danger"
                         >
                           👎
                         </button>
@@ -416,19 +416,19 @@ function ChatBody({
 
         {status === "submitted" && (
           <div className="flex justify-start">
-            <div className="rounded-2xl bg-slate-900 px-3.5 py-2.5 text-sm text-slate-400">
+            <div className="rounded-2xl bg-surface-raised px-3.5 py-2.5 text-sm text-text-secondary">
               AI Coach is thinking…
             </div>
           </div>
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-800 bg-red-900/30 px-3.5 py-2.5 text-sm text-red-300">
+          <div className="rounded-lg border border-danger/40 bg-danger-surface px-3.5 py-2.5 text-sm text-danger">
             <p>{error.message || "Something went wrong. Please try again."}</p>
             <button
               type="button"
               onClick={() => regenerate()}
-              className="mt-2 rounded-lg border border-red-700 px-3 py-1 text-xs hover:border-red-500"
+              className="mt-2 rounded-lg border border-danger/40 px-3 py-1 text-xs hover:border-danger"
             >
               Retry
             </button>
@@ -436,7 +436,7 @@ function ChatBody({
         )}
       </div>
 
-      <div className="border-t border-slate-800 p-3">
+      <div className="border-t border-border p-3">
         <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
           {quickActions.map((qa) => (
             <button
@@ -444,7 +444,7 @@ function ChatBody({
               type="button"
               onClick={() => submitText(qa.prompt, qa.label === IM_CONFUSED_LABEL)}
               disabled={isBusy}
-              className="shrink-0 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-orange-500 disabled:opacity-50"
+              className="shrink-0 rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-brand disabled:opacity-50"
             >
               {qa.label}
             </button>
@@ -468,20 +468,20 @@ function ChatBody({
             }}
             rows={1}
             placeholder="Ask your AI Study Coach…"
-            className="max-h-32 flex-1 resize-none rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            className="max-h-32 flex-1 resize-none rounded-lg border border-border-strong bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
           />
           {isBusy ? (
             <button
               type="button"
               onClick={() => stop()}
-              className="shrink-0 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              className="shrink-0 rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
             >
               Stop
             </button>
           ) : (
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               Send
             </button>
