@@ -85,16 +85,17 @@ model User {
   teacherProfile TeacherProfile?
   sponsorProfile SponsorProfile?
 
-  enrollments            CourseEnrollment[]
-  examAttempts           ExamAttempt[]
-  certificates           Certificate[]
-  badges                 UserBadge[]
-  subscriptions          Subscription[]
-  purchasedSubscriptions Subscription[]         @relation("PurchasedSubscriptions")
-  payments               Payment[]
-  assignmentSubmissions  AssignmentSubmission[]
-  teacherFollows         TeacherFollow[]
-  courseReviews          CourseReview[]
+  enrollments               CourseEnrollment[]
+  examAttempts              ExamAttempt[]
+  certificates              Certificate[]
+  badges                    UserBadge[]
+  subscriptions             Subscription[]
+  purchasedSubscriptions    Subscription[]             @relation("PurchasedSubscriptions")
+  payments                  Payment[]
+  assignmentSubmissions     AssignmentSubmission[]
+  teacherFollows            TeacherFollow[]
+  courseReviews             CourseReview[]
+  lessonCheckpointResponses LessonCheckpointResponse[]
 
   aiConversations AiConversation[]
   topicMastery    StudentTopicMastery[]
@@ -456,6 +457,38 @@ enum CourseModerationStatus {
   SUSPENDED
 }
 
+// ---------- Curriculum hierarchy (Curriculum -> ClassLevel -> Course -> CourseTopic -> Lesson) ----------
+// Distinct from the existing plain-string Lesson.topic/Question.topic
+// convention (which stays untouched, since it's the key StudentTopicMastery
+// and the practice-question cross-link both rely on). This hierarchy is
+// purely organizational/browsable metadata layered on top.
+
+model Curriculum {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  country     String   @default("Nigeria")
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  classLevels ClassLevel[]
+}
+
+model ClassLevel {
+  id           String     @id @default(cuid())
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  curriculumId String
+  name         String
+  code         String?
+  order        Int
+  isActive     Boolean    @default(true)
+
+  courses Course[]
+
+  @@unique([curriculumId, name])
+}
+
 model Course {
   id            String         @id @default(cuid())
   title         String
@@ -489,6 +522,11 @@ model Course {
   subjectId String?
   examType  ExamType?
 
+  // Curriculum browsing metadata (e.g. "SS2"). Optional so Skills-category
+  // courses and any course created before this field existed are unaffected.
+  classLevel   ClassLevel? @relation(fields: [classLevelId], references: [id])
+  classLevelId String?
+
   // Set when a school or teacher created this course on-platform, as
   // opposed to a centrally seeded/curated course (both stay null for those).
   school    School?         @relation(fields: [schoolId], references: [id])
@@ -497,6 +535,7 @@ model Course {
   teacherId String?
 
   modules      Module[]
+  courseTopics CourseTopic[]
   enrollments  CourseEnrollment[]
   certificates Certificate[]
   assignments  Assignment[]
@@ -540,6 +579,24 @@ model Module {
   lessons Lesson[]
 }
 
+// Course -> Topic -> Lesson pedagogical grouping (e.g. "Acids, Bases & Salts"
+// containing one or more lessons). Purely organizational browse/admin
+// metadata, distinct from Module (unchanged structural/authoring unit) and
+// from the plain-string Lesson.topic mastery-key convention below.
+model CourseTopic {
+  id          String   @id @default(cuid())
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String
+  title       String
+  order       Int
+  description String?
+  createdAt   DateTime @default(now())
+
+  lessons Lesson[]
+
+  @@unique([courseId, order])
+}
+
 enum LessonType {
   VIDEO
   TEXT
@@ -556,13 +613,70 @@ model Lesson {
   videoUrl String?
   order    Int
   // Matches Question.topic for the same subject, letting this lesson link
-  // to SmartPrepAfrica practice questions on the same concept.
+  // to SmartPrepAfrica practice questions on the same concept. NEVER
+  // repurposed for the CourseTopic hierarchy below - StudentTopicMastery
+  // and the practice cross-link both key off this exact string.
   topic    String?
+
+  // Optional curriculum-browse grouping (see CourseTopic above).
+  courseTopic   CourseTopic? @relation(fields: [courseTopicId], references: [id])
+  courseTopicId String?
+
+  // Pre-recorded video metadata. All optional so TEXT/QUIZ-type lessons
+  // (and any VIDEO lesson created before these fields existed) are unaffected.
+  durationSeconds    Int?
+  thumbnailUrl       String?
+  captionsUrl        String?
+  // "Title - Author, License", recorded for freely-licensed sourced clips.
+  videoAttribution   String?
+  // Whole-lesson fallback transcript when chapters aren't authored.
+  transcriptFull     String?
+  // The separate "Notes" tab - distinct from `content` (TEXT-lesson body /
+  // quiz intro text, untouched) and from the transcript.
+  notesMarkdown      String?
+  learningObjectives String[] @default([])
+
+  // Content-review workflow, reusing CourseModerationStatus rather than
+  // inventing a third workflow enum (QuestionStatus is already shared by
+  // Question + PassageGroup - same precedent). Existing lessons default to
+  // PUBLISHED so nothing that already worked stops working; new lessons
+  // are created explicitly as DRAFT by the authoring action, mirroring how
+  // createQuestion() explicitly sets status: DRAFT despite the schema
+  // default being the legacy-safe PUBLISHED.
+  moderationStatus CourseModerationStatus @default(PUBLISHED)
+  moderationReason String?
+  moderatedById    String?
+  moderatedAt      DateTime?
 
   progress      LessonProgress[]
   quizQuestions QuizQuestion[]
+  chapters      LessonChapter[]
+
+  relatedLessons Lesson[] @relation("RelatedLessons")
+  relatedFrom    Lesson[] @relation("RelatedLessons")
 
   aiConversations AiConversation[]
+}
+
+// Timestamped video chapters with a chapter-aware transcript segment, so
+// the AI tutor can ground itself in the material near the student's
+// current playback position rather than drifting into unrelated content.
+model LessonChapter {
+  id                String   @id @default(cuid())
+  lesson            Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId          String
+  order             Int
+  title             String
+  startSeconds      Int
+  // Null = "until the next chapter / end of video".
+  endSeconds        Int?
+  transcriptSegment String?
+  createdAt         DateTime @default(now())
+
+  checkpoints QuizQuestion[]
+
+  @@unique([lessonId, order])
+  @@index([lessonId])
 }
 
 model QuizQuestion {
@@ -573,6 +687,35 @@ model QuizQuestion {
   prompt        String
   options       Json // [{ key: "A", text: "..." }, ...]
   correctOption String
+
+  // When set, this row is an in-video interactive checkpoint that pauses
+  // playback at this timestamp rather than an ordinary end-of-lesson quiz
+  // item. Checkpoints only ever attach to VIDEO-type lessons; ordinary quiz
+  // items only ever attach to QUIZ-type lessons - no collision in existing
+  // quiz-rendering/grading code, which already branches on lesson.type.
+  atSeconds   Int?
+  explanation String?
+  chapter     LessonChapter? @relation(fields: [chapterId], references: [id])
+  chapterId   String?
+
+  responses LessonCheckpointResponse[]
+}
+
+// Append-only, mirrors QuestionResponse's shape. Needed for: AI "recent
+// checkpoint mistakes in this lesson" context, the wrong-answer "Watch This
+// Part Again" flow (jump back to the relevant chapter/timestamp), and
+// graded-attempt mastery recording for checkpoint answers.
+model LessonCheckpointResponse {
+  id             String       @id @default(cuid())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  quizQuestion   QuizQuestion @relation(fields: [quizQuestionId], references: [id], onDelete: Cascade)
+  quizQuestionId String
+  selectedOption String
+  isCorrect      Boolean
+  answeredAt     DateTime     @default(now())
+
+  @@index([userId, quizQuestionId])
 }
 
 enum EnrollmentStatus {
@@ -605,6 +748,12 @@ model LessonProgress {
   completedAt  DateTime?
   // Set for QUIZ-type lessons: percentage score of the student's attempt.
   score        Float?
+
+  // Video resume/watch tracking. percentWatched is a high-water-mark (max
+  // reached so far) - it never regresses on rewatch or scrubbing backward.
+  lastPositionSeconds Int?
+  percentWatched      Float?
+  lastWatchedAt       DateTime?
 
   @@unique([enrollmentId, lessonId])
 }

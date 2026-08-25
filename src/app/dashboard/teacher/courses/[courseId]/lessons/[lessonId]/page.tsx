@@ -3,7 +3,23 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
-import { addQuizQuestion } from "@/app/dashboard/teacher/courses/actions";
+import {
+  addQuizQuestion,
+  submitLessonForReview,
+  addLessonChapter,
+  addCheckpoint,
+} from "@/app/dashboard/teacher/courses/actions";
+
+const MODERATION_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Draft — not submitted for review yet",
+  SUBMITTED: "Submitted — waiting for an admin to review",
+  UNDER_REVIEW: "Under review",
+  APPROVED: "Approved — waiting to be published",
+  PUBLISHED: "Published — live for students",
+  REJECTED: "Rejected",
+  NEEDS_CHANGES: "Changes requested — see the note below",
+  SUSPENDED: "Suspended by an administrator",
+};
 
 export default async function ManageLessonPage({
   params,
@@ -19,12 +35,15 @@ export default async function ManageLessonPage({
     where: { id: lessonId },
     include: {
       module: { include: { course: true } },
-      quizQuestions: { orderBy: { order: "asc" } },
+      quizQuestions: { where: { atSeconds: null }, orderBy: { order: "asc" } },
+      chapters: { orderBy: { order: "asc" }, include: { checkpoints: true } },
     },
   });
   if (!lesson || lesson.module.course.id !== courseId || lesson.module.course.teacherId !== teacher.id) {
     notFound();
   }
+
+  const canSubmitForReview = lesson.moderationStatus === "DRAFT" || lesson.moderationStatus === "NEEDS_CHANGES";
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
@@ -34,8 +53,30 @@ export default async function ManageLessonPage({
       >
         ← {lesson.module.course.title}
       </Link>
-      <h1 className="mt-4 text-2xl font-semibold">{lesson.title}</h1>
-      <p className="mt-1 text-sm text-slate-400">{lesson.type} lesson</p>
+
+      <div className="mt-4 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">{lesson.title}</h1>
+          <p className="mt-1 text-sm text-slate-400">{lesson.type} lesson</p>
+        </div>
+        {canSubmitForReview && (
+          <form action={submitLessonForReview}>
+            <input type="hidden" name="lessonId" value={lesson.id} />
+            <button
+              type="submit"
+              className="shrink-0 rounded-full bg-orange-500 px-4 py-2 text-xs font-medium text-slate-950 hover:bg-orange-400"
+            >
+              Submit for review
+            </button>
+          </form>
+        )}
+      </div>
+      <p className="mt-2 text-xs text-amber-400">
+        {MODERATION_STATUS_LABELS[lesson.moderationStatus] ?? lesson.moderationStatus}
+      </p>
+      {lesson.moderationReason && (
+        <p className="mt-1 text-xs text-slate-400">Reviewer note: {lesson.moderationReason}</p>
+      )}
 
       {lesson.type !== "QUIZ" ? (
         <p className="mt-6 rounded-lg border border-slate-800 bg-slate-900 p-4 text-sm text-slate-400">
@@ -105,6 +146,156 @@ export default async function ManageLessonPage({
               </button>
             </form>
           </Card>
+        </div>
+      )}
+
+      {lesson.type === "VIDEO" && (
+        <div className="mt-6 space-y-6">
+          <Card title={`Chapters (${lesson.chapters.length})`}>
+            {lesson.chapters.length === 0 ? (
+              <p className="text-sm text-slate-400">No chapters yet — add timestamps so students can jump around the video.</p>
+            ) : (
+              <ol className="space-y-1.5 text-sm">
+                {lesson.chapters.map((c) => (
+                  <li key={c.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3">
+                    <p className="text-slate-200">
+                      {Math.floor(c.startSeconds / 60)}:{String(c.startSeconds % 60).padStart(2, "0")} — {c.title}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <form action={addLessonChapter} className="mt-4 space-y-2">
+              <input type="hidden" name="lessonId" value={lesson.id} />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  name="startSeconds"
+                  min={0}
+                  required
+                  placeholder="Start (seconds)"
+                  className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                />
+                <input
+                  type="text"
+                  name="title"
+                  required
+                  placeholder="Chapter title"
+                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                />
+              </div>
+              <textarea
+                name="transcriptSegment"
+                placeholder="This chapter's transcript segment (optional — grounds the AI tutor)"
+                rows={2}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              <button
+                type="submit"
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              >
+                Add chapter
+              </button>
+            </form>
+          </Card>
+
+          <Card title={`Interactive checkpoints (${lesson.chapters.reduce((n, c) => n + c.checkpoints.length, 0)})`}>
+            {lesson.chapters.every((c) => c.checkpoints.length === 0) ? (
+              <p className="text-sm text-slate-400">
+                No checkpoints yet — a checkpoint pauses the video at a timestamp and asks the student a
+                question.
+              </p>
+            ) : (
+              <ol className="space-y-1.5 text-sm">
+                {lesson.chapters
+                  .flatMap((c) => c.checkpoints)
+                  .map((cp) => (
+                    <li key={cp.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3">
+                      <p className="text-slate-200">
+                        {Math.floor((cp.atSeconds ?? 0) / 60)}:{String((cp.atSeconds ?? 0) % 60).padStart(2, "0")} — {cp.prompt}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">Correct answer: {cp.correctOption}</p>
+                    </li>
+                  ))}
+              </ol>
+            )}
+            <form action={addCheckpoint} className="mt-4 space-y-2">
+              <input type="hidden" name="lessonId" value={lesson.id} />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  name="atSeconds"
+                  min={0}
+                  required
+                  placeholder="Timestamp (seconds)"
+                  className="w-40 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                />
+                <select
+                  name="chapterId"
+                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                >
+                  <option value="">No specific chapter</option>
+                  {lesson.chapters.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <textarea
+                name="prompt"
+                required
+                placeholder="Question"
+                rows={2}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              {["A", "B", "C", "D"].map((key) => (
+                <input
+                  key={key}
+                  type="text"
+                  name={`option${key}`}
+                  required
+                  placeholder={`Option ${key}`}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                />
+              ))}
+              <div>
+                <label className="block text-xs text-slate-400" htmlFor="checkpointCorrectOption">
+                  Correct option
+                </label>
+                <select
+                  id="checkpointCorrectOption"
+                  name="correctOption"
+                  required
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                >
+                  {["A", "B", "C", "D"].map((key) => (
+                    <option key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <textarea
+                name="explanation"
+                placeholder="Explanation shown after the student answers (optional)"
+                rows={2}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              <button
+                type="submit"
+                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+              >
+                Add checkpoint
+              </button>
+            </form>
+          </Card>
+
+          {lesson.notesMarkdown && (
+            <Card title="Notes">
+              <pre className="whitespace-pre-wrap text-sm text-slate-300">{lesson.notesMarkdown}</pre>
+            </Card>
+          )}
         </div>
       )}
     </div>

@@ -12,6 +12,11 @@ export type Permission =
   | "subjects.manage"
   | "courses.view"
   | "courses.approve"
+  | "curriculum.manage"
+  | "lessons.view"
+  | "lessons.edit"
+  | "lessons.approve"
+  | "lessons.publish"
   | "schools.view"
   | "schools.approve"
   | "users.view"
@@ -45,6 +50,11 @@ const ALL_PERMISSIONS: Permission[] = [
   "subjects.manage",
   "courses.view",
   "courses.approve",
+  "curriculum.manage",
+  "lessons.view",
+  "lessons.edit",
+  "lessons.approve",
+  "lessons.publish",
   "schools.view",
   "schools.approve",
   "users.view",
@@ -82,6 +92,10 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "exams.manage",
     "subjects.manage",
     "courses.view",
+    "curriculum.manage",
+    "lessons.view",
+    "lessons.edit",
+    "lessons.publish",
   ],
   CONTENT_REVIEWER: [
     "questions.view",
@@ -90,6 +104,9 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "questions.archive",
     "courses.view",
     "courses.approve",
+    "lessons.view",
+    "lessons.approve",
+    "lessons.publish",
   ],
   SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "users.view", "courses.view", "courses.approve"],
   USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke"],

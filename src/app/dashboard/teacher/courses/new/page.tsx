@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import { createCourse } from "@/app/dashboard/teacher/courses/actions";
 
 const categories = [
@@ -15,7 +16,13 @@ const categories = [
   "LIFE_SKILLS",
 ] as const;
 
-export default function NewCoursePage() {
+export default async function NewCoursePage() {
+  const classLevels = await prisma.classLevel.findMany({
+    where: { isActive: true },
+    orderBy: { order: "asc" },
+    include: { curriculum: { select: { name: true } } },
+  });
+
   return (
     <div className="mx-auto max-w-xl px-6 py-12">
       <Link href="/dashboard/teacher" className="text-sm text-slate-400 hover:text-white">
@@ -94,6 +101,23 @@ export default function NewCoursePage() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
             />
           </div>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-300" htmlFor="classLevelId">
+            Class level (optional)
+          </label>
+          <select
+            id="classLevelId"
+            name="classLevelId"
+            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+          >
+            <option value="">Not tied to a class level (Skills/Career courses)</option>
+            {classLevels.map((cl) => (
+              <option key={cl.id} value={cl.id}>
+                {cl.curriculum.name} — {cl.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="block text-sm text-slate-300" htmlFor="instructorName">

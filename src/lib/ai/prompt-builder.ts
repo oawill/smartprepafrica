@@ -17,6 +17,16 @@ const PASSAGE_TYPE_LABELS: Record<string, string> = {
   OTHER: "passage",
 };
 
+// "I'm Confused" escalation ladder — each stage must be a genuinely
+// different teaching method from the last, never a repeat of the same
+// explanation. Stage numbering starts at 1 (first "I'm Confused" click).
+const CONFUSION_ESCALATION_STAGES = [
+  "Re-explain the concept clearly, but from a different angle than your previous explanation — do not repeat what you already said.",
+  "Simplify the vocabulary and break the idea into smaller, more concrete steps.",
+  "Explain it using one clear, everyday-life analogy the student can relate to.",
+  "Walk through one fully worked example or a simple step-by-step visual description, from start to finish.",
+];
+
 const MODE_INSTRUCTIONS: Record<CoachContext["mode"], string> = {
   ASK: "The student is asking a general question about their current material. Answer directly and clearly.",
   EXPLAIN:
@@ -71,11 +81,44 @@ export function buildSystemPrompt(context: CoachContext): string {
     parts.push(
       `Current lesson: "${l.title}" (lesson ${l.lessonIndex + 1} of ${l.totalLessons} in module "${l.moduleTitle}")${
         l.topic ? `, topic: ${l.topic}` : ""
-      }.`
+      }${l.classLevel ? `, class level: ${l.classLevel}` : ""}${l.courseTopic ? `, unit: ${l.courseTopic}` : ""}.` +
+        (l.learningObjectives.length
+          ? ` By the end of this lesson the student should be able to: ${l.learningObjectives.join("; ")}.`
+          : "")
     );
     if (l.content) {
       parts.push(`Lesson content the student is viewing:\n"""\n${l.content}\n"""`);
     }
+  }
+
+  if (context.chapter) {
+    const ch = context.chapter;
+    parts.push(
+      `The student is currently on chapter ${ch.order + 1} of ${ch.totalChapters}, "${ch.title}". The student should not need to explain which part of the video they're on — you already know.` +
+        (ch.transcriptSegment
+          ? ` Ground your answer primarily in this chapter's material:\n"""\n${ch.transcriptSegment}\n"""\nDo not drift into unrelated parts of the lesson or unrelated subjects unless the student explicitly asks about something else.`
+          : "")
+    );
+  }
+
+  if (context.recentCheckpointMistakes.length) {
+    parts.push(
+      "The student recently missed these in-video checkpoint questions in this lesson: " +
+        context.recentCheckpointMistakes
+          .map(
+            (m) =>
+              `"${m.prompt}"${m.chapterTitle ? ` (${m.chapterTitle})` : ""} — chose ${m.selectedOption ?? "no answer"}, correct answer was ${m.correctOption}`
+          )
+          .join("; ") +
+        ". If relevant to the current question, gently connect the dots without lecturing unprompted."
+    );
+  }
+
+  if (context.confusionStage && context.confusionStage >= 1) {
+    const stageIndex = Math.min(context.confusionStage - 1, CONFUSION_ESCALATION_STAGES.length - 1);
+    parts.push(
+      `The student has clicked "I'm Confused" ${context.confusionStage} time(s) in a row on this concept. ${CONFUSION_ESCALATION_STAGES[stageIndex]} Do NOT simply repeat a previous explanation. After explaining, ask exactly one short, simple question to check whether the student now understands, before moving on.`
+    );
   }
 
   if (context.focusQuestion) {

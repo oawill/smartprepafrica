@@ -7,9 +7,21 @@ import {
   createModule,
   createLesson,
   createAssignment,
-  togglePublish,
+  submitCourseForReview,
+  createCourseTopic,
   scheduleLiveClass,
 } from "@/app/dashboard/teacher/courses/actions";
+
+const MODERATION_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Draft — not submitted for review yet",
+  SUBMITTED: "Submitted — waiting for an admin to review",
+  UNDER_REVIEW: "Under review",
+  APPROVED: "Approved — waiting to be published",
+  PUBLISHED: "Published — live in the course catalog",
+  REJECTED: "Rejected",
+  NEEDS_CHANGES: "Changes requested — see the note below",
+  SUSPENDED: "Suspended by an administrator",
+};
 
 export default async function ManageCoursePage({
   params,
@@ -28,11 +40,15 @@ export default async function ManageCoursePage({
         orderBy: { order: "asc" },
         include: { lessons: { orderBy: { order: "asc" } } },
       },
+      courseTopics: { orderBy: { order: "asc" } },
       assignments: { orderBy: { createdAt: "desc" } },
       liveClasses: { orderBy: { scheduledAt: "asc" } },
+      classLevel: { select: { name: true } },
     },
   });
   if (!course || course.teacherId !== teacher.id) notFound();
+
+  const canSubmitForReview = course.moderationStatus === "DRAFT" || course.moderationStatus === "NEEDS_CHANGES";
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
@@ -44,28 +60,59 @@ export default async function ManageCoursePage({
         <div>
           <h1 className="text-2xl font-semibold">{course.title}</h1>
           <p className="mt-1 text-sm text-slate-400">{course.description}</p>
+          {course.classLevel && <p className="mt-1 text-xs text-slate-500">{course.classLevel.name}</p>}
         </div>
-        <form action={togglePublish}>
-          <input type="hidden" name="courseId" value={course.id} />
-          <button
-            type="submit"
-            className={`shrink-0 rounded-full px-4 py-2 text-xs font-medium ${
-              course.published
-                ? "border border-slate-700 text-slate-300 hover:border-slate-500"
-                : "bg-orange-500 text-slate-950 hover:bg-orange-400"
-            }`}
-          >
-            {course.published ? "Unpublish" : "Publish"}
-          </button>
-        </form>
+        {canSubmitForReview && (
+          <form action={submitCourseForReview}>
+            <input type="hidden" name="courseId" value={course.id} />
+            <button
+              type="submit"
+              className="shrink-0 rounded-full bg-orange-500 px-4 py-2 text-xs font-medium text-slate-950 hover:bg-orange-400"
+            >
+              Submit for review
+            </button>
+          </form>
+        )}
       </div>
-      {!course.published && (
-        <p className="mt-2 text-xs text-amber-400">
-          Draft — not visible in the course catalog until published.
-        </p>
+      <p className="mt-2 text-xs text-amber-400">
+        {MODERATION_STATUS_LABELS[course.moderationStatus] ?? course.moderationStatus}
+      </p>
+      {course.moderationReason && (
+        <p className="mt-1 text-xs text-slate-400">Reviewer note: {course.moderationReason}</p>
       )}
 
       <div className="mt-8 space-y-6">
+        <Card title="Topics">
+          {course.courseTopics.length === 0 ? (
+            <p className="text-sm text-slate-400">
+              No topics yet — group lessons under a topic like &quot;Acids, Bases &amp; Salts&quot; so
+              students can browse by unit.
+            </p>
+          ) : (
+            <ul className="space-y-1.5 text-sm text-slate-300">
+              {course.courseTopics.map((t) => (
+                <li key={t.id}>{t.title}</li>
+              ))}
+            </ul>
+          )}
+          <form action={createCourseTopic} className="mt-3 flex gap-2">
+            <input type="hidden" name="courseId" value={course.id} />
+            <input
+              type="text"
+              name="title"
+              required
+              placeholder="New topic title"
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+            >
+              Add topic
+            </button>
+          </form>
+        </Card>
+
         {course.modules.map((mod, i) => (
           <Card key={mod.id} title={`Module ${i + 1}: ${mod.title}`}>
             {mod.lessons.length === 0 ? (
@@ -115,6 +162,56 @@ export default async function ManageCoursePage({
                 type="url"
                 name="videoUrl"
                 placeholder="Video URL (if video lesson)"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  name="durationSeconds"
+                  placeholder="Video duration (seconds)"
+                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                />
+                <select
+                  name="courseTopicId"
+                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                >
+                  <option value="">No topic (ungrouped)</option>
+                  {course.courseTopics.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <input
+                type="url"
+                name="thumbnailUrl"
+                placeholder="Thumbnail URL (optional)"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              <input
+                type="text"
+                name="videoAttribution"
+                placeholder="Video attribution — e.g. &quot;Title — Author, License&quot; (for sourced clips)"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              <textarea
+                name="learningObjectives"
+                placeholder="Learning objectives, one per line"
+                rows={2}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              <textarea
+                name="notesMarkdown"
+                placeholder="Lesson notes (key concepts, formulas, examples — shown in the Notes tab)"
+                rows={3}
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              />
+              <textarea
+                name="transcriptFull"
+                placeholder="Full transcript (optional fallback — prefer per-chapter transcripts once chapters are added)"
+                rows={3}
                 className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-orange-500"
               />
               <input

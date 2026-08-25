@@ -14,7 +14,11 @@ export async function LearnHub({ userId }: { userId: string }) {
             modules: {
               orderBy: { order: "asc" },
               select: {
-                lessons: { orderBy: { order: "asc" }, select: { id: true, title: true } },
+                lessons: {
+                  where: { moderationStatus: "PUBLISHED" },
+                  orderBy: { order: "asc" },
+                  select: { id: true, title: true },
+                },
               },
             },
           },

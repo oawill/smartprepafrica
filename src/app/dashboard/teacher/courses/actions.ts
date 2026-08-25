@@ -41,6 +41,7 @@ export async function createCourse(formData: FormData) {
       estimatedMinutes: formData.get("estimatedMinutes")
         ? Number(formData.get("estimatedMinutes"))
         : undefined,
+      classLevelId: (formData.get("classLevelId") as string) || undefined,
       teacherId: teacher.id,
       schoolId: teacher.schoolId,
       published: false,
@@ -50,7 +51,11 @@ export async function createCourse(formData: FormData) {
   redirect(`/dashboard/teacher/courses/${course.id}`);
 }
 
-export async function togglePublish(formData: FormData) {
+/** Replaces the old direct published-boolean flip. A teacher can no longer
+ * self-publish — this only moves the course into the admin review queue
+ * (moderationStatus: SUBMITTED). Only an admin's approveCourse action sets
+ * `published: true` from here on, so the review queue actually gets used. */
+export async function submitCourseForReview(formData: FormData) {
   const session = await auth();
   if (!session) redirect("/login");
   const teacher = await assertTeacher(session.user.id);
@@ -58,10 +63,31 @@ export async function togglePublish(formData: FormData) {
   const courseId = formData.get("courseId") as string;
   const course = await assertOwnsCourse(teacher.id, courseId);
 
+  if (!["DRAFT", "NEEDS_CHANGES"].includes(course.moderationStatus)) {
+    throw new Error(`This course can't be submitted for review right now — its status is ${course.moderationStatus}.`);
+  }
+
   await prisma.course.update({
     where: { id: courseId },
-    data: { published: !course.published },
+    data: { moderationStatus: "SUBMITTED" },
   });
+
+  revalidatePath(`/dashboard/teacher/courses/${courseId}`);
+}
+
+export async function createCourseTopic(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const teacher = await assertTeacher(session.user.id);
+
+  const courseId = formData.get("courseId") as string;
+  await assertOwnsCourse(teacher.id, courseId);
+
+  const title = (formData.get("title") as string)?.trim();
+  if (!title) throw new Error("Topic title is required.");
+
+  const count = await prisma.courseTopic.count({ where: { courseId } });
+  await prisma.courseTopic.create({ data: { courseId, title, order: count } });
 
   revalidatePath(`/dashboard/teacher/courses/${courseId}`);
 }
@@ -97,6 +123,11 @@ export async function createLesson(formData: FormData) {
   const type = formData.get("type") as LessonType;
   if (!title) throw new Error("Lesson title is required.");
 
+  const learningObjectives = ((formData.get("learningObjectives") as string) || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
   const count = await prisma.lesson.count({ where: { moduleId } });
   await prisma.lesson.create({
     data: {
@@ -107,10 +138,105 @@ export async function createLesson(formData: FormData) {
       content: (formData.get("content") as string)?.trim() || null,
       videoUrl: (formData.get("videoUrl") as string)?.trim() || null,
       topic: (formData.get("topic") as string)?.trim() || null,
+      courseTopicId: (formData.get("courseTopicId") as string) || null,
+      durationSeconds: formData.get("durationSeconds") ? Number(formData.get("durationSeconds")) : null,
+      thumbnailUrl: (formData.get("thumbnailUrl") as string)?.trim() || null,
+      captionsUrl: (formData.get("captionsUrl") as string)?.trim() || null,
+      videoAttribution: (formData.get("videoAttribution") as string)?.trim() || null,
+      transcriptFull: (formData.get("transcriptFull") as string)?.trim() || null,
+      notesMarkdown: (formData.get("notesMarkdown") as string)?.trim() || null,
+      learningObjectives,
+      // New lessons always start as a real draft, unlike the schema's
+      // legacy-safe PUBLISHED default (same precedent as createQuestion
+      // explicitly setting status: DRAFT).
+      moderationStatus: "DRAFT",
     },
   });
 
   revalidatePath(`/dashboard/teacher/courses/${mod.courseId}`);
+}
+
+export async function submitLessonForReview(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const teacher = await assertTeacher(session.user.id);
+
+  const lessonId = formData.get("lessonId") as string;
+  const lesson = await assertOwnsLesson(teacher.id, lessonId);
+
+  if (!["DRAFT", "NEEDS_CHANGES"].includes(lesson.moderationStatus)) {
+    throw new Error(`This lesson can't be submitted for review right now — its status is ${lesson.moderationStatus}.`);
+  }
+
+  await prisma.lesson.update({ where: { id: lessonId }, data: { moderationStatus: "SUBMITTED" } });
+  revalidatePath(`/dashboard/teacher/courses/${lesson.module.course.id}/lessons/${lessonId}`);
+}
+
+export async function addLessonChapter(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const teacher = await assertTeacher(session.user.id);
+
+  const lessonId = formData.get("lessonId") as string;
+  const lesson = await assertOwnsLesson(teacher.id, lessonId);
+
+  const title = (formData.get("title") as string)?.trim();
+  const startSeconds = Number(formData.get("startSeconds"));
+  if (!title || !Number.isFinite(startSeconds) || startSeconds < 0) {
+    throw new Error("A chapter needs a title and a valid start time (in seconds).");
+  }
+
+  const count = await prisma.lessonChapter.count({ where: { lessonId } });
+  await prisma.lessonChapter.create({
+    data: {
+      lessonId,
+      order: count,
+      title,
+      startSeconds,
+      transcriptSegment: (formData.get("transcriptSegment") as string)?.trim() || null,
+    },
+  });
+
+  revalidatePath(`/dashboard/teacher/courses/${lesson.module.course.id}/lessons/${lessonId}`);
+}
+
+/** Adds an in-video checkpoint — a QuizQuestion with atSeconds set. Kept
+ * separate from addQuizQuestion (end-of-lesson QUIZ-type items) even though
+ * both write to the same table, since the two forms collect different
+ * fields (a checkpoint needs a timestamp + explanation + optional chapter,
+ * an end-of-lesson quiz item needs neither). */
+export async function addCheckpoint(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const teacher = await assertTeacher(session.user.id);
+
+  const lessonId = formData.get("lessonId") as string;
+  const lesson = await assertOwnsLesson(teacher.id, lessonId);
+
+  const prompt = (formData.get("prompt") as string)?.trim();
+  const atSeconds = Number(formData.get("atSeconds"));
+  const optionTexts = ["A", "B", "C", "D"].map((k) => (formData.get(`option${k}`) as string)?.trim());
+  const correctOption = formData.get("correctOption") as string;
+
+  if (!prompt || !Number.isFinite(atSeconds) || atSeconds < 0 || optionTexts.some((t) => !t) || !correctOption) {
+    throw new Error("Fill in the checkpoint timestamp, question, all four options, and select the correct one.");
+  }
+
+  const count = await prisma.quizQuestion.count({ where: { lessonId } });
+  await prisma.quizQuestion.create({
+    data: {
+      lessonId,
+      order: count,
+      prompt,
+      options: optionTexts.map((text, i) => ({ key: ["A", "B", "C", "D"][i], text })),
+      correctOption,
+      atSeconds,
+      explanation: (formData.get("explanation") as string)?.trim() || null,
+      chapterId: (formData.get("chapterId") as string) || null,
+    },
+  });
+
+  revalidatePath(`/dashboard/teacher/courses/${lesson.module.course.id}/lessons/${lessonId}`);
 }
 
 async function assertOwnsLesson(teacherId: string, lessonId: string) {

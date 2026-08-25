@@ -6,6 +6,8 @@ import { buildCoachContext, type CoachContext } from "@/lib/ai/context-builder";
 import { buildSystemPrompt } from "@/lib/ai/prompt-builder";
 import { checkUsageAllowance } from "@/lib/ai/limits";
 import { persistMessage, logUsage, assertOwnsConversation } from "@/lib/ai/coach-service";
+import { logConfusionSignal } from "@/lib/ai/mastery-service";
+import { prisma } from "@/lib/prisma";
 
 function extractText(message: UIMessage): string {
   return message.parts
@@ -19,6 +21,7 @@ type CoachRequestBody = {
   conversationId: string;
   courseId?: string | null;
   lessonId?: string | null;
+  chapterId?: string | null;
   mode: AiCoachMode;
   focusQuestion?: CoachContext["focusQuestion"];
 };
@@ -36,7 +39,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { messages, conversationId, courseId, lessonId, mode, focusQuestion } =
+  const { messages, conversationId, courseId, lessonId, chapterId, mode, focusQuestion } =
     (await req.json()) as CoachRequestBody;
 
   try {
@@ -44,6 +47,14 @@ export async function POST(req: Request) {
   } catch {
     return new Response("Conversation not found.", { status: 404 });
   }
+
+  // Sent as metadata on the last (current) user message rather than a
+  // top-level body field — see coach-panel.tsx for why.
+  const lastUserMessage = messages[messages.length - 1];
+  const confusionStage =
+    lastUserMessage?.role === "user" && lastUserMessage.metadata
+      ? (lastUserMessage.metadata as { confusionStage?: number }).confusionStage ?? null
+      : null;
 
   const usage = await checkUsageAllowance(session.user.id);
   if (!usage.allowed) {
@@ -59,9 +70,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const lastMessage = messages[messages.length - 1];
-  if (lastMessage?.role === "user") {
-    const text = extractText(lastMessage);
+  if (lastUserMessage?.role === "user") {
+    const text = extractText(lastUserMessage);
     if (text.trim()) {
       await persistMessage(conversationId, "USER", text);
     }
@@ -71,10 +81,28 @@ export async function POST(req: Request) {
     userId: session.user.id,
     courseId,
     lessonId,
+    chapterId,
     mode,
     focusQuestion,
+    confusionStage,
   });
   const system = buildSystemPrompt(context);
+
+  // Repeated confusion on the same concept is a useful signal for
+  // admins/teachers, but is deliberately NOT fed into StudentTopicMastery's
+  // EMA (see logConfusionSignal) — expressing confusion isn't a graded
+  // attempt. Fire-and-forget: never block the response on this.
+  if (confusionStage && confusionStage >= 2 && lessonId && context.lesson?.topic && context.course?.subject) {
+    prisma.lesson
+      .findUnique({ where: { id: lessonId }, select: { module: { select: { course: { select: { subjectId: true } } } } } })
+      .then((row) => {
+        const subjectId = row?.module.course.subjectId;
+        if (subjectId && context.lesson?.topic) {
+          return logConfusionSignal({ userId: session.user.id, subjectId, topic: context.lesson.topic });
+        }
+      })
+      .catch((e) => console.error("Failed to log confusion signal:", e));
+  }
 
   // Shared between the stream (so the client's message id matches) and the
   // DB row we persist in onFinish — otherwise thumbs-up/down and other

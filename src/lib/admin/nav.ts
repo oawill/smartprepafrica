@@ -38,6 +38,16 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    label: "Learning Management",
+    items: [
+      { label: "Curriculum & Class Levels", href: "/dashboard/admin/learning/curriculum", permission: "curriculum.manage" },
+      { label: "Topics", href: "/dashboard/admin/learning/topics", permission: "lessons.view" },
+      { label: "Lessons", href: "/dashboard/admin/learning/lessons", permission: "lessons.view" },
+      { label: "Content review queue", href: "/dashboard/admin/learning/review", permission: "lessons.approve" },
+      { label: "Learning analytics", href: "/dashboard/admin/learning/analytics", permission: "analytics.view" },
+    ],
+  },
+  {
     label: "Users",
     items: [
       { label: "Students", href: "/dashboard/admin/users/students", permission: "users.view" },

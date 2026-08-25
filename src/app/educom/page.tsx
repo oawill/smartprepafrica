@@ -64,17 +64,18 @@ function timeUntil(target: Date, now: Date): string {
 export default async function EduComPage({
   searchParams,
 }: PageProps<"/educom">) {
-  const { q, difficulty, price, subjectId } = await searchParams;
+  const { q, difficulty, price, subjectId, classLevelId } = await searchParams;
   const search = typeof q === "string" ? q : "";
   const difficultyFilter = typeof difficulty === "string" ? difficulty : "";
   const priceFilter = typeof price === "string" ? price : "";
   const subjectIdFilter = typeof subjectId === "string" ? subjectId : "";
+  const classLevelIdFilter = typeof classLevelId === "string" ? classLevelId : "";
 
   const session = await auth();
 
   const now = new Date();
 
-  const [courses, upcomingLiveClasses, courseCountsBySubject, subjects] = await Promise.all([
+  const [courses, upcomingLiveClasses, courseCountsBySubject, subjects, classLevels] = await Promise.all([
     prisma.course.findMany({
       where: {
         published: true,
@@ -83,6 +84,7 @@ export default async function EduComPage({
         ...(priceFilter === "free" ? { OR: [{ priceKobo: null }, { priceKobo: 0 }] } : {}),
         ...(priceFilter === "paid" ? { priceKobo: { gt: 0 } } : {}),
         ...(subjectIdFilter ? { subjectId: subjectIdFilter } : {}),
+        ...(classLevelIdFilter ? { classLevelId: classLevelIdFilter } : {}),
       },
       include: {
         subject: { select: { name: true } },
@@ -115,6 +117,11 @@ export default async function EduComPage({
       _count: { _all: true },
     }),
     prisma.subject.findMany({ orderBy: { name: "asc" } }),
+    prisma.classLevel.findMany({
+      where: { isActive: true },
+      orderBy: { order: "asc" },
+      include: { curriculum: { select: { name: true } }, _count: { select: { courses: true } } },
+    }),
   ]);
 
   const courseCountBySubjectId = new Map(courseCountsBySubject.map((c) => [c.subjectId, c._count._all]));
@@ -218,6 +225,28 @@ export default async function EduComPage({
         </section>
       )}
 
+      {classLevels.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold">Browse by Class Level</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {classLevels.map((cl) => (
+              <Link
+                key={cl.id}
+                href={`/educom/class/${cl.id}`}
+                className={`rounded-full border px-4 py-2 text-sm hover:border-orange-500 hover:text-orange-300 ${
+                  classLevelIdFilter === cl.id
+                    ? "border-orange-500 text-orange-300"
+                    : "border-slate-700 text-slate-300"
+                }`}
+              >
+                {cl.name}
+                <span className="ml-1.5 text-slate-500">({cl._count.courses})</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {subjects.length > 0 && (
         <section className="mt-10">
           <h2 className="text-lg font-semibold">Explore by Subject</h2>
@@ -242,9 +271,9 @@ export default async function EduComPage({
         </section>
       )}
 
-      {subjectIdFilter && (
+      {(subjectIdFilter || classLevelIdFilter) && (
         <p className="mt-6 text-sm text-slate-400">
-          Filtered by subject.{" "}
+          Filtered by {subjectIdFilter && classLevelIdFilter ? "subject and class level" : subjectIdFilter ? "subject" : "class level"}.{" "}
           <Link href="/educom" className="text-orange-400 hover:underline">
             Clear filter
           </Link>
@@ -253,6 +282,7 @@ export default async function EduComPage({
 
       <form method="GET" className="mt-4 flex flex-wrap gap-2">
         <input type="hidden" name="subjectId" value={subjectIdFilter} />
+        <input type="hidden" name="classLevelId" value={classLevelIdFilter} />
         <input
           type="text"
           name="q"

@@ -6,6 +6,8 @@ import { markLessonComplete, submitQuiz } from "@/app/educom/actions";
 import { startAttempt } from "@/app/practice/actions";
 import { asOptions } from "@/lib/practice-types";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
+import { LessonTabs } from "@/components/lesson-player/lesson-tabs";
+import { resolveVideoSource } from "@/lib/video/resolve-video-source";
 
 function renderContent(content: string) {
   const segments = content.split("```");
@@ -45,7 +47,7 @@ export default async function LessonPage({
     include: {
       modules: {
         orderBy: { order: "asc" },
-        include: { lessons: { orderBy: { order: "asc" } } },
+        include: { lessons: { where: { moderationStatus: "PUBLISHED" }, orderBy: { order: "asc" } } },
       },
     },
   });
@@ -55,23 +57,48 @@ export default async function LessonPage({
   const currentIndex = flatLessons.findIndex((l) => l.id === lessonId);
   if (currentIndex === -1) notFound();
 
-  const lesson = flatLessons[currentIndex];
+  const lessonSummary = flatLessons[currentIndex];
   const prevLesson = flatLessons[currentIndex - 1];
   const nextLesson = flatLessons[currentIndex + 1];
 
-  const [enrollment, quizQuestions] = await Promise.all([
+  const [enrollment, quizQuestions, lesson, checkpointRows] = await Promise.all([
     prisma.courseEnrollment.findUnique({
       where: { userId_courseId: { userId: session.user.id, courseId } },
       include: { lessonProgress: { where: { lessonId } } },
     }),
-    lesson.type === "QUIZ"
-      ? prisma.quizQuestion.findMany({ where: { lessonId }, orderBy: { order: "asc" } })
+    lessonSummary.type === "QUIZ"
+      ? prisma.quizQuestion.findMany({ where: { lessonId, atSeconds: null }, orderBy: { order: "asc" } })
       : Promise.resolve([]),
+    prisma.lesson.findUniqueOrThrow({
+      where: { id: lessonId },
+      include: { chapters: { orderBy: { order: "asc" } } },
+    }),
+    prisma.quizQuestion.findMany({
+      where: { lessonId, atSeconds: { not: null } },
+      orderBy: { atSeconds: "asc" },
+    }),
   ]);
   if (!enrollment) redirect(`/educom/${courseId}`);
 
   const progress = enrollment.lessonProgress[0];
   const isComplete = !!progress?.completedAt;
+
+  const source = lesson.type === "VIDEO" ? resolveVideoSource(lesson) : null;
+  const playerChapters = lesson.chapters.map((c) => ({
+    id: c.id,
+    order: c.order,
+    title: c.title,
+    startSeconds: c.startSeconds,
+    endSeconds: c.endSeconds,
+    transcriptSegment: c.transcriptSegment,
+  }));
+  const playerCheckpoints = checkpointRows.map((cp) => ({
+    id: cp.id,
+    atSeconds: cp.atSeconds!,
+    prompt: cp.prompt,
+    options: asOptions(cp.options),
+    chapterId: cp.chapterId,
+  }));
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
@@ -89,29 +116,64 @@ export default async function LessonPage({
           </p>
           <h1 className="mt-1 text-2xl font-semibold">{lesson.title}</h1>
         </div>
-        <AiCoachPanel
-          context={{ courseId, lessonId }}
-          defaultMode="EXPLAIN"
-          suggestedPrompts={[
-            "Explain this lesson simply",
-            "Give me an example",
-            "Quiz me on this topic",
-            "What should I remember for the exam?",
-          ]}
-        />
+        {lesson.type !== "VIDEO" && (
+          <AiCoachPanel
+            context={{ courseId, lessonId }}
+            defaultMode="EXPLAIN"
+            suggestedPrompts={[
+              "Explain this lesson simply",
+              "Give me an example",
+              "Quiz me on this topic",
+              "What should I remember for the exam?",
+            ]}
+          />
+        )}
       </div>
 
-      {lesson.type === "VIDEO" && lesson.videoUrl && (
-        <video
-          controls
-          src={lesson.videoUrl}
-          className="mt-6 w-full rounded-lg border border-slate-800"
-        />
+      {lesson.type === "VIDEO" ? (
+        <div className="mt-6">
+          <LessonTabs
+            lessonId={lesson.id}
+            courseId={courseId}
+            source={source}
+            chapters={playerChapters}
+            checkpoints={playerCheckpoints}
+            initialPositionSeconds={progress?.lastPositionSeconds ?? null}
+            notesMarkdown={lesson.notesMarkdown}
+            transcriptFull={lesson.transcriptFull}
+            learningObjectives={lesson.learningObjectives}
+            practicePanel={
+              lesson.topic && course.subjectId ? (
+                <div className="rounded-lg border border-orange-800 bg-orange-950/30 p-4">
+                  <p className="text-sm font-medium text-orange-300">Test what you learned</p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Launch a short SmartPrepAfrica drill on {lesson.topic} using the real question bank.
+                  </p>
+                  <form action={startAttempt} className="mt-3">
+                    <input type="hidden" name="exam" value={course.examType ?? "UTME"} />
+                    <input type="hidden" name="subjects" value={course.subjectId} />
+                    <input type="hidden" name="topic" value={lesson.topic} />
+                    <input type="hidden" name="mode" value="STUDY_DRILL" />
+                    <input type="hidden" name="count" value="8" />
+                    <button
+                      type="submit"
+                      className="rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-slate-950 hover:bg-orange-400"
+                    >
+                      Practice: {lesson.topic}
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  No practice topic is linked to this lesson yet.
+                </p>
+              )
+            }
+          />
+        </div>
+      ) : (
+        <div className="mt-2">{lesson.content && renderContent(lesson.content)}</div>
       )}
-
-      <div className="mt-2">
-        {lesson.content && renderContent(lesson.content)}
-      </div>
 
       {lesson.type === "QUIZ" && (
         <div className="mt-6">
@@ -180,7 +242,7 @@ export default async function LessonPage({
         </div>
       )}
 
-      {lesson.topic && course.subjectId && (
+      {lesson.type !== "VIDEO" && lesson.topic && course.subjectId && (
         <div className="mt-8 rounded-lg border border-orange-800 bg-orange-950/30 p-4">
           <p className="text-sm font-medium text-orange-300">
             Practice what you learned

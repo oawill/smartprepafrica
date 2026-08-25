@@ -13,7 +13,14 @@ import {
   submitMessageRating,
 } from "@/app/ai-coach/actions";
 import { MessageContent } from "@/components/ai-coach/message-content";
-import { MODE_LABELS, QUICK_ACTIONS, type CoachFocusQuestion, type CoachLaunchContext } from "@/components/ai-coach/types";
+import {
+  MODE_LABELS,
+  QUICK_ACTIONS,
+  IM_CONFUSED_LABEL,
+  type CoachFocusQuestion,
+  type CoachLaunchContext,
+  type QuickAction,
+} from "@/components/ai-coach/types";
 
 type ConversationSummary = {
   id: string;
@@ -34,6 +41,7 @@ export function AiCoachPanel({
   focusQuestion,
   triggerLabel = "Ask AI Coach",
   triggerClassName,
+  quickActions = QUICK_ACTIONS,
 }: {
   context: CoachLaunchContext;
   defaultMode?: AiCoachMode;
@@ -41,6 +49,7 @@ export function AiCoachPanel({
   focusQuestion?: CoachFocusQuestion;
   triggerLabel?: string;
   triggerClassName?: string;
+  quickActions?: QuickAction[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<AiCoachMode>(defaultMode);
@@ -207,6 +216,7 @@ export function AiCoachPanel({
                 initialMessages={initialMessages}
                 initialText={pendingFirstText}
                 focusQuestion={focusQuestion}
+                quickActions={quickActions}
               />
             ) : (
               <EmptyState
@@ -286,6 +296,7 @@ function ChatBody({
   initialMessages,
   initialText,
   focusQuestion,
+  quickActions,
 }: {
   conversationId: string;
   context: CoachLaunchContext;
@@ -293,10 +304,21 @@ function ChatBody({
   initialMessages?: UIMessage[];
   initialText: string | null;
   focusQuestion?: CoachFocusQuestion;
+  quickActions: QuickAction[];
 }) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentInitial = useRef(false);
+  // "I'm Confused" escalation counter — session-scoped (resets on a fresh
+  // conversation), incremented only by consecutive "I'm Confused" clicks and
+  // reset by any other message, so buildSystemPrompt can pick a genuinely
+  // different teaching method each time instead of repeating itself. Sent as
+  // per-message metadata (computed synchronously in submitText) rather than
+  // baked into the shared transport body, since a value read from state or a
+  // ref inside the transport's body would lag a render behind the click that
+  // triggered it — and reading a ref directly inside useChat's render-time
+  // options object isn't allowed by the refs lint rule anyway.
+  const [confusionStage, setConfusionStage] = useState(0);
 
   const { messages, sendMessage, status, error, regenerate, stop } = useChat({
     id: conversationId,
@@ -307,6 +329,7 @@ function ChatBody({
         conversationId,
         courseId: context.courseId ?? null,
         lessonId: context.lessonId ?? null,
+        chapterId: context.chapterId ?? null,
         mode,
         focusQuestion: focusQuestion ?? null,
       },
@@ -324,9 +347,11 @@ function ChatBody({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, status]);
 
-  function submitText(text: string) {
+  function submitText(text: string, isConfusedClick = false) {
     if (!text.trim() || status === "streaming" || status === "submitted") return;
-    sendMessage({ text: text.trim() });
+    const nextStage = isConfusedClick ? confusionStage + 1 : 0;
+    setConfusionStage(nextStage);
+    sendMessage({ text: text.trim(), metadata: { confusionStage: nextStage } });
     setInput("");
   }
 
@@ -413,11 +438,11 @@ function ChatBody({
 
       <div className="border-t border-slate-800 p-3">
         <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
-          {QUICK_ACTIONS.map((qa) => (
+          {quickActions.map((qa) => (
             <button
               key={qa.label}
               type="button"
-              onClick={() => submitText(qa.prompt)}
+              onClick={() => submitText(qa.prompt, qa.label === IM_CONFUSED_LABEL)}
               disabled={isBusy}
               className="shrink-0 rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-orange-500 disabled:opacity-50"
             >

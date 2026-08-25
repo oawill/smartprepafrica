@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { CoachFocusQuestion } from "@/lib/ai/focus-question";
 
 const MAX_LESSON_CONTENT_CHARS = 2500;
+const MAX_CHAPTER_TRANSCRIPT_CHARS = 2000;
 
 export type CoachContext = {
   student: {
@@ -26,20 +27,41 @@ export type CoachContext = {
     moduleTitle: string;
     lessonIndex: number;
     totalLessons: number;
+    learningObjectives: string[];
+    classLevel: string | null;
+    courseTopic: string | null;
   };
+  chapter?: {
+    title: string;
+    order: number;
+    totalChapters: number;
+    transcriptSegment: string | null;
+  };
+  recentCheckpointMistakes: {
+    chapterTitle: string | null;
+    prompt: string;
+    selectedOption: string | null;
+    correctOption: string;
+  }[];
   focusQuestion?: CoachFocusQuestion;
   recentAttempts: { exam: string; mode: string; score: number | null; daysAgo: number }[];
   weakTopics: { topic: string; subject: string | null; masteryScore: number }[];
   strongTopics: { topic: string; subject: string | null; masteryScore: number }[];
   mode: AiCoachMode;
+  /** Set when the student clicked "I'm Confused" — how many consecutive
+   * times in this chat session, so buildSystemPrompt can escalate through a
+   * different teaching method each time instead of repeating itself. */
+  confusionStage?: number | null;
 };
 
 export type BuildContextInput = {
   userId: string;
   courseId?: string | null;
   lessonId?: string | null;
+  chapterId?: string | null;
   mode: AiCoachMode;
   focusQuestion?: CoachContext["focusQuestion"];
+  confusionStage?: number | null;
 };
 
 /** Assembles only what's needed to answer the current request — never the
@@ -50,8 +72,10 @@ export async function buildCoachContext({
   userId,
   courseId,
   lessonId,
+  chapterId,
   mode,
   focusQuestion,
+  confusionStage,
 }: BuildContextInput): Promise<CoachContext> {
   const [user, studentProfile, recentAttemptRows, weakRows, strongRows] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } }),
@@ -93,6 +117,8 @@ export async function buildCoachContext({
 
   let course: CoachContext["course"];
   let lesson: CoachContext["lesson"];
+  let chapter: CoachContext["chapter"];
+  let recentCheckpointMistakes: CoachContext["recentCheckpointMistakes"] = [];
 
   if (lessonId) {
     const lessonRow = await prisma.lesson.findUnique({
@@ -102,6 +128,9 @@ export async function buildCoachContext({
         topic: true,
         content: true,
         order: true,
+        learningObjectives: true,
+        courseTopic: { select: { title: true } },
+        chapters: { select: { id: true, title: true, order: true }, orderBy: { order: "asc" } },
         module: {
           select: {
             title: true,
@@ -115,6 +144,7 @@ export async function buildCoachContext({
                 subject: { select: { name: true } },
                 school: { select: { name: true } },
                 teacher: { select: { user: { select: { name: true } } } },
+                classLevel: { select: { name: true } },
               },
             },
           },
@@ -129,6 +159,9 @@ export async function buildCoachContext({
         moduleTitle: lessonRow.module.title,
         lessonIndex: lessonRow.order,
         totalLessons: lessonRow.module.lessons.length,
+        learningObjectives: lessonRow.learningObjectives,
+        classLevel: lessonRow.module.course.classLevel?.name ?? null,
+        courseTopic: lessonRow.courseTopic?.title ?? null,
       };
       const c = lessonRow.module.course;
       course = {
@@ -139,6 +172,39 @@ export async function buildCoachContext({
         examType: c.examType,
         category: c.category,
       };
+
+      if (chapterId) {
+        const chapterRow = await prisma.lessonChapter.findUnique({
+          where: { id: chapterId },
+          select: { title: true, order: true, transcriptSegment: true },
+        });
+        if (chapterRow) {
+          chapter = {
+            title: chapterRow.title,
+            order: chapterRow.order,
+            totalChapters: lessonRow.chapters.length,
+            transcriptSegment: chapterRow.transcriptSegment
+              ? chapterRow.transcriptSegment.slice(0, MAX_CHAPTER_TRANSCRIPT_CHARS)
+              : null,
+          };
+        }
+      }
+
+      const mistakeRows = await prisma.lessonCheckpointResponse.findMany({
+        where: { userId, isCorrect: false, quizQuestion: { lessonId } },
+        orderBy: { answeredAt: "desc" },
+        take: 5,
+        select: {
+          selectedOption: true,
+          quizQuestion: { select: { prompt: true, correctOption: true, chapter: { select: { title: true } } } },
+        },
+      });
+      recentCheckpointMistakes = mistakeRows.map((r) => ({
+        chapterTitle: r.quizQuestion.chapter?.title ?? null,
+        prompt: r.quizQuestion.prompt,
+        selectedOption: r.selectedOption,
+        correctOption: r.quizQuestion.correctOption,
+      }));
     }
   } else if (courseId) {
     const c = await prisma.course.findUnique({
@@ -173,6 +239,8 @@ export async function buildCoachContext({
     },
     course,
     lesson,
+    chapter,
+    recentCheckpointMistakes,
     focusQuestion,
     recentAttempts,
     weakTopics: weakRows.map((r) => ({
@@ -186,5 +254,6 @@ export async function buildCoachContext({
       masteryScore: r.masteryScore,
     })),
     mode,
+    confusionStage,
   };
 }

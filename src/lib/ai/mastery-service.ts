@@ -98,6 +98,30 @@ export async function refreshTopicInsights(userId: string) {
   ]);
 }
 
+/** Records that a student needed multiple escalating explanations on a
+ * concept (the "I'm Confused" video-tutor flow). Deliberately NOT fed into
+ * StudentTopicMastery's EMA - expressing confusion isn't a graded attempt,
+ * and mixing it into masteryScore/questionsAttempted would corrupt a signal
+ * that's meant to mean "correctness on real attempts." Recorded as an
+ * AiLearningInsight instead, for admin/teacher visibility only. */
+export async function logConfusionSignal(params: {
+  userId: string;
+  subjectId: string;
+  topic: string;
+}) {
+  const { userId, subjectId, topic } = params;
+  await prisma.aiLearningInsight.create({
+    data: {
+      userId,
+      subjectId,
+      topic,
+      insightType: "COMMON_MISTAKE",
+      insight: `Needed multiple explanations to understand ${topic} in a video lesson.`,
+      confidence: 0,
+    },
+  });
+}
+
 export type StudyRecommendation = {
   topic: string;
   subjectName: string;
@@ -120,7 +144,7 @@ export async function getTodaysRecommendation(userId: string): Promise<StudyReco
 
   const top = weakest[0];
   const lesson = await prisma.lesson.findFirst({
-    where: { topic: top.topic, module: { course: { published: true } } },
+    where: { topic: top.topic, moderationStatus: "PUBLISHED", module: { course: { published: true } } },
     select: { id: true, title: true, module: { select: { courseId: true } } },
   });
 

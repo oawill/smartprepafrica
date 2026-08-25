@@ -18,7 +18,7 @@ export default async function CourseDetailPage({
     include: {
       modules: {
         orderBy: { order: "asc" },
-        include: { lessons: { orderBy: { order: "asc" } } },
+        include: { lessons: { where: { moderationStatus: "PUBLISHED" }, orderBy: { order: "asc" } } },
       },
       assignments: {
         orderBy: { createdAt: "asc" },
