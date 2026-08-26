@@ -2,15 +2,16 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
-import { linkChild } from "@/app/dashboard/parent/actions";
+import { Badge } from "@/components/ui/badge";
+import { requestChildLink } from "@/app/dashboard/parent/actions";
 
 export default async function ParentDashboard() {
   const session = await auth();
   if (!session) return null;
 
-  const [links, payments] = await Promise.all([
+  const [links, pendingRequests, payments] = await Promise.all([
     prisma.parentStudentLink.findMany({
-      where: { parentId: session.user.id },
+      where: { parentId: session.user.id, status: "ACTIVE" },
       include: {
         student: {
           include: {
@@ -21,6 +22,11 @@ export default async function ParentDashboard() {
         },
       },
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.parentStudentLink.findMany({
+      where: { parentId: session.user.id, status: "PENDING" },
+      include: { student: { include: { user: { select: { name: true } } } } },
+      orderBy: { requestedAt: "desc" },
     }),
     prisma.payment.findMany({
       where: { userId: session.user.id },
@@ -40,8 +46,8 @@ export default async function ParentDashboard() {
         <Card title="Linked children">
           {links.length === 0 ? (
             <p className="text-sm text-text-secondary">
-              No children linked yet. Add a child using their student email
-              below to start monitoring progress.
+              No children linked yet. Ask your child for their parent link code
+              from their dashboard, then enter it below.
             </p>
           ) : (
             <ul className="space-y-2">
@@ -67,20 +73,45 @@ export default async function ParentDashboard() {
             </ul>
           )}
 
-          <form action={linkChild} className="mt-4 flex gap-2">
+          {pendingRequests.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {pendingRequests.map((req) => (
+                <li
+                  key={req.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface-sunken px-3 py-2.5 text-sm"
+                >
+                  <span className="text-text-secondary">{req.student.user.name}</span>
+                  <Badge tone="warning">Awaiting approval</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <form action={requestChildLink} className="mt-4 space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="linkCode"
+                required
+                placeholder="Child's link code (e.g. SPA-TUN-74921)"
+                className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+              />
+              <button
+                type="submit"
+                className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                Request link
+              </button>
+            </div>
             <input
-              type="email"
-              name="childEmail"
-              required
-              placeholder="Child's student email"
-              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+              type="text"
+              name="relationship"
+              placeholder="Your relationship (e.g. Mother, Guardian) — optional"
+              className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-            >
-              Link child
-            </button>
+            <p className="text-xs text-text-muted">
+              Your child will need to approve this request before you can see their progress.
+            </p>
           </form>
         </Card>
 

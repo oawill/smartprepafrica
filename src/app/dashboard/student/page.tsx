@@ -3,8 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { redeemVoucher } from "@/app/dashboard/student/actions";
+import { approveParentLink, rejectParentLink } from "@/app/dashboard/student/parent-link-actions";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-service";
+import { getOrCreateLinkCode } from "@/lib/parent-links";
 
 export default async function StudentDashboard({
   searchParams,
@@ -14,7 +16,7 @@ export default async function StudentDashboard({
   if (!session) return null;
   const userId = session.user.id;
 
-  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness] =
+  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, studentProfile] =
     await Promise.all([
       prisma.examAttempt.findMany({
         where: { userId, submittedAt: { not: null } },
@@ -33,7 +35,19 @@ export default async function StudentDashboard({
       }),
       getTodaysRecommendation(userId),
       getExamReadiness(userId),
+      prisma.studentProfile.findUnique({ where: { userId }, select: { id: true } }),
     ]);
+
+  const [linkCode, pendingParentRequests] = studentProfile
+    ? await Promise.all([
+        getOrCreateLinkCode(studentProfile.id),
+        prisma.parentStudentLink.findMany({
+          where: { studentId: studentProfile.id, status: "PENDING" },
+          include: { parent: { select: { name: true, email: true } } },
+          orderBy: { requestedAt: "desc" },
+        }),
+      ])
+    : [null, []];
 
   const readinessScore =
     attempts.length > 0
@@ -201,7 +215,46 @@ export default async function StudentDashboard({
         </Card>
       </div>
 
-      <div className="mt-6">
+      {pendingParentRequests.length > 0 && (
+        <div className="mt-6">
+          <Card title="Parent/guardian requests">
+            <ul className="space-y-3">
+              {pendingParentRequests.map((req) => (
+                <li key={req.id} className="rounded-lg border border-border bg-surface-sunken p-3">
+                  <p className="text-sm text-text-primary">
+                    <span className="font-medium">{req.parent.name}</span>
+                    {req.relationship ? ` (${req.relationship})` : ""} wants to connect as your
+                    parent/guardian.
+                  </p>
+                  <p className="mt-0.5 text-xs text-text-muted">{req.parent.email}</p>
+                  <div className="mt-2 flex gap-2">
+                    <form action={approveParentLink}>
+                      <input type="hidden" name="linkId" value={req.id} />
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover"
+                      >
+                        Approve
+                      </button>
+                    </form>
+                    <form action={rejectParentLink}>
+                      <input type="hidden" name="linkId" value={req.id} />
+                      <button
+                        type="submit"
+                        className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-danger/40 hover:text-danger"
+                      >
+                        Reject
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Have a sponsor voucher code?">
           <form action={redeemVoucher} className="flex gap-2">
             <input
@@ -219,6 +272,18 @@ export default async function StudentDashboard({
             </button>
           </form>
         </Card>
+
+        {linkCode && (
+          <Card title="Your parent link code">
+            <p className="text-sm text-text-secondary">
+              Share this code with a parent or guardian so they can request to connect and
+              follow your progress.
+            </p>
+            <p className="mt-3 rounded-lg border border-border-strong bg-surface-sunken px-4 py-3 text-center font-mono text-lg font-semibold tracking-wide text-brand-text">
+              {linkCode}
+            </p>
+          </Card>
+        )}
       </div>
     </div>
   );

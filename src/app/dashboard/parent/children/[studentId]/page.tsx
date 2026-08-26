@@ -40,7 +40,7 @@ export default async function ChildDetailPage({
     },
   });
 
-  if (!link) notFound();
+  if (!link || link.status !== "ACTIVE") notFound();
 
   const { student } = link;
   const insights = await getStudentInsights(student.user.id);

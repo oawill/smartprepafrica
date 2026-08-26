@@ -147,7 +147,18 @@ model StudentProfile {
   classId     String?
   gradeLevel  String?
   targetExams ExamType[]
+  // Non-sequential (unlike User.studentNumber), shown to the student to share
+  // with a parent/guardian — deliberately not enumerable since it grants
+  // access to this student's academic data once linked.
+  linkCode    String?             @unique
   parentLinks ParentStudentLink[] @relation("StudentLinks")
+}
+
+enum ParentLinkStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  REMOVED
 }
 
 model ParentStudentLink {
@@ -156,9 +167,18 @@ model ParentStudentLink {
   parentId  String
   student   StudentProfile @relation("StudentLinks", fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
-  createdAt DateTime       @default(now())
+
+  status       ParentLinkStatus @default(PENDING)
+  relationship String?
+
+  requestedAt DateTime  @default(now())
+  respondedAt DateTime?
+  removedAt   DateTime?
+
+  createdAt DateTime @default(now())
 
   @@unique([parentId, studentId])
+  @@index([studentId, status])
 }
 
 model School {

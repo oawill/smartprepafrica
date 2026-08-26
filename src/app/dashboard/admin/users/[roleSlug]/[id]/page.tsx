@@ -37,7 +37,10 @@ export default async function AdminUserDetailPage({
       teacherProfile: { include: { school: { select: { name: true } } } },
       schoolAdminOf: { select: { id: true, name: true } },
       sponsorProfile: true,
-      parentLinks: { include: { student: { include: { user: { select: { name: true } } } } } },
+      parentLinks: {
+        where: { status: "ACTIVE" },
+        include: { student: { include: { user: { select: { name: true } } } } },
+      },
       examAttempts: { select: { id: true, submittedAt: true }, take: 1000 },
       enrollments: { select: { id: true, status: true }, take: 1000 },
       subscriptions: {
