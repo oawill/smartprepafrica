@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { redeemVoucher } from "@/app/dashboard/student/actions";
 import { approveParentLink, rejectParentLink } from "@/app/dashboard/student/parent-link-actions";
+import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-service";
 import { getOrCreateLinkCode } from "@/lib/parent-links";
@@ -48,6 +49,19 @@ export default async function StudentDashboard({
         }),
       ])
     : [null, []];
+
+  const pendingSchoolInvitations = session.user.email
+    ? await prisma.schoolInvitation.findMany({
+        where: {
+          inviteeEmail: session.user.email.toLowerCase(),
+          role: "STUDENT",
+          status: "PENDING",
+          invitationExpiresAt: { gt: new Date() },
+        },
+        include: { school: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
 
   const readinessScore =
     attempts.length > 0
@@ -244,6 +258,43 @@ export default async function StudentDashboard({
                         className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-danger/40 hover:text-danger"
                       >
                         Reject
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
+
+      {pendingSchoolInvitations.length > 0 && (
+        <div className="mt-6">
+          <Card title="School invitations">
+            <ul className="space-y-3">
+              {pendingSchoolInvitations.map((inv) => (
+                <li key={inv.id} className="rounded-lg border border-border bg-surface-sunken p-3">
+                  <p className="text-sm text-text-primary">
+                    <span className="font-medium">{inv.school.name}</span> wants to add you as a
+                    student.
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <form action={acceptSchoolInvitation}>
+                      <input type="hidden" name="invitationId" value={inv.id} />
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover"
+                      >
+                        Accept
+                      </button>
+                    </form>
+                    <form action={declineSchoolInvitation}>
+                      <input type="hidden" name="invitationId" value={inv.id} />
+                      <button
+                        type="submit"
+                        className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-danger/40 hover:text-danger"
+                      >
+                        Decline
                       </button>
                     </form>
                   </div>

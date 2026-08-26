@@ -1,12 +1,16 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseSimpleCsv, generateTempPassword } from "@/lib/csv";
 import { redeemVoucherRecord } from "@/lib/vouchers";
+import { logAudit } from "@/lib/admin/audit";
+
+const INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function assertSchoolAdmin(userId: string) {
   const school = await prisma.school.findFirst({
@@ -41,53 +45,111 @@ export async function updateSchoolProfile(formData: FormData) {
   revalidatePath("/dashboard/school");
 }
 
-export async function addTeacherByEmail(formData: FormData) {
+export type InviteResult = { token: string; alreadyHasAccount: boolean } | { error: string };
+
+async function createOrResendInvite(
+  school: { id: string },
+  invitedById: string,
+  role: "TEACHER" | "STUDENT",
+  email: string,
+  classId: string | null
+): Promise<InviteResult> {
+  if (!email) return { error: "Enter an email address." };
+
+  if (classId) {
+    const cls = await prisma.class.findUnique({ where: { id: classId } });
+    if (!cls || cls.schoolId !== school.id) {
+      return { error: "Selected class not found in your school." };
+    }
+  }
+
+  const invitationToken = randomUUID();
+  const invitationExpiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
+
+  const existingPending = await prisma.schoolInvitation.findFirst({
+    where: { schoolId: school.id, inviteeEmail: email, status: "PENDING" },
+  });
+
+  const invitation = existingPending
+    ? await prisma.schoolInvitation.update({
+        where: { id: existingPending.id },
+        data: { invitationToken, invitationExpiresAt, classId },
+      })
+    : await prisma.schoolInvitation.create({
+        data: {
+          schoolId: school.id,
+          inviteeEmail: email,
+          role,
+          classId,
+          invitationToken,
+          invitationExpiresAt,
+          invitedById,
+        },
+      });
+
+  await logAudit({
+    actorUserId: invitedById,
+    actorRole: "SCHOOL_ADMIN",
+    action: existingPending ? "SCHOOL_INVITE_RESENT" : "SCHOOL_INVITE_CREATED",
+    resourceType: "SchoolInvitation",
+    resourceId: invitation.id,
+    result: "SUCCESS",
+  });
+
+  const alreadyHasAccount = !!(await prisma.user.findUnique({ where: { email } }));
+
+  revalidatePath("/dashboard/school");
+  return { token: invitation.invitationToken, alreadyHasAccount };
+}
+
+export async function inviteTeacher(
+  _prevState: InviteResult | null,
+  formData: FormData
+): Promise<InviteResult> {
   const session = await auth();
   if (!session) redirect("/login");
   const school = await assertSchoolAdmin(session.user.id);
 
   const email = (formData.get("teacherEmail") as string)?.trim().toLowerCase();
-  const teacher = await prisma.teacherProfile.findFirst({
-    where: { user: { email } },
-  });
-  if (!teacher) {
-    throw new Error(
-      "No teacher account found with that email. They need to register as a Teacher first."
-    );
-  }
-  if (teacher.schoolId && teacher.schoolId !== school.id) {
-    throw new Error("That teacher already belongs to another school.");
-  }
-
-  await prisma.teacherProfile.update({
-    where: { id: teacher.id },
-    data: { schoolId: school.id },
-  });
-
-  revalidatePath("/dashboard/school");
+  return createOrResendInvite(school, session.user.id, "TEACHER", email, null);
 }
 
-export async function addStudentByEmail(formData: FormData) {
+export async function inviteStudent(
+  _prevState: InviteResult | null,
+  formData: FormData
+): Promise<InviteResult> {
   const session = await auth();
   if (!session) redirect("/login");
   const school = await assertSchoolAdmin(session.user.id);
 
   const email = (formData.get("studentEmail") as string)?.trim().toLowerCase();
-  const student = await prisma.studentProfile.findFirst({
-    where: { user: { email } },
-  });
-  if (!student) {
-    throw new Error(
-      "No student account found with that email. They need to register as a Student first."
-    );
-  }
-  if (student.schoolId && student.schoolId !== school.id) {
-    throw new Error("That student already belongs to another school.");
+  const classId = (formData.get("classId") as string) || null;
+  return createOrResendInvite(school, session.user.id, "STUDENT", email, classId);
+}
+
+export async function revokeSchoolInvitation(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const school = await assertSchoolAdmin(session.user.id);
+
+  const invitationId = formData.get("invitationId") as string;
+  const invitation = await prisma.schoolInvitation.findUnique({ where: { id: invitationId } });
+  if (!invitation || invitation.schoolId !== school.id || invitation.status !== "PENDING") {
+    throw new Error("Invitation not found.");
   }
 
-  await prisma.studentProfile.update({
-    where: { id: student.id },
-    data: { schoolId: school.id },
+  await prisma.schoolInvitation.update({
+    where: { id: invitationId },
+    data: { status: "REVOKED", respondedAt: new Date() },
+  });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: "SCHOOL_ADMIN",
+    action: "SCHOOL_INVITE_REVOKED",
+    resourceType: "SchoolInvitation",
+    resourceId: invitationId,
+    result: "SUCCESS",
   });
 
   revalidatePath("/dashboard/school");

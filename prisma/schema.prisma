@@ -181,6 +181,49 @@ model ParentStudentLink {
   @@index([studentId, status])
 }
 
+enum SchoolInviteRole {
+  TEACHER
+  STUDENT
+}
+
+enum SchoolInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  REVOKED
+}
+
+// A school inviting its own staff/student, distinct from PartnerSchoolLead
+// (a partner recruiting a brand-new school onto the platform) — different
+// domain and lifecycle, so kept as a separate model rather than widening
+// that one.
+model SchoolInvitation {
+  id       String @id @default(cuid())
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId String
+
+  inviteeEmail String
+  role         SchoolInviteRole
+
+  // Only meaningful when role = STUDENT.
+  class   Class?  @relation(fields: [classId], references: [id])
+  classId String?
+
+  status              SchoolInviteStatus @default(PENDING)
+  invitationToken     String             @unique
+  invitationExpiresAt DateTime
+
+  invitedById String
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId, inviteeEmail, status])
+  @@index([inviteeEmail, status])
+}
+
 model School {
   id                String           @id @default(cuid())
   name              String
@@ -206,6 +249,7 @@ model School {
   teachers          TeacherProfile[]
   classes           Class[]
   courses           Course[]
+  invitations       SchoolInvitation[]
   createdAt         DateTime         @default(now())
 
   sponsorshipPrograms SponsorshipProgram[]
@@ -263,6 +307,8 @@ model Class {
 
   teachers TeacherProfile[] @relation("TeacherClasses")
   students StudentProfile[]
+
+  invitations SchoolInvitation[]
 }
 
 model SponsorProfile {

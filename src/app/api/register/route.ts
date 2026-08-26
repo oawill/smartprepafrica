@@ -5,7 +5,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { captureAttributionAtRegistration, hashIp } from "@/lib/partners/attribution";
 import { registerSchoolFromInvitation } from "@/lib/partners/school-leads";
+import { registerStaffFromInvitation } from "@/lib/school-invitations";
 import { recordAcceptance } from "@/lib/legal/documents";
+import { logAudit } from "@/lib/admin/audit";
 
 const baseFields = {
   name: z.string().min(2),
@@ -20,9 +22,9 @@ const baseFields = {
 };
 
 const registerSchema = z.discriminatedUnion("role", [
-  z.object({ role: z.literal("STUDENT"), ...baseFields }),
+  z.object({ role: z.literal("STUDENT"), ...baseFields, staffInviteToken: z.string().optional() }),
   z.object({ role: z.literal("PARENT"), ...baseFields }),
-  z.object({ role: z.literal("TEACHER"), ...baseFields }),
+  z.object({ role: z.literal("TEACHER"), ...baseFields, staffInviteToken: z.string().optional() }),
   z.object({ role: z.literal("SPONSOR"), ...baseFields }),
   z.object({
     role: z.literal("SCHOOL_ADMIN"),
@@ -78,10 +80,18 @@ export async function POST(request: Request) {
 
     switch (data.role) {
       case "STUDENT":
-        await tx.studentProfile.create({ data: { userId: user.id } });
+        if (data.staffInviteToken) {
+          await registerStaffFromInvitation(tx, data.staffInviteToken, "STUDENT", user.id);
+        } else {
+          await tx.studentProfile.create({ data: { userId: user.id } });
+        }
         break;
       case "TEACHER":
-        await tx.teacherProfile.create({ data: { userId: user.id } });
+        if (data.staffInviteToken) {
+          await registerStaffFromInvitation(tx, data.staffInviteToken, "TEACHER", user.id);
+        } else {
+          await tx.teacherProfile.create({ data: { userId: user.id } });
+        }
         break;
       case "SPONSOR":
         await tx.sponsorProfile.create({ data: { userId: user.id } });
@@ -125,6 +135,16 @@ export async function POST(request: Request) {
 
     return user;
   });
+
+  if ((data.role === "STUDENT" || data.role === "TEACHER") && data.staffInviteToken) {
+    await logAudit({
+      actorUserId: user.id,
+      actorRole: data.role,
+      action: "SCHOOL_INVITE_ACCEPTED",
+      resourceType: "SchoolInvitation",
+      result: "SUCCESS",
+    });
+  }
 
   return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
 }

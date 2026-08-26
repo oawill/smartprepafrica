@@ -26,6 +26,9 @@ export default function RegisterPage() {
   const [schoolInvite, setSchoolInvite] = useState<{ token: string; schoolName: string } | null>(
     null
   );
+  const [staffInvite, setStaffInvite] = useState<
+    { token: string; role: "TEACHER" | "STUDENT"; schoolName: string } | null
+  >(null);
 
   // Plain browser API rather than useSearchParams, so this page doesn't need
   // a Suspense boundary just to read a couple of query params once.
@@ -46,6 +49,13 @@ export default function RegisterPage() {
     if (invite && invite !== "invalid" && schoolName) {
       setSchoolInvite({ token: invite, schoolName });
       setRole("SCHOOL_ADMIN");
+    }
+
+    const staffToken = params.get("staffInvite");
+    const staffRole = params.get("staffRole");
+    if (staffToken && staffToken !== "invalid" && schoolName && (staffRole === "TEACHER" || staffRole === "STUDENT")) {
+      setStaffInvite({ token: staffToken, role: staffRole, schoolName });
+      setRole(staffRole);
     }
   }, []);
 
@@ -69,6 +79,9 @@ export default function RegisterPage() {
       } else {
         payload.schoolName = formData.get("schoolName");
       }
+    }
+    if (staffInvite) {
+      payload.staffInviteToken = staffInvite.token;
     }
 
     const res = await fetch("/api/register", {
@@ -125,9 +138,15 @@ export default function RegisterPage() {
             partner invitation.
           </p>
         )}
+        {staffInvite && (
+          <p className="mt-4 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-xs text-brand-text">
+            You&apos;re joining <strong>{staffInvite.schoolName}</strong> as a{" "}
+            {staffInvite.role === "TEACHER" ? "teacher" : "student"}.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          {!schoolInvite && (
+          {!schoolInvite && !staffInvite && (
             <fieldset>
               <legend className="text-sm text-text-secondary">I am a:</legend>
               <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5">

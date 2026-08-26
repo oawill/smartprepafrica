@@ -4,10 +4,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { BulkUploadForm } from "@/components/school/bulk-upload-form";
+import { InviteForm } from "@/components/school/invite-form";
 import {
   updateSchoolProfile,
-  addTeacherByEmail,
-  addStudentByEmail,
+  inviteTeacher,
+  inviteStudent,
+  revokeSchoolInvitation,
   createClass,
   assignSponsoredSeat,
 } from "@/app/dashboard/school/actions";
@@ -23,6 +25,11 @@ export default async function SchoolDashboard() {
     include: { classes: { orderBy: { name: "asc" } } },
   });
   if (!school) redirect("/dashboard");
+
+  const pendingInvitations = await prisma.schoolInvitation.findMany({
+    where: { schoolId: school.id, status: "PENDING" },
+    orderBy: { createdAt: "desc" },
+  });
 
   const students = await prisma.studentProfile.findMany({
     where: { schoolId: school.id },
@@ -329,48 +336,64 @@ export default async function SchoolDashboard() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Add a teacher">
+        <Card title="Invite a teacher">
           <p className="text-xs text-text-muted">
-            The teacher must already have a SmartPrepAfrica Teacher account.
+            They&apos;ll need to accept before joining your school.
           </p>
-          <form action={addTeacherByEmail} className="mt-2 flex gap-2">
-            <input
-              type="email"
-              name="teacherEmail"
-              required
-              placeholder="teacher@example.com"
-              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+          <div className="mt-2">
+            <InviteForm
+              emailField="teacherEmail"
+              emailPlaceholder="teacher@example.com"
+              action={inviteTeacher}
             />
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-            >
-              Add
-            </button>
-          </form>
+          </div>
         </Card>
 
-        <Card title="Add a student">
+        <Card title="Invite a student">
           <p className="text-xs text-text-muted">
-            The student must already have a SmartPrepAfrica Student account.
+            They&apos;ll need to accept before joining your school.
           </p>
-          <form action={addStudentByEmail} className="mt-2 flex gap-2">
-            <input
-              type="email"
-              name="studentEmail"
-              required
-              placeholder="student@example.com"
-              className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+          <div className="mt-2">
+            <InviteForm
+              emailField="studentEmail"
+              emailPlaceholder="student@example.com"
+              action={inviteStudent}
+              classes={school.classes}
             />
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-            >
-              Add
-            </button>
-          </form>
+          </div>
         </Card>
       </div>
+
+      {pendingInvitations.length > 0 && (
+        <div className="mt-6">
+          <Card title="Pending invitations">
+            <ul className="space-y-2">
+              {pendingInvitations.map((inv) => (
+                <li
+                  key={inv.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 text-sm"
+                >
+                  <span>
+                    <span className="text-text-primary">{inv.inviteeEmail}</span>
+                    <span className="ml-2 text-xs text-text-muted">
+                      {inv.role === "TEACHER" ? "Teacher" : "Student"} invite
+                    </span>
+                  </span>
+                  <form action={revokeSchoolInvitation}>
+                    <input type="hidden" name="invitationId" value={inv.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-text-secondary hover:text-danger"
+                    >
+                      Revoke
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
 
       {sponsorshipPrograms.length > 0 && (
         <div className="mt-6">

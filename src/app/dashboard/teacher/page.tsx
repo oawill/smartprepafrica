@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { updateTeacherProfile } from "@/app/dashboard/teacher/actions";
+import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
 
 export default async function TeacherDashboard() {
   const session = await auth();
@@ -21,6 +22,19 @@ export default async function TeacherDashboard() {
     },
   });
   if (!teacher) redirect("/dashboard");
+
+  const pendingSchoolInvitations = session.user.email
+    ? await prisma.schoolInvitation.findMany({
+        where: {
+          inviteeEmail: session.user.email.toLowerCase(),
+          role: "TEACHER",
+          status: "PENDING",
+          invitationExpiresAt: { gt: new Date() },
+        },
+        include: { school: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
 
   const classCount = teacher?.classes.length ?? 0;
   const courseCount = teacher?.courses.length ?? 0;
@@ -64,6 +78,43 @@ export default async function TeacherDashboard() {
           </Link>
         )}
       </div>
+
+      {pendingSchoolInvitations.length > 0 && (
+        <div className="mt-6">
+          <Card title="School invitations">
+            <ul className="space-y-3">
+              {pendingSchoolInvitations.map((inv) => (
+                <li key={inv.id} className="rounded-lg border border-border bg-surface-sunken p-3">
+                  <p className="text-sm text-text-primary">
+                    <span className="font-medium">{inv.school.name}</span> wants to add you as a
+                    teacher.
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <form action={acceptSchoolInvitation}>
+                      <input type="hidden" name="invitationId" value={inv.id} />
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover"
+                      >
+                        Accept
+                      </button>
+                    </form>
+                    <form action={declineSchoolInvitation}>
+                      <input type="hidden" name="invitationId" value={inv.id} />
+                      <button
+                        type="submit"
+                        className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-danger/40 hover:text-danger"
+                      >
+                        Decline
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card title="Classes">
