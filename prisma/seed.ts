@@ -412,11 +412,31 @@ const allQuestions = [
   ...biologyQuestions,
 ];
 
+type SeedCheckpoint = {
+  atSeconds: number;
+  prompt: string;
+  options: [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation?: string;
+};
+
+type SeedChapter = {
+  title: string;
+  startSeconds: number;
+  endSeconds?: number;
+  transcriptSegment?: string;
+  checkpoint?: SeedCheckpoint;
+};
+
 type SeedLesson = {
   title: string;
   type: LessonType;
   content?: string;
   videoUrl?: string;
+  videoAttribution?: string;
+  durationSeconds?: number;
+  notesMarkdown?: string;
+  chapters?: SeedChapter[];
   // Matches a Question.topic for this course's subject, linking the lesson
   // to SmartPrepAfrica practice questions on the same concept.
   topic?: string;
@@ -504,10 +524,49 @@ const courseSeeds: SeedCourse[] = [
           {
             title: "Introduction to Banks and Interest",
             type: LessonType.VIDEO,
-            videoUrl:
-              "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+            videoAttribution: "Demo video — Video.js sample library (vjs.zencdn.net)",
+            durationSeconds: 46,
             content:
               "This video introduces how banks work: they hold your money safely, pay you interest for keeping it with them, and lend a portion of it to others (who pay the bank interest in return). Understanding this cycle helps explain why savings accounts, fixed deposits, and loans all behave the way they do.",
+            notesMarkdown:
+              "**Key takeaway:** a bank is a middleman — it pays you interest to hold your money, then lends that money to others at a higher interest rate, keeping the difference.",
+            chapters: [
+              {
+                title: "How Banks Store Your Money",
+                startSeconds: 0,
+                endSeconds: 15,
+                transcriptSegment:
+                  "Banks exist to hold your money more safely than keeping cash at home, while still letting you access it whenever you need to.",
+                checkpoint: {
+                  atSeconds: 14,
+                  prompt: "What is the main benefit of keeping your money in a bank rather than at home?",
+                  options: ["It earns interest", "It disappears faster", "Banks charge you to hold it", "It's illegal to keep cash at home"],
+                  correctIndex: 0,
+                  explanation: "Banks pay you interest for keeping your money with them, which cash at home never does.",
+                },
+              },
+              {
+                title: "Earning Interest on Savings",
+                startSeconds: 15,
+                endSeconds: 30,
+                transcriptSegment:
+                  "Interest is the bank's way of paying you for the use of your money. The rate is usually quoted per year, and it grows the longer you leave your savings untouched.",
+                checkpoint: {
+                  atSeconds: 29,
+                  prompt: "If a bank pays 5% simple annual interest, how much would ₦10,000 earn in one year?",
+                  options: ["₦50", "₦500", "₦5,000", "₦100"],
+                  correctIndex: 1,
+                  explanation: "5% of ₦10,000 is ₦500 (10,000 × 0.05).",
+                },
+              },
+              {
+                title: "How Loans Work",
+                startSeconds: 30,
+                transcriptSegment:
+                  "The bank lends a portion of the money it holds to other customers, charging them a higher interest rate than it pays savers — the difference is how the bank makes money.",
+              },
+            ],
           },
         ],
       },
@@ -557,9 +616,55 @@ const courseSeeds: SeedCourse[] = [
           },
           {
             title: "Loops",
-            type: LessonType.TEXT,
+            type: LessonType.VIDEO,
+            videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+            videoAttribution: "Demo video — Video.js sample library (vjs.zencdn.net)",
+            durationSeconds: 46,
             content:
               "Loops let you repeat an action without writing it out multiple times. A `for` loop repeats a fixed number of times or over a collection of items:\n\n```python\nfor i in range(5):\n    print(i)\n```\n\nThis prints 0 through 4. A `while` loop repeats as long as a condition stays true — useful when you don't know in advance how many times you'll need to repeat something.",
+            notesMarkdown:
+              "**Key takeaway:** use a `for` loop when you know how many times to repeat; use a `while` loop when you're repeating until a condition changes.",
+            chapters: [
+              {
+                title: "For Loops",
+                startSeconds: 0,
+                endSeconds: 15,
+                transcriptSegment:
+                  "A for loop repeats a block of code a fixed number of times, or once for every item in a collection like a list.",
+                checkpoint: {
+                  atSeconds: 14,
+                  prompt: "What does `for i in range(3): print(i)` output?",
+                  options: ["0 1 2", "1 2 3", "0 1 2 3", "3"],
+                  correctIndex: 0,
+                  explanation: "range(3) produces 0, 1, 2 — range() counts up to but not including its argument.",
+                },
+              },
+              {
+                title: "While Loops",
+                startSeconds: 15,
+                endSeconds: 30,
+                transcriptSegment:
+                  "A while loop keeps running as long as its condition stays true, checking the condition again before every repeat.",
+                checkpoint: {
+                  atSeconds: 29,
+                  prompt: "What danger do while loops have that for loops usually avoid?",
+                  options: [
+                    "Infinite loops if the condition never becomes false",
+                    "They can't use variables",
+                    "They run backwards",
+                    "They require a newer Python version",
+                  ],
+                  correctIndex: 0,
+                  explanation: "If nothing inside a while loop ever makes its condition false, it will run forever.",
+                },
+              },
+              {
+                title: "Common Pitfalls",
+                startSeconds: 30,
+                transcriptSegment:
+                  "Forgetting to update the loop variable, off-by-one errors in range(), and accidentally reusing a loop variable outside the loop are the most common mistakes beginners make.",
+              },
+            ],
           },
         ],
       },
@@ -593,10 +698,51 @@ const courseSeeds: SeedCourse[] = [
           },
           {
             title: "Rules of Indices",
-            type: LessonType.TEXT,
+            type: LessonType.VIDEO,
+            videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+            videoAttribution: "Demo video — Video.js sample library (vjs.zencdn.net)",
+            durationSeconds: 46,
             content:
               "Indices (powers) follow a small set of rules that make simplifying expressions much faster once memorized:\n\n- Multiplying: a^m × a^n = a^(m+n)\n- Dividing: a^m ÷ a^n = a^(m-n)\n- Power of a power: (a^m)^n = a^(mn)\n- Zero power: a^0 = 1 (for a ≠ 0)\n\nThese rules only apply directly when the base (the 'a') is the same on both sides — you can't combine 2^3 and 3^2 this way.",
+            notesMarkdown:
+              "**Key takeaway:** the index rules only combine powers that share the same base — always check the base matches before applying a rule.",
             topic: "Indices",
+            chapters: [
+              {
+                title: "Multiplying and Dividing Powers",
+                startSeconds: 0,
+                endSeconds: 15,
+                transcriptSegment:
+                  "When multiplying powers with the same base, add the exponents: a^m × a^n = a^(m+n). When dividing, subtract them: a^m ÷ a^n = a^(m-n).",
+                checkpoint: {
+                  atSeconds: 14,
+                  prompt: "Simplify: a^3 × a^4",
+                  options: ["a^7", "a^12", "a^1", "a^-1"],
+                  correctIndex: 0,
+                  explanation: "Add the exponents when multiplying powers of the same base: 3 + 4 = 7, so a^3 × a^4 = a^7.",
+                },
+              },
+              {
+                title: "Power of a Power and Zero Power",
+                startSeconds: 15,
+                endSeconds: 30,
+                transcriptSegment:
+                  "Raising a power to another power multiplies the exponents: (a^m)^n = a^(mn). Any nonzero base raised to the power of zero equals 1.",
+                checkpoint: {
+                  atSeconds: 29,
+                  prompt: "What is x^0 for x ≠ 0?",
+                  options: ["0", "1", "x", "Undefined"],
+                  correctIndex: 1,
+                  explanation: "Any nonzero base raised to the power of 0 equals 1, by definition.",
+                },
+              },
+              {
+                title: "Practice Walkthrough",
+                startSeconds: 30,
+                transcriptSegment:
+                  "Working through a mixed example that combines multiplying, dividing, and the power-of-a-power rule in one expression.",
+              },
+            ],
           },
         ],
       },
@@ -675,23 +821,55 @@ async function seedCourses() {
     await prisma.module.deleteMany({ where: { courseId: course.id } });
 
     for (const [moduleIndex, mod] of course.modules.entries()) {
-      await prisma.module.create({
-        data: {
-          courseId: course.id,
-          title: mod.title,
-          order: moduleIndex,
-          lessons: {
-            create: mod.lessons.map((lesson, lessonIndex) => ({
-              title: lesson.title,
-              type: lesson.type,
-              content: lesson.content,
-              videoUrl: lesson.videoUrl,
-              topic: lesson.topic,
-              order: lessonIndex,
-            })),
-          },
-        },
+      const createdModule = await prisma.module.create({
+        data: { courseId: course.id, title: mod.title, order: moduleIndex },
       });
+
+      for (const [lessonIndex, lesson] of mod.lessons.entries()) {
+        const createdLesson = await prisma.lesson.create({
+          data: {
+            moduleId: createdModule.id,
+            title: lesson.title,
+            type: lesson.type,
+            content: lesson.content,
+            videoUrl: lesson.videoUrl,
+            videoAttribution: lesson.videoAttribution,
+            durationSeconds: lesson.durationSeconds,
+            notesMarkdown: lesson.notesMarkdown,
+            topic: lesson.topic,
+            order: lessonIndex,
+          },
+        });
+
+        for (const [chapterIndex, chapter] of (lesson.chapters ?? []).entries()) {
+          const createdChapter = await prisma.lessonChapter.create({
+            data: {
+              lessonId: createdLesson.id,
+              order: chapterIndex,
+              title: chapter.title,
+              startSeconds: chapter.startSeconds,
+              endSeconds: chapter.endSeconds,
+              transcriptSegment: chapter.transcriptSegment,
+            },
+          });
+
+          if (chapter.checkpoint) {
+            const cp = chapter.checkpoint;
+            await prisma.quizQuestion.create({
+              data: {
+                lessonId: createdLesson.id,
+                chapterId: createdChapter.id,
+                order: chapterIndex,
+                atSeconds: cp.atSeconds,
+                prompt: cp.prompt,
+                options: cp.options.map((text, i) => ({ key: OPTION_KEYS[i], text })),
+                correctOption: OPTION_KEYS[cp.correctIndex],
+                explanation: cp.explanation,
+              },
+            });
+          }
+        }
+      }
     }
   }
 }
