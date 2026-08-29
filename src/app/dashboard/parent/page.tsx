@@ -3,13 +3,14 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { Badge } from "@/components/ui/badge";
+import { NotificationsCard } from "@/components/dashboard/notifications-card";
 import { requestChildLink } from "@/app/dashboard/parent/actions";
 
 export default async function ParentDashboard() {
   const session = await auth();
   if (!session) return null;
 
-  const [links, pendingRequests, payments] = await Promise.all([
+  const [links, pendingRequests, payments, notifications] = await Promise.all([
     prisma.parentStudentLink.findMany({
       where: { parentId: session.user.id, status: "ACTIVE" },
       include: {
@@ -33,6 +34,11 @@ export default async function ParentDashboard() {
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    prisma.notification.findMany({
+      where: { userId: session.user.id, readAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
   ]);
 
   return (
@@ -41,6 +47,7 @@ export default async function ParentDashboard() {
       <p className="mt-1 text-sm text-text-secondary">
         Monitor your child&apos;s exam prep and course progress in one place.
       </p>
+      <NotificationsCard notifications={notifications} path="/dashboard/parent" />
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Linked children">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { NotificationsCard } from "@/components/dashboard/notifications-card";
 import { redeemVoucher } from "@/app/dashboard/student/actions";
 import { approveParentLink, rejectParentLink } from "@/app/dashboard/student/parent-link-actions";
 import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
@@ -63,6 +64,12 @@ export default async function StudentDashboard({
       })
     : [];
 
+  const notifications = await prisma.notification.findMany({
+    where: { userId, readAt: null },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+
   const readinessScore =
     attempts.length > 0
       ? Math.round(
@@ -107,6 +114,8 @@ export default async function StudentDashboard({
           Payment successful — your subscription is now active.
         </p>
       )}
+
+      <NotificationsCard notifications={notifications} path="/dashboard/student" />
 
       <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-brand-text">
         SmartPrepAfrica Prep

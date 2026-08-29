@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { NotificationsCard } from "@/components/dashboard/notifications-card";
 import { updateTeacherProfile } from "@/app/dashboard/teacher/actions";
 import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
 
@@ -35,6 +36,12 @@ export default async function TeacherDashboard() {
         orderBy: { createdAt: "desc" },
       })
     : [];
+
+  const notifications = await prisma.notification.findMany({
+    where: { userId: session.user.id, readAt: null },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
 
   const classCount = teacher?.classes.length ?? 0;
   const courseCount = teacher?.courses.length ?? 0;
@@ -78,6 +85,8 @@ export default async function TeacherDashboard() {
           </Link>
         )}
       </div>
+
+      <NotificationsCard notifications={notifications} path="/dashboard/teacher" />
 
       {pendingSchoolInvitations.length > 0 && (
         <div className="mt-6">

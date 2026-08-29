@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { NotificationsCard } from "@/components/dashboard/notifications-card";
 import { issueVoucher, createSponsorshipProgram, renewProgram } from "@/app/dashboard/sponsor/actions";
 import { PLAN_LABELS } from "@/lib/plans";
 
@@ -21,6 +22,12 @@ export default async function SponsorDashboard() {
     where: { sponsorId: sponsor.id },
     include: { redemption: true },
     orderBy: { createdAt: "desc" },
+  });
+
+  const notifications = await prisma.notification.findMany({
+    where: { userId: session.user.id, readAt: null },
+    orderBy: { createdAt: "desc" },
+    take: 10,
   });
 
   const redeemedUserIds = vouchers
@@ -84,6 +91,7 @@ export default async function SponsorDashboard() {
       <p className="mt-1 text-sm text-text-secondary">
         Issue vouchers, track redemptions, and see your impact.
       </p>
+      <NotificationsCard notifications={notifications} path="/dashboard/sponsor" />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card title="Vouchers issued">

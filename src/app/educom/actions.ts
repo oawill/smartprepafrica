@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
+import { notifyUser } from "@/lib/notify";
 
 export async function toggleFollowTeacher(teacherId: string) {
   const session = await auth();
@@ -149,7 +150,11 @@ export async function submitAssignment(assignmentId: string, formData: FormData)
 
   const assignment = await prisma.assignment.findUniqueOrThrow({
     where: { id: assignmentId },
-    select: { courseId: true },
+    select: {
+      title: true,
+      courseId: true,
+      course: { select: { title: true, teacher: { select: { userId: true } } } },
+    },
   });
 
   const enrollment = await prisma.courseEnrollment.findUnique({
@@ -169,6 +174,19 @@ export async function submitAssignment(assignmentId: string, formData: FormData)
     update: { content, submittedAt: new Date(), grade: null, feedback: null, gradedAt: null },
     create: { assignmentId, userId: session.user.id, content },
   });
+
+  if (assignment.course.teacher) {
+    const student = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true },
+    });
+    await notifyUser(
+      assignment.course.teacher.userId,
+      "ASSIGNMENT_SUBMITTED",
+      `${student?.name} submitted "${assignment.title}" (${assignment.course.title}).`,
+      `/dashboard/teacher/courses/${assignment.courseId}/assignments/${assignmentId}`
+    );
+  }
 
   await checkCourseCompletion(session.user.id, enrollment.id, assignment.courseId);
 

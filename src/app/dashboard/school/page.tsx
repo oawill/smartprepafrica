@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { NotificationsCard } from "@/components/dashboard/notifications-card";
 import { BulkUploadForm } from "@/components/school/bulk-upload-form";
 import { InviteForm } from "@/components/school/invite-form";
 import {
@@ -29,6 +30,12 @@ export default async function SchoolDashboard() {
   const pendingInvitations = await prisma.schoolInvitation.findMany({
     where: { schoolId: school.id, status: "PENDING" },
     orderBy: { createdAt: "desc" },
+  });
+
+  const notifications = await prisma.notification.findMany({
+    where: { userId: session.user.id, readAt: null },
+    orderBy: { createdAt: "desc" },
+    take: 10,
   });
 
   const students = await prisma.studentProfile.findMany({
@@ -144,6 +151,8 @@ export default async function SchoolDashboard() {
           </a>
         </div>
       </div>
+
+      <NotificationsCard notifications={notifications} path="/dashboard/school" />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card title="Enrolled students">

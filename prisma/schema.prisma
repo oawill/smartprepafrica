@@ -112,6 +112,8 @@ model User {
   contactSubmissions         ContactSubmission[] @relation("ContactSubmitter")
   assignedContactSubmissions ContactSubmission[] @relation("ContactAssignee")
 
+  notifications Notification[]
+
   // Set when this user IS an approved partner (role=PARTNER).
   partnerProfile Partner?
 
@@ -1686,6 +1688,25 @@ enum PartnerNotificationType {
   PAYOUT_APPROVED
   PAYOUT_COMPLETED
   TIER_UPGRADED
+}
+
+// General-purpose in-app notification, parallel to the Partner-scoped
+// PartnerNotification below (same shape, kept separate since that one is
+// wired to PartnerNotificationType-specific partner events). `type` is a
+// free-text tag (e.g. "MOCK_EXAM_COMPLETED", "ASSIGNMENT_SUBMITTED") rather
+// than an enum, since this model spans every role's very different event
+// vocabulary — same convention already used by AuditLog.action.
+model Notification {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String
+  message   String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
 }
 
 model PartnerNotification {

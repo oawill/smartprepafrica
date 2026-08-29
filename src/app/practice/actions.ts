@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
 import { buildSelectionUnits, selectContiguousUnits } from "@/lib/practice/attempt-selection";
+import { examLabels } from "@/lib/exam-slugs";
+import { notifyUser } from "@/lib/notify";
 
 export async function startAttempt(formData: FormData) {
   const session = await auth();
@@ -145,6 +147,7 @@ export async function submitAttempt(attemptId: string) {
     where: { id: attemptId },
     include: {
       responses: { include: { question: { select: { subjectId: true, topic: true } } } },
+      user: { select: { name: true } },
     },
   });
 
@@ -156,6 +159,24 @@ export async function submitAttempt(attemptId: string) {
     where: { id: attemptId },
     data: { submittedAt: new Date(), score },
   });
+
+  // Only mock exams, not every practice question — matches the brief's
+  // example ("Tunde completed his UTME mock examination with 74%") without
+  // spamming a parent on every short study-drill session.
+  if (attempt.mode === "MOCK_EXAM") {
+    const studentProfile = await prisma.studentProfile.findUnique({
+      where: { userId: session.user.id },
+      include: { parentLinks: { where: { status: "ACTIVE" } } },
+    });
+    for (const link of studentProfile?.parentLinks ?? []) {
+      await notifyUser(
+        link.parentId,
+        "MOCK_EXAM_COMPLETED",
+        `${attempt.user.name} completed a ${examLabels[attempt.exam]} mock exam with ${Math.round(score)}%.`,
+        `/dashboard/parent/children/${studentProfile!.id}`
+      );
+    }
+  }
 
   const topicAttempts = attempt.responses
     .filter((r) => r.question.topic && r.isCorrect !== null)
