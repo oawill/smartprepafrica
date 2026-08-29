@@ -3,7 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
-import { assignStudentToClass, assignTeacherToClass } from "@/app/dashboard/school/actions";
+import {
+  assignStudentToClass,
+  assignTeacherToClass,
+  assignCourseToClass,
+  unassignCourseFromClass,
+} from "@/app/dashboard/school/actions";
 
 export default async function ClassDetailPage({
   params,
@@ -28,7 +33,7 @@ export default async function ClassDetailPage({
   });
   if (!cls || cls.schoolId !== school.id) notFound();
 
-  const [unassignedStudents, schoolTeachers, studentUserIds] = await Promise.all([
+  const [unassignedStudents, schoolTeachers, studentUserIds, assignedCourses, schoolCourses] = await Promise.all([
     prisma.studentProfile.findMany({
       where: { schoolId: school.id, classId: null },
       include: { user: { select: { name: true } } },
@@ -38,7 +43,19 @@ export default async function ClassDetailPage({
       include: { user: { select: { name: true } } },
     }),
     Promise.resolve(cls.students.map((s) => s.user.id)),
+    prisma.classCourseAssignment.findMany({
+      where: { classId },
+      include: { course: { select: { id: true, title: true } } },
+    }),
+    prisma.course.findMany({
+      where: { schoolId: school.id },
+      select: { id: true, title: true },
+      orderBy: { title: "asc" },
+    }),
   ]);
+
+  const assignedCourseIds = new Set(assignedCourses.map((a) => a.courseId));
+  const unassignedCourses = schoolCourses.filter((c) => !assignedCourseIds.has(c.id));
 
   const attempts = await prisma.examAttempt.findMany({
     where: { userId: { in: studentUserIds }, submittedAt: { not: null } },
@@ -121,6 +138,65 @@ export default async function ClassDetailPage({
                 className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Add
+              </button>
+            </form>
+          )}
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card title="Assigned courses">
+          <p className="text-xs text-text-muted">
+            Assigning a course enrolls every current student in this class; students added later
+            are enrolled automatically too.
+          </p>
+          {assignedCourses.length === 0 ? (
+            <p className="mt-2 text-sm text-text-secondary">No courses assigned to this class yet.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {assignedCourses.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+                >
+                  <Link
+                    href={`/dashboard/teacher/courses/${a.course.id}`}
+                    className="text-text-primary hover:text-brand-text"
+                  >
+                    {a.course.title}
+                  </Link>
+                  <form action={unassignCourseFromClass}>
+                    <input type="hidden" name="classId" value={cls.id} />
+                    <input type="hidden" name="courseId" value={a.course.id} />
+                    <button type="submit" className="text-xs text-text-secondary hover:text-danger">
+                      Unassign
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {unassignedCourses.length > 0 && (
+            <form action={assignCourseToClass} className="mt-3 flex gap-2">
+              <input type="hidden" name="classId" value={cls.id} />
+              <select
+                name="courseId"
+                required
+                className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
+              >
+                <option value="">Select a course…</option>
+                {unassignedCourses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                Assign
               </button>
             </form>
           )}

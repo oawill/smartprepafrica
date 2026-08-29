@@ -23,6 +23,7 @@ export default async function TeacherClassPage({
       students: {
         include: { user: { select: { id: true, name: true, email: true } } },
       },
+      courseAssignments: { include: { course: { select: { id: true, title: true } } } },
     },
   });
   if (!cls || !cls.teachers.some((t) => t.id === teacher.id)) notFound();
@@ -50,6 +51,25 @@ export default async function TeacherClassPage({
       </Link>
       <h1 className="mt-4 text-h2 font-semibold text-text-primary">{cls.name}</h1>
       <p className="mt-1 text-sm text-text-secondary">{cls.students.length} students</p>
+
+      {cls.courseAssignments.length > 0 && (
+        <div className="mt-6">
+          <Card title="Assigned courses">
+            <ul className="space-y-1.5 text-sm">
+              {cls.courseAssignments.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    href={`/dashboard/teacher/courses/${a.course.id}`}
+                    className="text-brand-text hover:underline"
+                  >
+                    {a.course.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
 
       <div className="mt-6">
         <Card title="Roster">

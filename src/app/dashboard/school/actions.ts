@@ -13,6 +13,19 @@ import { requireSchoolAdmin as assertSchoolAdmin } from "@/lib/authz";
 
 const INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** Enrolls one student into every course currently assigned to their class.
+ * Called both when a student joins a class and (in the other direction)
+ * when a course is newly assigned to a class — skips anyone already
+ * enrolled rather than erroring. */
+async function enrollStudentInClassCourses(userId: string, classId: string) {
+  const assignments = await prisma.classCourseAssignment.findMany({ where: { classId } });
+  if (assignments.length === 0) return;
+  await prisma.courseEnrollment.createMany({
+    data: assignments.map((a) => ({ userId, courseId: a.courseId })),
+    skipDuplicates: true,
+  });
+}
+
 export async function updateSchoolProfile(formData: FormData) {
   const session = await auth();
   if (!session) redirect("/login");
@@ -182,6 +195,7 @@ export async function assignStudentToClass(formData: FormData) {
     where: { id: studentProfileId },
     data: { classId },
   });
+  await enrollStudentInClassCourses(student.userId, classId);
 
   revalidatePath(`/dashboard/school/classes/${classId}`);
   revalidatePath("/dashboard/school");
@@ -281,7 +295,7 @@ export async function bulkUploadStudents(
     const tempPassword = generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         name: name.trim(),
         email,
@@ -292,12 +306,88 @@ export async function bulkUploadStudents(
         },
       },
     });
+    if (classId) {
+      await enrollStudentInClassCourses(newUser.id, classId);
+    }
 
     created.push({ row: rowNum, name: name.trim(), email, tempPassword });
   }
 
   revalidatePath("/dashboard/school");
   return { created, skipped };
+}
+
+export async function assignCourseToClass(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const school = await assertSchoolAdmin(session.user.id);
+
+  const classId = formData.get("classId") as string;
+  const courseId = formData.get("courseId") as string;
+
+  const [cls, course] = await Promise.all([
+    prisma.class.findUnique({ where: { id: classId }, include: { students: true } }),
+    prisma.course.findUnique({ where: { id: courseId } }),
+  ]);
+  if (!cls || cls.schoolId !== school.id) {
+    throw new Error("Class not found in your school.");
+  }
+  if (!course || course.schoolId !== school.id) {
+    throw new Error("Course not found in your school.");
+  }
+
+  const assignment = await prisma.classCourseAssignment.upsert({
+    where: { classId_courseId: { classId, courseId } },
+    update: {},
+    create: { classId, courseId, assignedById: session.user.id },
+  });
+
+  await prisma.courseEnrollment.createMany({
+    data: cls.students.map((s) => ({ userId: s.userId, courseId })),
+    skipDuplicates: true,
+  });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: "SCHOOL_ADMIN",
+    action: "CLASS_COURSE_ASSIGNED",
+    resourceType: "ClassCourseAssignment",
+    resourceId: assignment.id,
+    result: "SUCCESS",
+    after: { classId, courseId },
+  });
+
+  revalidatePath(`/dashboard/school/classes/${classId}`);
+}
+
+/** Removes the cohort-curation link only — existing CourseEnrollment rows
+ * for students already enrolled are left untouched, so nobody's progress
+ * or access disappears just because an admin changed what's assigned. */
+export async function unassignCourseFromClass(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const school = await assertSchoolAdmin(session.user.id);
+
+  const classId = formData.get("classId") as string;
+  const courseId = formData.get("courseId") as string;
+
+  const cls = await prisma.class.findUnique({ where: { id: classId } });
+  if (!cls || cls.schoolId !== school.id) {
+    throw new Error("Class not found in your school.");
+  }
+
+  await prisma.classCourseAssignment.deleteMany({ where: { classId, courseId } });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: "SCHOOL_ADMIN",
+    action: "CLASS_COURSE_UNASSIGNED",
+    resourceType: "ClassCourseAssignment",
+    result: "SUCCESS",
+    after: { classId, courseId },
+  });
+
+  revalidatePath(`/dashboard/school/classes/${classId}`);
 }
 
 export async function assignSponsoredSeat(formData: FormData) {

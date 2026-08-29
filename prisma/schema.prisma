@@ -308,7 +308,25 @@ model Class {
   teachers TeacherProfile[] @relation("TeacherClasses")
   students StudentProfile[]
 
-  invitations SchoolInvitation[]
+  invitations       SchoolInvitation[]
+  courseAssignments ClassCourseAssignment[]
+}
+
+// A school curating which of its own courses a cohort should study.
+// Assigning a course auto-enrolls the class's current students
+// (CourseEnrollment); unassigning only removes the curation link and never
+// touches those enrollments, so a student's progress is never lost by an
+// admin changing what's currently assigned to their class.
+model ClassCourseAssignment {
+  id           String   @id @default(cuid())
+  class        Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId      String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId     String
+  assignedById String
+  assignedAt   DateTime @default(now())
+
+  @@unique([classId, courseId])
 }
 
 model SponsorProfile {
@@ -608,7 +626,8 @@ model Course {
   reviews      CourseReview[]
   liveClasses  LiveClass[]
 
-  aiConversations AiConversation[]
+  aiConversations  AiConversation[]
+  classAssignments ClassCourseAssignment[]
 }
 
 model CourseReview {
