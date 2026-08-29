@@ -5,12 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { CourseCategory, Difficulty, LessonType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-async function assertTeacher(userId: string) {
-  const teacher = await prisma.teacherProfile.findUnique({ where: { userId } });
-  if (!teacher) throw new Error("You don't have a teacher profile.");
-  return teacher;
-}
+import { requireTeacherProfile as assertTeacher } from "@/lib/authz";
 
 async function assertOwnsCourse(teacherId: string, courseId: string) {
   const course = await prisma.course.findUnique({ where: { id: courseId } });

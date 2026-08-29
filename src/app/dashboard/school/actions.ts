@@ -9,18 +9,9 @@ import { prisma } from "@/lib/prisma";
 import { parseSimpleCsv, generateTempPassword } from "@/lib/csv";
 import { redeemVoucherRecord } from "@/lib/vouchers";
 import { logAudit } from "@/lib/admin/audit";
+import { requireSchoolAdmin as assertSchoolAdmin } from "@/lib/authz";
 
 const INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
-
-async function assertSchoolAdmin(userId: string) {
-  const school = await prisma.school.findFirst({
-    where: { admins: { some: { id: userId } } },
-  });
-  if (!school) {
-    throw new Error("You are not an administrator of any school.");
-  }
-  return school;
-}
 
 export async function updateSchoolProfile(formData: FormData) {
   const session = await auth();

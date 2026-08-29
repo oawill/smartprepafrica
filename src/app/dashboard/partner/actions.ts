@@ -9,14 +9,7 @@ import {
   generateSchoolInvitation,
   updateLeadStage,
 } from "@/lib/partners/school-leads";
-
-async function assertApprovedPartner(userId: string) {
-  const partner = await prisma.partner.findUnique({ where: { userId } });
-  if (!partner || partner.status !== "APPROVED") {
-    throw new Error("You are not an approved partner.");
-  }
-  return partner;
-}
+import { requireApprovedPartner as assertApprovedPartner } from "@/lib/authz";
 
 export async function addSchoolLead(formData: FormData) {
   const session = await auth();

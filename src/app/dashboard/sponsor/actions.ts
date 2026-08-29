@@ -6,14 +6,7 @@ import { revalidatePath } from "next/cache";
 import type { Prisma, SubscriptionPlan } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-async function assertSponsor(userId: string) {
-  const sponsor = await prisma.sponsorProfile.findUnique({ where: { userId } });
-  if (!sponsor) {
-    throw new Error("You don't have a sponsor profile.");
-  }
-  return sponsor;
-}
+import { requireSponsorProfile as assertSponsor } from "@/lib/authz";
 
 function generateVoucherCode(): string {
   return `SP-${randomBytes(4).toString("hex").toUpperCase()}`;
