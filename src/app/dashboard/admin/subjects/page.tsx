@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { Badge } from "@/components/ui/badge";
+import { examLabels } from "@/lib/exam-slugs";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { createSubject, renameSubject, renameOrMergeTopic } from "@/app/dashboard/admin/subjects/actions";
 
@@ -14,17 +17,37 @@ export default async function AdminSubjectsPage() {
     include: { _count: { select: { questions: true, courses: true } } },
   });
 
-  const topicsBySubject = await Promise.all(
-    subjects.map(async (s) => {
-      const topics = await prisma.question.groupBy({
-        by: ["topic"],
-        where: { subjectId: s.id, topic: { not: null } },
-        _count: { _all: true },
-      });
-      return { subjectId: s.id, topics: topics.filter((t) => t.topic).map((t) => ({ name: t.topic!, count: t._count._all })) };
-    })
-  );
-  const topicsBySubjectId = new Map(topicsBySubject.map((t) => [t.subjectId, t.topics]));
+  const [topicRows, examTypeRows] = await Promise.all([
+    prisma.question.groupBy({
+      by: ["subjectId", "topic"],
+      where: { topic: { not: null } },
+      _count: { _all: true },
+    }),
+    // Exam type isn't a field on Subject — it's set per-question (and per
+    // passage/course). A subject's exam-type coverage is whichever exams its
+    // questions currently belong to, computed here rather than stored, so
+    // one subject (e.g. "Biology") can keep being shared across WAEC/NECO/
+    // UTME the way the rest of the app already relies on.
+    prisma.question.groupBy({
+      by: ["subjectId", "exam"],
+      _count: { _all: true },
+    }),
+  ]);
+
+  const topicsBySubjectId = new Map<string, { name: string; count: number }[]>();
+  for (const row of topicRows) {
+    if (!row.topic) continue;
+    const list = topicsBySubjectId.get(row.subjectId) ?? [];
+    list.push({ name: row.topic, count: row._count._all });
+    topicsBySubjectId.set(row.subjectId, list);
+  }
+
+  const examTypesBySubjectId = new Map<string, { exam: (typeof examTypeRows)[number]["exam"]; count: number }[]>();
+  for (const row of examTypeRows) {
+    const list = examTypesBySubjectId.get(row.subjectId) ?? [];
+    list.push({ exam: row.exam, count: row._count._all });
+    examTypesBySubjectId.set(row.subjectId, list);
+  }
 
   return (
     <div>
@@ -42,6 +65,68 @@ export default async function AdminSubjectsPage() {
               Add
             </button>
           </form>
+          <p className="mt-2 text-xs text-text-muted">
+            A subject isn&apos;t tied to one exam type — the same subject (e.g. Biology) can hold
+            questions for WAEC, NECO, and UTME at once. Exam type is set per question, in{" "}
+            <Link href="/dashboard/admin/questions/new" className="text-brand-text hover:underline">
+              New question
+            </Link>
+            .
+          </p>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card title="All subjects">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs text-text-muted">
+                <tr>
+                  <th className="pb-2 pr-3">Subject name</th>
+                  <th className="pb-2 pr-3">Exam type</th>
+                  <th className="pb-2 pr-3">Status</th>
+                  <th className="pb-2 pr-3">Questions</th>
+                  <th className="pb-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subjects.map((subject) => {
+                  const examTypes = examTypesBySubjectId.get(subject.id) ?? [];
+                  return (
+                    <tr key={subject.id} className="border-t border-border">
+                      <td className="py-2 pr-3 text-text-primary">{subject.name}</td>
+                      <td className="py-2 pr-3">
+                        {examTypes.length === 0 ? (
+                          <Badge tone="neutral">Not Assigned</Badge>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {examTypes.map(({ exam }) => (
+                              <Badge key={exam} tone="brand">
+                                {examLabels[exam]}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-2 pr-3">
+                        {subject._count.questions > 0 ? (
+                          <Badge tone="success">Active</Badge>
+                        ) : (
+                          <Badge tone="warning">No questions yet</Badge>
+                        )}
+                      </td>
+                      <td className="py-2 pr-3 text-text-secondary">{subject._count.questions}</td>
+                      <td className="py-2">
+                        <a href={`#subject-${subject.id}`} className="text-xs text-brand-text hover:underline">
+                          Manage →
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </Card>
       </div>
 
@@ -51,6 +136,7 @@ export default async function AdminSubjectsPage() {
           return (
             <Card
               key={subject.id}
+              id={`subject-${subject.id}`}
               title={`${subject.name} — ${subject._count.questions} questions, ${subject._count.courses} courses`}
             >
               <form action={renameSubject} className="flex gap-2">
