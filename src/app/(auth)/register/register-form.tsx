@@ -15,11 +15,23 @@ const roleOptions = [
 ] as const;
 
 export type ActiveCountry = { code: string; name: string; flag: string };
+export type ExamsByCountry = Record<
+  string,
+  { code: string; name: string; subjects: { id: string; name: string }[] }[]
+>;
 
-export default function RegisterForm({ countries }: { countries: ActiveCountry[] }) {
+export default function RegisterForm({
+  countries,
+  examsByCountry,
+}: {
+  countries: ActiveCountry[];
+  examsByCountry: ExamsByCountry;
+}) {
   const router = useRouter();
   const [role, setRole] = useState<(typeof roleOptions)[number]["value"]>("STUDENT");
   const [countryCode, setCountryCode] = useState(countries[0]?.code ?? "NG");
+  const [examCodes, setExamCodes] = useState<string[]>([]);
+  const [subjectIds, setSubjectIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [referral, setReferral] = useState<{ ref: string | null; campaign: string | null }>({
@@ -62,6 +74,24 @@ export default function RegisterForm({ countries }: { countries: ActiveCountry[]
     }
   }, []);
 
+  const availableExams = examsByCountry[countryCode] ?? [];
+  const availableSubjects = availableExams
+    .filter((exam) => examCodes.includes(exam.code))
+    .flatMap((exam) => exam.subjects)
+    .filter((subject, index, all) => all.findIndex((s) => s.id === subject.id) === index);
+
+  function toggleExamCode(code: string) {
+    setExamCodes((current) =>
+      current.includes(code) ? current.filter((c) => c !== code) : [...current, code]
+    );
+  }
+
+  function toggleSubjectId(id: string) {
+    setSubjectIds((current) =>
+      current.includes(id) ? current.filter((s) => s !== id) : [...current, id]
+    );
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -86,6 +116,11 @@ export default function RegisterForm({ countries }: { countries: ActiveCountry[]
     }
     if (staffInvite) {
       payload.staffInviteToken = staffInvite.token;
+    }
+    if (role === "STUDENT" && !staffInvite) {
+      const validSubjectIds = new Set(availableSubjects.map((s) => s.id));
+      payload.examCodes = examCodes;
+      payload.subjectIds = subjectIds.filter((id) => validSubjectIds.has(id));
     }
 
     const res = await fetch("/api/register", {
@@ -157,7 +192,11 @@ export default function RegisterForm({ countries }: { countries: ActiveCountry[]
                 id="countryCode"
                 name="countryCode"
                 value={countryCode}
-                onChange={(event) => setCountryCode(event.target.value)}
+                onChange={(event) => {
+                  setCountryCode(event.target.value);
+                  setExamCodes([]);
+                  setSubjectIds([]);
+                }}
                 className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
               >
                 {countries.map((country) => (
@@ -191,6 +230,58 @@ export default function RegisterForm({ countries }: { countries: ActiveCountry[]
                       className="sr-only"
                     />
                     {option.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          {role === "STUDENT" && !staffInvite && availableExams.length > 0 && (
+            <fieldset>
+              <legend className="text-sm text-text-secondary">What are you preparing for? (optional)</legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {availableExams.map((exam) => (
+                  <label
+                    key={exam.code}
+                    className={`cursor-pointer rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+                      examCodes.includes(exam.code)
+                        ? "border-brand bg-brand/10 text-text-primary"
+                        : "border-border-strong text-text-secondary hover:border-text-muted"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={examCodes.includes(exam.code)}
+                      onChange={() => toggleExamCode(exam.code)}
+                      className="sr-only"
+                    />
+                    {exam.name}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          {role === "STUDENT" && !staffInvite && availableSubjects.length > 0 && (
+            <fieldset>
+              <legend className="text-sm text-text-secondary">Subjects (optional)</legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {availableSubjects.map((subject) => (
+                  <label
+                    key={subject.id}
+                    className={`cursor-pointer rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+                      subjectIds.includes(subject.id)
+                        ? "border-brand bg-brand/10 text-text-primary"
+                        : "border-border-strong text-text-secondary hover:border-text-muted"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={subjectIds.includes(subject.id)}
+                      onChange={() => toggleSubjectId(subject.id)}
+                      className="sr-only"
+                    />
+                    {subject.name}
                   </label>
                 ))}
               </div>

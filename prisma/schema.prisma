@@ -167,20 +167,23 @@ model UserRole {
 }
 
 model StudentProfile {
-  id          String              @id @default(cuid())
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String              @unique
-  school      School?             @relation(fields: [schoolId], references: [id])
-  schoolId    String?
-  class       Class?              @relation(fields: [classId], references: [id])
-  classId     String?
-  gradeLevel  String?
-  targetExams ExamType[]
+  id             String              @id @default(cuid())
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String              @unique
+  school         School?             @relation(fields: [schoolId], references: [id])
+  schoolId       String?
+  class          Class?              @relation(fields: [classId], references: [id])
+  classId        String?
+  gradeLevel     String?
+  targetExams    ExamType[]
+  // Collected at registration when the student's country offers real
+  // subject content (see CountryExamSubject) — optional, never forced.
+  targetSubjects Subject[]           @relation("StudentTargetSubjects")
   // Non-sequential (unlike User.studentNumber), shown to the student to share
   // with a parent/guardian — deliberately not enumerable since it grants
   // access to this student's academic data once linked.
-  linkCode    String?             @unique
-  parentLinks ParentStudentLink[] @relation("StudentLinks")
+  linkCode       String?             @unique
+  parentLinks    ParentStudentLink[] @relation("StudentLinks")
 }
 
 enum ParentLinkStatus {
@@ -520,6 +523,7 @@ model Subject {
   courses             Course[]
   sponsorshipPrograms SponsorshipProgram[]
   countryExamSubjects CountryExamSubject[]
+  targetedByStudents  StudentProfile[]     @relation("StudentTargetSubjects")
 
   aiConversations AiConversation[]
   topicMastery    StudentTopicMastery[]

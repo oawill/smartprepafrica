@@ -8,6 +8,7 @@ import { registerSchoolFromInvitation } from "@/lib/partners/school-leads";
 import { registerStaffFromInvitation } from "@/lib/school-invitations";
 import { recordAcceptance } from "@/lib/legal/documents";
 import { logAudit } from "@/lib/admin/audit";
+import { EXAM_CODE_TO_EXAM_TYPE } from "@/lib/exam-type-mapping";
 
 const baseFields = {
   name: z.string().min(2),
@@ -23,7 +24,13 @@ const baseFields = {
 };
 
 const registerSchema = z.discriminatedUnion("role", [
-  z.object({ role: z.literal("STUDENT"), ...baseFields, staffInviteToken: z.string().optional() }),
+  z.object({
+    role: z.literal("STUDENT"),
+    ...baseFields,
+    staffInviteToken: z.string().optional(),
+    examCodes: z.array(z.string()).optional(),
+    subjectIds: z.array(z.string()).optional(),
+  }),
   z.object({ role: z.literal("PARENT"), ...baseFields }),
   z.object({ role: z.literal("TEACHER"), ...baseFields, staffInviteToken: z.string().optional() }),
   z.object({ role: z.literal("SPONSOR"), ...baseFields }),
@@ -95,7 +102,18 @@ export async function POST(request: Request) {
         if (data.staffInviteToken) {
           await registerStaffFromInvitation(tx, data.staffInviteToken, "STUDENT", user.id);
         } else {
-          await tx.studentProfile.create({ data: { userId: user.id } });
+          const targetExams = (data.examCodes ?? [])
+            .map((code) => EXAM_CODE_TO_EXAM_TYPE[code])
+            .filter((examType): examType is NonNullable<typeof examType> => !!examType);
+          await tx.studentProfile.create({
+            data: {
+              userId: user.id,
+              targetExams,
+              targetSubjects: data.subjectIds?.length
+                ? { connect: data.subjectIds.map((id) => ({ id })) }
+                : undefined,
+            },
+          });
         }
         break;
       case "TEACHER":
