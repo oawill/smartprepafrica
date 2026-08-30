@@ -45,6 +45,10 @@ export default async function Home() {
             and Post-UTME with an AI study coach. SmartPrepAfrica Learning connects
             students with live classes and courses from schools across Nigeria.
           </p>
+          <p className="mx-auto mt-2 max-w-2xl text-xs text-text-muted">
+            Prepare Smarter. Learn Better. Succeed Anywhere. — SmartPrepAfrica helps
+            African students prepare for the exams that shape their future.
+          </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
               href="/register"

@@ -141,6 +141,11 @@ model User {
   adminAuditActions AuditLog[]      @relation("AdminAuditActor")
   loginActivity     LoginActivity[] @relation("LoginActivityUser")
 
+  // The user's country preference, set at registration. Nullable/backfilled
+  // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
+  country   Country? @relation(fields: [countryId], references: [id])
+  countryId String?
+
   @@index([status])
   @@index([role])
 }
@@ -249,32 +254,38 @@ model SchoolInvitation {
 }
 
 model School {
-  id                String           @id @default(cuid())
+  id                String             @id @default(cuid())
   name              String
   address           String?
   // Plain string for now (Nigeria-only marketplace) rather than a full
   // countries/states relation — easy to migrate to a relation later if
   // Educom expands beyond Nigeria.
   state             String?
-  country           String           @default("Nigeria")
+  country           String             @default("Nigeria")
+  // Relational counterpart to the free-text `country` string above, added
+  // for the multi-country architecture — nullable, backfilled to Nigeria for
+  // every existing row (see scripts/backfill-country-refs.ts). The string
+  // field is left as-is/unused-by-new-code rather than removed.
+  countryRef        Country?           @relation(fields: [countryId], references: [id])
+  countryId         String?
   logoUrl           String?
   coverImageUrl     String?
   description       String?
-  verified          Boolean          @default(false)
+  verified          Boolean            @default(false)
   // Permanent human-readable reference, e.g. SCH-000045. Backfilled for
   // schools that existed before this field was added.
-  schoolNumber      String?          @unique
-  status            SchoolStatus     @default(PENDING)
+  schoolNumber      String?            @unique
+  status            SchoolStatus       @default(PENDING)
   statusReason      String?
   statusChangedById String?
   statusChangedAt   DateTime?
-  admins            User[]           @relation("SchoolAdmins")
+  admins            User[]             @relation("SchoolAdmins")
   students          StudentProfile[]
   teachers          TeacherProfile[]
   classes           Class[]
   courses           Course[]
   invitations       SchoolInvitation[]
-  createdAt         DateTime         @default(now())
+  createdAt         DateTime           @default(now())
 
   sponsorshipPrograms SponsorshipProgram[]
 
@@ -363,6 +374,134 @@ model SponsorProfile {
   programs SponsorshipProgram[]
 }
 
+// ---------- Multi-country expansion ----------
+// Phase 1 (foundation): additive only — Nigeria stays the sole ACTIVE
+// country and the existing ExamType enum / Subject model are untouched, so
+// every existing flow keeps working unchanged. See scripts/seed-countries.ts
+// and scripts/backfill-country-refs.ts for how existing rows get scoped to
+// Nigeria, and CountryStatus for the per-country activation gate.
+
+enum CountryStatus {
+  DRAFT
+  CONTENT_SETUP
+  TESTING
+  ACTIVE
+  PAUSED
+}
+
+model Country {
+  id              String        @id @default(cuid())
+  name            String        @unique
+  code            String        @unique // ISO 3166-1 alpha-2, e.g. "NG"
+  currency        String // "NGN"
+  currencySymbol  String // "₦"
+  flag            String // emoji, e.g. "🇳🇬" — no asset pipeline needed
+  status          CountryStatus @default(DRAFT)
+  defaultLanguage String        @default("en")
+  timezone        String // e.g. "Africa/Lagos"
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  users             User[]
+  schools           School[]
+  partners          Partner[]
+  countryExams      CountryExam[]
+  countryPlanPrices CountryPlanPrice[]
+
+  @@index([status])
+}
+
+model ExamBody {
+  id        String   @id @default(cuid())
+  name      String   @unique // "WAEC", "JAMB", "NECO"
+  code      String   @unique
+  exams     Exam[]
+  createdAt DateTime @default(now())
+}
+
+// The abstract exam PRODUCT (WASSCE, UTME, Post-UTME, SSCE) — a single
+// global definition administered by one ExamBody. Country-specific
+// availability/activation lives on CountryExam, not here, so the same
+// WASSCE row is shared by Nigeria, Ghana, Sierra Leone, Liberia and The
+// Gambia without duplication.
+model Exam {
+  id           String        @id @default(cuid())
+  name         String // "WASSCE"
+  code         String        @unique // "WASSCE"
+  examBody     ExamBody      @relation(fields: [examBodyId], references: [id])
+  examBodyId   String
+  countryExams CountryExam[]
+  createdAt    DateTime      @default(now())
+
+  @@index([examBodyId])
+}
+
+// Answers "is this exam offered in this country, and is it live yet?" — the
+// feature-flag join Admin uses to activate a country's exam in phases
+// (Draft -> Content Setup -> Testing -> Active -> Paused) without exposing
+// it publicly beforehand.
+model CountryExam {
+  id        String        @id @default(cuid())
+  country   Country       @relation(fields: [countryId], references: [id])
+  countryId String
+  exam      Exam          @relation(fields: [examId], references: [id])
+  examId    String
+  status    CountryStatus @default(DRAFT)
+  createdAt DateTime      @default(now())
+
+  subjects      CountryExamSubject[]
+  questions     Question[]
+  passageGroups PassageGroup[]
+
+  @@unique([countryId, examId])
+  @@index([status])
+}
+
+// Which of the (already-global) Subjects are offered for a given country's
+// exam, e.g. Ghana/WASSCE offering "Biology" reuses the same Subject row
+// Nigeria/WASSCE uses rather than duplicating it.
+model CountryExamSubject {
+  id            String      @id @default(cuid())
+  countryExam   CountryExam @relation(fields: [countryExamId], references: [id])
+  countryExamId String
+  subject       Subject     @relation(fields: [subjectId], references: [id])
+  subjectId     String
+  topics        ExamTopic[]
+
+  @@unique([countryExamId, subjectId])
+}
+
+// Lightweight syllabus topic scoped to one country's exam+subject, so e.g.
+// Ghana's WASSCE Biology syllabus can diverge from Nigeria's even though the
+// Subject row is shared. Purely additive — existing Question.topic/subtopic
+// free-text fields are untouched; this is opt-in for new content.
+model ExamTopic {
+  id                   String             @id @default(cuid())
+  countryExamSubject   CountryExamSubject @relation(fields: [countryExamSubjectId], references: [id])
+  countryExamSubjectId String
+  name                 String
+  order                Int                @default(0)
+  questions            Question[]
+
+  @@index([countryExamSubjectId])
+}
+
+// Dormant until wired into checkout in a later phase — lets Admin configure
+// a plan's price for a country ahead of that country's launch, without
+// touching the live Nigeria Paystack checkout path.
+model CountryPlanPrice {
+  id         String           @id @default(cuid())
+  country    Country          @relation(fields: [countryId], references: [id])
+  countryId  String
+  plan       SubscriptionPlan
+  priceMinor Int // minor currency unit (kobo/pesewas/cents)
+  currency   String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([countryId, plan])
+}
+
 // ---------- Exam prep ----------
 
 enum ExamType {
@@ -380,6 +519,7 @@ model Subject {
   examAttempts        ExamAttempt[]
   courses             Course[]
   sponsorshipPrograms SponsorshipProgram[]
+  countryExamSubjects CountryExamSubject[]
 
   aiConversations AiConversation[]
   topicMastery    StudentTopicMastery[]
@@ -433,12 +573,22 @@ model Question {
   passageLineStart Int? // numeric line anchor for auto-highlight/scroll
   passageLineEnd   Int?
 
+  // Optional richer scope for the multi-country architecture — null for
+  // every existing question and for any new Nigeria question that doesn't
+  // need it; `exam`/`subjectId`/`topic` above remain the required, always-set
+  // fields every consumer already relies on.
+  countryExam   CountryExam? @relation(fields: [countryExamId], references: [id])
+  countryExamId String?
+  examTopic     ExamTopic?   @relation(fields: [examTopicId], references: [id])
+  examTopicId   String?
+
   responses QuestionResponse[]
 
   @@index([status])
   @@index([subjectId])
   @@index([exam])
   @@index([passageGroupId])
+  @@index([countryExamId])
 }
 
 enum PassageType {
@@ -472,11 +622,16 @@ model PassageGroup {
   createdById        String?
   createdAt          DateTime           @default(now())
 
+  // Optional richer scope, same non-destructive pattern as Question above.
+  countryExam   CountryExam? @relation(fields: [countryExamId], references: [id])
+  countryExamId String?
+
   questions Question[]
 
   @@index([status])
   @@index([subjectId])
   @@index([exam])
+  @@index([countryExamId])
 }
 
 enum QuestionStatus {
@@ -1235,6 +1390,10 @@ model Partner {
   lastName     String
   phone        String
   country      String      @default("Nigeria")
+  // Relational counterpart to the free-text `country` string above — same
+  // additive/backfilled pattern as School.countryRef.
+  countryRef   Country?    @relation(fields: [countryId], references: [id])
+  countryId    String?
   state        String?
   city         String?
   organization String?

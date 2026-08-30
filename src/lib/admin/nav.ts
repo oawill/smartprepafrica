@@ -31,6 +31,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    label: "Countries & Exams",
+    items: [
+      { label: "Countries", href: "/dashboard/admin/countries", permission: "countries.manage" },
+      { label: "Exam bodies & exams", href: "/dashboard/admin/exams", permission: "exams.manage" },
+    ],
+  },
+  {
     label: "Courses",
     items: [
       { label: "Schools", href: "/dashboard/admin/schools", permission: "schools.view" },

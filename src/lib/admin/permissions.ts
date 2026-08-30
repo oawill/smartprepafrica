@@ -36,7 +36,8 @@ export type Permission =
   | "branding.update"
   | "legal.update"
   | "support.manage"
-  | "analytics.view";
+  | "analytics.view"
+  | "countries.manage";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -75,6 +76,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "legal.update",
   "support.manage",
   "analytics.view",
+  "countries.manage",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null

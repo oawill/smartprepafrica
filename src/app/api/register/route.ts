@@ -16,6 +16,7 @@ const baseFields = {
   ref: z.string().optional(),
   campaign: z.string().optional(),
   clickToken: z.string().optional(),
+  countryCode: z.string().optional(),
   agreeToTerms: z.literal(true, {
     message: "You must agree to the Terms & Conditions and Privacy Policy.",
   }),
@@ -61,6 +62,15 @@ export async function POST(request: Request) {
 
   const passwordHash = await bcrypt.hash(data.password, 10);
 
+  // Only an ACTIVE country is a valid choice — this is the enforcement point
+  // for "don't expose a country until Admin activates it" even if a client
+  // somehow submits a Draft country's code. Falls back to Nigeria (the
+  // default market) when no code is sent or it doesn't resolve.
+  const country =
+    (data.countryCode &&
+      (await prisma.country.findFirst({ where: { code: data.countryCode, status: "ACTIVE" } }))) ||
+    (await prisma.country.findFirst({ where: { code: "NG" } }));
+
   const cookieStore = await cookies();
   const refCode = data.ref || cookieStore.get("edp_ref")?.value || null;
   const campaignSlug = data.campaign || cookieStore.get("edp_campaign")?.value || null;
@@ -75,6 +85,7 @@ export async function POST(request: Request) {
         email: data.email,
         passwordHash,
         role: data.role,
+        countryId: country?.id,
       },
     });
     await tx.userRole.create({ data: { userId: user.id, role: data.role } });
