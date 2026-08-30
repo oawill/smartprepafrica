@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import type { SubscriptionPlan } from "@prisma/client";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { PLAN_LABELS } from "@/lib/plans";
 import { updatePlanLimit } from "@/app/dashboard/admin/ai/actions";
 
@@ -18,9 +17,7 @@ function formatNairaFromKobo(kobo: number) {
 const ALL_PLANS: SubscriptionPlan[] = ["FREE", "BASIC", "PREMIUM", "SCHOOL"];
 
 export default async function AdminAiDashboard() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("settings.update");
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);

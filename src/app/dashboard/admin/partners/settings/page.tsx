@@ -1,13 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { Card } from "@/components/dashboard/card";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { getPartnerSettings } from "@/lib/partners/settings";
 import { saveProgramSettings } from "@/app/dashboard/admin/partners/settings/actions";
 
 export default async function AdminPartnerSettingsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("settings.update");
 
   const settings = await getPartnerSettings();
 

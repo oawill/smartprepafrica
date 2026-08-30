@@ -1,16 +1,11 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireActionPermission } from "@/lib/admin/authz";
 import { prisma } from "@/lib/prisma";
 
 export async function saveProgramSettings(formData: FormData) {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only platform administrators can do that.");
-  }
+  await requireActionPermission("settings.update");
 
   await prisma.partnerSettings.upsert({
     where: { id: 1 },

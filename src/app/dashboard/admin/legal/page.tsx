@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { getActiveDocument } from "@/lib/legal/documents";
 import { saveLegalDocument } from "@/app/dashboard/admin/legal/actions";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +12,7 @@ const documentTypes = [
 ];
 
 export default async function AdminLegalDocumentsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("legal.update");
 
   const activeDocs = await Promise.all(
     documentTypes.map(async ({ type }) => ({ type, doc: await getActiveDocument(type) }))

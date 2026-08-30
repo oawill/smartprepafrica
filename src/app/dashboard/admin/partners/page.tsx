@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { formatNaira } from "@/lib/partners/compensation";
 
@@ -19,9 +18,7 @@ export default async function AdminPartnersPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.view");
 
   const params = await searchParams;
   const q = params.q?.trim();

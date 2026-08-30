@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { Card } from "@/components/dashboard/card";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { getPlatformSettings } from "@/lib/legal/settings";
 import { savePlatformSettings } from "@/app/dashboard/admin/settings/actions";
 
@@ -9,9 +8,7 @@ const inputClass =
 const labelClass = "block text-sm text-text-secondary";
 
 export default async function AdminPlatformSettingsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("settings.update");
 
   const settings = await getPlatformSettings();
 
