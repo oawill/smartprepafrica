@@ -6,7 +6,7 @@ import { Card } from "@/components/dashboard/card";
 import { getStudentInsights } from "@/lib/student-insights";
 import { getExamReadiness } from "@/lib/ai/mastery-service";
 import { checkoutForChild } from "@/app/dashboard/parent/actions";
-import { PLAN_LABELS, PLAN_PRICING_KOBO, formatNaira } from "@/lib/plans";
+import { PLAN_LABELS, resolvePlanPrice, formatMoney } from "@/lib/plans";
 
 const purchasablePlans = ["BASIC", "PREMIUM"] as const;
 
@@ -45,6 +45,16 @@ export default async function ChildDetailPage({
   const { student } = link;
   const insights = await getStudentInsights(student.user.id);
   const readiness = await getExamReadiness(student.user.id);
+
+  const payer = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { countryId: true },
+  });
+  const prices = Object.fromEntries(
+    await Promise.all(
+      purchasablePlans.map(async (plan) => [plan, await resolvePlanPrice(plan, payer?.countryId)] as const)
+    )
+  ) as Record<(typeof purchasablePlans)[number], { amountMinor: number; currency: string } | null>;
 
   const recommendedCourses = insights.weakSubjects.length
     ? await prisma.course.findMany({
@@ -267,7 +277,7 @@ export default async function ChildDetailPage({
                     {PLAN_LABELS[plan]}
                   </span>
                   <span className="block text-xs text-text-muted">
-                    {formatNaira(PLAN_PRICING_KOBO[plan]!)} / month
+                    {prices[plan] ? `${formatMoney(prices[plan]!.amountMinor, prices[plan]!.currency)} / month` : "Contact us"}
                   </span>
                 </button>
               </form>

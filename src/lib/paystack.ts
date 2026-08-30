@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { PLAN_PRICING_KOBO } from "@/lib/plans";
+import { resolvePlanPrice } from "@/lib/plans";
 import { handlePartnerCommissionsForPayment } from "@/lib/partners/payment-hooks";
 import { reverseCommissionsForPayment } from "@/lib/partners/compensation";
 
@@ -20,6 +20,7 @@ function requireSecretKey(): string {
 export async function initializeTransaction(opts: {
   email: string;
   amountKobo: number;
+  currency: string;
   reference: string;
   callbackUrl: string;
   metadata: Record<string, unknown>;
@@ -35,6 +36,7 @@ export async function initializeTransaction(opts: {
     body: JSON.stringify({
       email: opts.email,
       amount: opts.amountKobo,
+      currency: opts.currency,
       reference: opts.reference,
       callback_url: opts.callbackUrl,
       metadata: opts.metadata,
@@ -165,8 +167,12 @@ export async function initiateSubscriptionCheckout(opts: {
   plan: SubscriptionPlan;
   beneficiaryUserId?: string;
 }): Promise<string> {
-  const amountKobo = PLAN_PRICING_KOBO[opts.plan];
-  if (!amountKobo) {
+  const payer = await prisma.user.findUnique({
+    where: { id: opts.payerId },
+    select: { countryId: true },
+  });
+  const price = await resolvePlanPrice(opts.plan, payer?.countryId);
+  if (!price) {
     throw new Error("That plan isn't available for direct checkout.");
   }
 
@@ -175,7 +181,8 @@ export async function initiateSubscriptionCheckout(opts: {
   await prisma.payment.create({
     data: {
       userId: opts.payerId,
-      amountKobo,
+      amountKobo: price.amountMinor,
+      currency: price.currency,
       provider: "paystack",
       reference,
       status: "PENDING",
@@ -187,7 +194,8 @@ export async function initiateSubscriptionCheckout(opts: {
   try {
     return await initializeTransaction({
       email: opts.payerEmail,
-      amountKobo,
+      amountKobo: price.amountMinor,
+      currency: price.currency,
       reference,
       callbackUrl: `${baseUrl}/api/payments/callback`,
       metadata: {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PLAN_FEATURES, PLAN_LABELS, PLAN_PRICING_KOBO, formatNaira } from "@/lib/plans";
+import { PLAN_FEATURES, PLAN_LABELS, resolvePlanPrice, formatMoney } from "@/lib/plans";
 import { checkout } from "@/app/pricing/actions";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Badge } from "@/components/ui/badge";
@@ -25,12 +25,23 @@ export default async function PricingPage({
   const { status } = await searchParams;
   const session = await auth();
 
-  const activeSubscription = session
-    ? await prisma.subscription.findFirst({
-        where: { userId: session.user.id, status: "ACTIVE" },
-        orderBy: { startedAt: "desc" },
-      })
-    : null;
+  const [activeSubscription, viewer] = await Promise.all([
+    session
+      ? prisma.subscription.findFirst({
+          where: { userId: session.user.id, status: "ACTIVE" },
+          orderBy: { startedAt: "desc" },
+        })
+      : null,
+    session
+      ? prisma.user.findUnique({ where: { id: session.user.id }, select: { countryId: true } })
+      : null,
+  ]);
+
+  const prices = Object.fromEntries(
+    await Promise.all(
+      orderedPlans.map(async (plan) => [plan, await resolvePlanPrice(plan, viewer?.countryId)] as const)
+    )
+  ) as Record<(typeof orderedPlans)[number], { amountMinor: number; currency: string } | null>;
 
   const statusMessage =
     typeof status === "string" ? statusMessages[status] : undefined;
@@ -55,7 +66,7 @@ export default async function PricingPage({
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {orderedPlans.map((plan) => {
-          const priceKobo = PLAN_PRICING_KOBO[plan];
+          const price = prices[plan];
           const isCurrent = activeSubscription?.plan === plan;
           const isFree = plan === "FREE";
           const isSchool = plan === "SCHOOL";
@@ -69,8 +80,8 @@ export default async function PricingPage({
                 {PLAN_LABELS[plan]}
               </p>
               <p className="mt-2 text-2xl font-semibold">
-                {priceKobo ? formatNaira(priceKobo) : isFree ? "₦0" : "Custom"}
-                {priceKobo && (
+                {price ? formatMoney(price.amountMinor, price.currency) : isFree ? "₦0" : "Custom"}
+                {price && (
                   <span className="text-sm font-normal text-text-muted">
                     {" "}
                     / month
