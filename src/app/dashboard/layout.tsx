@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { roleLabel, navForRole } from "@/lib/roles";
 import { Logo } from "@/components/brand/logo";
 import { MobileDashboardNav } from "@/components/dashboard/mobile-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
 
 export default async function DashboardLayout({
   children,
@@ -27,12 +29,24 @@ export default async function DashboardLayout({
     return <div className="flex min-h-screen flex-1 flex-col">{children}</div>;
   }
 
+  // Only queried/rendered when relevant — most users hold exactly one role,
+  // so this stays invisible for the overwhelming majority of accounts.
+  const otherRoles = session
+    ? (
+        await prisma.userRole.findMany({
+          where: { userId: session.user.id, role: { not: role } },
+          select: { role: true },
+        })
+      ).map((r) => r.role)
+    : [];
+
   return (
     <div className="flex min-h-screen flex-1 flex-col sm:flex-row">
       <MobileDashboardNav
         navItems={navItems}
         roleLabel={roleLabel[role]}
         signOutAction={handleSignOut}
+        otherRoles={otherRoles}
       />
 
       <aside className="hidden w-56 flex-col border-r border-border bg-surface-raised p-4 sm:flex">
@@ -58,6 +72,7 @@ export default async function DashboardLayout({
             Signed in as{" "}
             <span className="text-text-secondary">{roleLabel[role]}</span>
           </p>
+          <WorkspaceSwitcher otherRoles={otherRoles} />
           <form action={handleSignOut}>
             <button className="w-full rounded-lg border border-border-strong py-2 text-xs text-text-secondary hover:border-text-muted">
               Sign out

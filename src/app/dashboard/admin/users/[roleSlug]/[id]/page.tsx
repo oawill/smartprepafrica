@@ -1,10 +1,15 @@
 import { notFound } from "next/navigation";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { hasPermission } from "@/lib/admin/permissions";
 import { roleFromSlug, ROLE_SLUG_LABEL } from "@/lib/admin/user-role-slug";
+import { roleLabel } from "@/lib/roles";
 import { suspendUser, reactivateUser, forceSignOut } from "@/app/dashboard/admin/users/actions";
+import { grantAdditionalRole } from "@/app/dashboard/admin/actions";
+
+const ALL_ROLES: Role[] = ["STUDENT", "PARENT", "TEACHER", "SCHOOL_ADMIN", "SPONSOR", "PARTNER", "ADMIN"];
 
 export default async function AdminUserDetailPage({
   params,
@@ -48,6 +53,7 @@ export default async function AdminUserDetailPage({
         orderBy: { startedAt: "desc" },
         take: 1,
       },
+      roles: { select: { role: true }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!user || user.role !== role) notFound();
@@ -55,6 +61,9 @@ export default async function AdminUserDetailPage({
   const redirectTo = `/dashboard/admin/users/${roleSlug}/${id}`;
   const canSuspend = hasPermission(session.user.adminRole, "users.suspend");
   const canRevoke = hasPermission(session.user.adminRole, "sessions.revoke");
+  const canManageRoles = hasPermission(session.user.adminRole, "roles.manage");
+  const heldRoles = new Set(user.roles.map((r) => r.role));
+  const grantableRoles = ALL_ROLES.filter((r) => !heldRoles.has(r));
 
   return (
     <div>
@@ -155,6 +164,38 @@ export default async function AdminUserDetailPage({
         <Card title="Activity">
           <p className="text-sm text-text-secondary">Exam attempts: {user.examAttempts.length}</p>
           <p className="text-sm text-text-secondary">Course enrollments: {user.enrollments.length}</p>
+        </Card>
+        <Card title="Workspaces">
+          <ul className="text-sm text-text-secondary">
+            {user.roles.map((r) => (
+              <li key={r.role}>
+                {roleLabel[r.role]}
+                {r.role === user.role && <span className="ml-1 text-xs text-brand-text">(active)</span>}
+              </li>
+            ))}
+          </ul>
+          {canManageRoles && grantableRoles.length > 0 && (
+            <form action={grantAdditionalRole} className="mt-3 flex gap-2">
+              <input type="hidden" name="userId" value={user.id} />
+              <select
+                name="role"
+                required
+                className="flex-1 rounded-lg border border-border-strong bg-surface px-2 py-2 text-xs text-text-primary outline-none focus:border-brand"
+              >
+                {grantableRoles.map((r) => (
+                  <option key={r} value={r}>
+                    {roleLabel[r]}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="shrink-0 rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
+              >
+                Grant workspace
+              </button>
+            </form>
+          )}
         </Card>
         <Card title="Subscription">
           {user.subscriptions[0] ? (

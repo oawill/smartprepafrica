@@ -85,12 +85,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!token.sub) return token;
       const current = await prisma.user.findUnique({
         where: { id: token.sub },
-        select: { status: true, sessionVersion: true, adminRole: true },
+        select: { status: true, sessionVersion: true, adminRole: true, role: true },
       });
       if (!current || current.status !== "ACTIVE" || current.sessionVersion !== token.sessionVersion) {
         return null;
       }
       token.adminRole = current.adminRole ?? null;
+      // Refreshed (not just set once at login) so switchActiveRole takes
+      // effect on the very next request instead of requiring a full
+      // re-login — role has never been mutated post-login before this
+      // feature existed, so this line was previously a no-op.
+      token.role = current.role;
       return token;
     },
     session({ session, token }) {

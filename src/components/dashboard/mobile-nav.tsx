@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type { Role } from "@prisma/client";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
 import type { NavItem } from "@/lib/roles";
 
 export function MobileDashboardNav({
   navItems,
   roleLabel,
   signOutAction,
+  otherRoles = [],
 }: {
   navItems: NavItem[];
   roleLabel: string;
   signOutAction: () => Promise<void>;
+  otherRoles?: Role[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -61,6 +65,7 @@ export function MobileDashboardNav({
             <p className="text-xs text-text-muted">
               Signed in as <span className="text-text-secondary">{roleLabel}</span>
             </p>
+            <WorkspaceSwitcher otherRoles={otherRoles} />
             <form action={signOutAction}>
               <button className="w-full rounded-lg border border-border-strong py-2 text-xs text-text-secondary hover:border-text-muted">
                 Sign out

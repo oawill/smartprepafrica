@@ -85,6 +85,12 @@ model User {
   teacherProfile TeacherProfile?
   sponsorProfile SponsorProfile?
 
+  // Every role this user is entitled to hold — `role` above is always one
+  // member of this set (the currently active workspace). Most users have
+  // exactly one row here; a second row is what makes the "Switch Workspace"
+  // UI appear at all.
+  roles UserRole[]
+
   enrollments               CourseEnrollment[]
   examAttempts              ExamAttempt[]
   certificates              Certificate[]
@@ -137,6 +143,22 @@ model User {
 
   @@index([status])
   @@index([role])
+}
+
+// Records that a user is entitled to a given role, distinct from
+// User.role (the currently *active* one). Admin-granted only — see
+// grantAdditionalRole in src/app/dashboard/admin/actions.ts — never
+// self-service, since holding a second role is a real-world fact
+// (a teacher who is also a parent) that an admin confirms, not something
+// a user can claim for themselves.
+model UserRole {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+
+  @@unique([userId, role])
 }
 
 model StudentProfile {

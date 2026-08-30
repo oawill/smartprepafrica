@@ -77,6 +77,7 @@ export async function POST(request: Request) {
         role: data.role,
       },
     });
+    await tx.userRole.create({ data: { userId: user.id, role: data.role } });
 
     switch (data.role) {
       case "STUDENT":
