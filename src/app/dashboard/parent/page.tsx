@@ -101,7 +101,7 @@ export default async function ParentDashboard() {
                 name="linkCode"
                 required
                 placeholder="Child's link code (e.g. SPA-TUN-74921)"
-                className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+                className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
               <button
                 type="submit"
