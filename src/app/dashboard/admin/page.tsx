@@ -63,6 +63,14 @@ export default async function AdminDashboard({
     pendingCourseApprovals,
     flaggedAccounts,
     failedLoginsInRange,
+    newRegistrations,
+    activeUserLogins,
+    linkedParentStudentAccounts,
+    activeTeachers,
+    publishedCourses,
+    schoolEnrollments,
+    activeSponsorships,
+    partnerConversions,
   ] = await Promise.all([
     prisma.user.count({ where: { role: "STUDENT" } }),
     prisma.user.count({ where: { role: "TEACHER" } }),
@@ -117,6 +125,20 @@ export default async function AdminDashboard({
     prisma.course.count({ where: { moderationStatus: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     prisma.user.count({ where: { status: { in: ["SUSPENDED", "LOCKED"] } } }),
     prisma.loginActivity.count({ where: { success: false, ...createdAtFilter } }),
+    prisma.user.count({ where: createdAtFilter }),
+    prisma.loginActivity.findMany({
+      where: { success: true, ...createdAtFilter },
+      select: { userId: true },
+      distinct: ["userId"],
+    }),
+    prisma.parentStudentLink.count({ where: { status: "ACTIVE" } }),
+    prisma.teacherProfile.count({
+      where: { OR: [{ courses: { some: { published: true } } }, { classes: { some: {} } }] },
+    }),
+    prisma.course.count({ where: { published: true } }),
+    prisma.studentProfile.count({ where: { schoolId: { not: null } } }),
+    prisma.voucherRedemption.count(),
+    prisma.partnerReferral.count({ where: { status: "REGISTERED", ...createdAtFilter } }),
   ]);
 
   const topSubjectIds = topAiSubjects.map((s) => s.subjectId).filter((id): id is string => !!id);
@@ -166,6 +188,41 @@ export default async function AdminDashboard({
         </Card>
         <Card title="Sponsors">
           <p className="text-3xl font-semibold">{totalSponsors}</p>
+        </Card>
+      </div>
+
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">
+        Ecosystem activity ({DATE_RANGE_LABELS[range]})
+      </h2>
+      <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card title="New registrations">
+          <p className="text-3xl font-semibold">{newRegistrations}</p>
+        </Card>
+        <Card title="Active users">
+          <p className="text-3xl font-semibold">{activeUserLogins.length}</p>
+          <p className="text-xs text-text-muted">Distinct successful logins in range.</p>
+        </Card>
+        <Card title="Linked parent/student accounts">
+          <p className="text-3xl font-semibold">{linkedParentStudentAccounts}</p>
+        </Card>
+        <Card title="Active teachers">
+          <p className="text-3xl font-semibold">{activeTeachers}</p>
+          <p className="text-xs text-text-muted">Have a published course or an assigned class.</p>
+        </Card>
+        <Card title="Published courses">
+          <p className="text-3xl font-semibold">{publishedCourses}</p>
+        </Card>
+        <Card title="School enrollments">
+          <p className="text-3xl font-semibold">{schoolEnrollments}</p>
+          <p className="text-xs text-text-muted">Students affiliated with a school.</p>
+        </Card>
+        <Card title="Active sponsorships">
+          <p className="text-3xl font-semibold">{activeSponsorships}</p>
+          <p className="text-xs text-text-muted">Vouchers redeemed to a real beneficiary.</p>
+        </Card>
+        <Card title="Partner conversions">
+          <p className="text-3xl font-semibold">{partnerConversions}</p>
+          <p className="text-xs text-text-muted">Referral clicks that led to a registration.</p>
         </Card>
       </div>
 
