@@ -1,19 +1,17 @@
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { formatNaira, computeTierForPartner } from "@/lib/partners/compensation";
 import { suspendPartner, reactivatePartner, closePartner, saveAdminNotes } from "@/app/dashboard/admin/partners/[id]/actions";
 import { approvePartner, rejectPartner } from "@/app/dashboard/admin/actions";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 
 export default async function AdminPartnerDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.approve");
 
   const { id } = await params;
   const partner = await prisma.partner.findUnique({

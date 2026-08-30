@@ -1,14 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { resolveFraudFlag } from "@/app/dashboard/admin/partners/fraud/actions";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 
 export default async function AdminFraudReviewPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.approve");
 
   const openFlags = await prisma.partnerFraudFlag.findMany({
     where: { status: { in: ["OPEN", "REVIEWING"] } },

@@ -1,13 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { resolveDispute } from "@/app/dashboard/admin/partners/disputes/actions";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 
 export default async function AdminDisputesPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.approve");
 
   const openDisputes = await prisma.partnerSchoolDispute.findMany({
     where: { status: "OPEN" },

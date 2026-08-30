@@ -1,23 +1,13 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notifyPartner } from "@/lib/partners/notify";
 import { logPartnerAudit } from "@/lib/partners/audit";
-
-async function assertAdmin() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only platform administrators can do that.");
-  }
-  return session;
-}
+import { requireActionPermission } from "@/lib/admin/authz";
 
 export async function approvePayout(formData: FormData) {
-  const session = await assertAdmin();
+  const session = await requireActionPermission("partners.payout");
   const payoutId = formData.get("payoutId") as string;
 
   const payout = await prisma.partnerPayout.findUniqueOrThrow({ where: { id: payoutId } });
@@ -47,7 +37,7 @@ export async function approvePayout(formData: FormData) {
 // actually happened — this action IS that confirmation step, not an
 // automatic follow-on to approval.
 export async function markPayoutPaid(formData: FormData) {
-  const session = await assertAdmin();
+  const session = await requireActionPermission("partners.payout");
   const payoutId = formData.get("payoutId") as string;
 
   const payout = await prisma.partnerPayout.findUniqueOrThrow({ where: { id: payoutId } });
@@ -80,7 +70,7 @@ export async function markPayoutPaid(formData: FormData) {
 }
 
 export async function rejectPayout(formData: FormData) {
-  const session = await assertAdmin();
+  const session = await requireActionPermission("partners.payout");
   const payoutId = formData.get("payoutId") as string;
   const reason = (formData.get("reason") as string)?.trim() || "Not specified";
 

@@ -1,21 +1,11 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-async function assertAdmin() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only platform administrators can do that.");
-  }
-  return session;
-}
+import { requireActionPermission } from "@/lib/admin/authz";
 
 export async function setSubmissionStatus(formData: FormData) {
-  await assertAdmin();
+  await requireActionPermission("support.manage");
   const submissionId = formData.get("submissionId") as string;
   const status = formData.get("status") as
     | "NEW"
@@ -33,7 +23,7 @@ export async function setSubmissionStatus(formData: FormData) {
 }
 
 export async function assignSubmission(formData: FormData) {
-  const session = await assertAdmin();
+  const session = await requireActionPermission("support.manage");
   const submissionId = formData.get("submissionId") as string;
   const assignToSelf = formData.get("assignToSelf") === "on";
 

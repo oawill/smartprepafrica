@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Card } from "@/components/dashboard/card";
 import { createMarketingAsset, toggleAssetPublished } from "@/app/dashboard/admin/partners/marketing/actions";
 
@@ -18,9 +17,7 @@ const assetTypes = [
 ] as const;
 
 export default async function AdminMarketingPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.approve");
 
   const assets = await prisma.partnerMarketingAsset.findMany({ orderBy: { createdAt: "desc" } });
 

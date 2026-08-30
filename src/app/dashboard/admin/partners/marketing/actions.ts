@@ -1,20 +1,11 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-async function assertAdmin() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only platform administrators can do that.");
-  }
-}
+import { requireActionPermission } from "@/lib/admin/authz";
 
 export async function createMarketingAsset(formData: FormData) {
-  await assertAdmin();
+  await requireActionPermission("partners.approve");
 
   const title = (formData.get("title") as string)?.trim();
   if (!title) throw new Error("Title is required.");
@@ -34,7 +25,7 @@ export async function createMarketingAsset(formData: FormData) {
 }
 
 export async function toggleAssetPublished(formData: FormData) {
-  await assertAdmin();
+  await requireActionPermission("partners.approve");
   const assetId = formData.get("assetId") as string;
 
   const asset = await prisma.partnerMarketingAsset.findUniqueOrThrow({ where: { id: assetId } });

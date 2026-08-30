@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Card } from "@/components/dashboard/card";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { setSubmissionStatus, assignSubmission } from "@/app/dashboard/admin/support/actions";
@@ -20,9 +19,7 @@ export default async function AdminSupportPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; topic?: string }>;
 }) {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("support.manage");
 
   const params = await searchParams;
   const q = params.q?.trim();

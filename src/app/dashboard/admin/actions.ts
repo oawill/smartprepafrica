@@ -1,19 +1,14 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generatePartnerNumber, referralCodeFromPartnerNumber } from "@/lib/partners/ids";
 import { logPartnerAudit } from "@/lib/partners/audit";
 import { notifyPartner } from "@/lib/partners/notify";
+import { requireActionPermission } from "@/lib/admin/authz";
 
 export async function approvePartner(formData: FormData) {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only platform administrators can do that.");
-  }
+  const session = await requireActionPermission("partners.approve");
 
   const partnerId = formData.get("partnerId") as string;
   const partner = await prisma.partner.findUniqueOrThrow({ where: { id: partnerId } });
@@ -53,11 +48,7 @@ export async function approvePartner(formData: FormData) {
 }
 
 export async function rejectPartner(formData: FormData) {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only platform administrators can do that.");
-  }
+  const session = await requireActionPermission("partners.approve");
 
   const partnerId = formData.get("partnerId") as string;
   const partner = await prisma.partner.findUniqueOrThrow({ where: { id: partnerId } });

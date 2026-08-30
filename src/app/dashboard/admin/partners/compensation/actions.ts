@@ -1,26 +1,16 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logPartnerAudit } from "@/lib/partners/audit";
-
-async function assertAdmin() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only platform administrators can do that.");
-  }
-  return session;
-}
+import { requireActionPermission } from "@/lib/admin/authz";
 
 // Never mutates an existing PartnerCommissionRule row — creates version+1
 // and deactivates the previous version. Every past PartnerCommission points
 // at the exact rule-version id that produced it, so this never changes what
 // a partner already earned.
 export async function saveCompensationRule(formData: FormData) {
-  const session = await assertAdmin();
+  const session = await requireActionPermission("partners.approve");
 
   const ruleKey = (formData.get("ruleKey") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();

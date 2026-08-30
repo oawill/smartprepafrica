@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Card } from "@/components/dashboard/card";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { formatNaira } from "@/lib/partners/compensation";
@@ -15,9 +14,7 @@ const STATUS_TONE: Record<string, BadgeTone> = {
 };
 
 export default async function AdminPayoutsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.payout");
 
   const payouts = await prisma.partnerPayout.findMany({
     where: { status: { in: ["REQUESTED", "APPROVED"] } },

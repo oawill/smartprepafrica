@@ -1,13 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { upsertTier } from "@/app/dashboard/admin/partners/tiers/actions";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 
 export default async function AdminTiersPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.approve");
 
   const tiers = await prisma.partnerTier.findMany({ orderBy: { sortOrder: "asc" } });
 

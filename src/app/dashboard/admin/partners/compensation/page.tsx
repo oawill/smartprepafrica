@@ -1,9 +1,8 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { formatNaira } from "@/lib/partners/compensation";
 import { saveCompensationRule } from "@/app/dashboard/admin/partners/compensation/actions";
+import { requireAdminPagePermission } from "@/lib/admin/authz";
 
 const eventTypes = [
   "STUDENT_FIRST_SUBSCRIPTION",
@@ -15,9 +14,7 @@ const eventTypes = [
 ] as const;
 
 export default async function AdminCompensationPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/dashboard");
+  await requireAdminPagePermission("partners.approve");
 
   const activeRules = await prisma.partnerCommissionRule.findMany({
     where: { isActive: true },
