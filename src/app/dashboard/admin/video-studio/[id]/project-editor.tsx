@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { VideoProject, VideoScene, Question, Country, CountryExam, Exam, ExamBody, Subject, ExamTopic, VideoRenderJob } from "@prisma/client";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Label, Textarea, Input } from "@/components/ui/form";
@@ -45,6 +46,7 @@ const STATUS_TONE: Record<string, BadgeTone> = {
   RENDERING: "info",
   RENDER_COMPLETE: "success",
   RENDER_FAILED: "danger",
+  PUBLISHED: "success",
 };
 
 const VOICE_STATUS_TONE: Record<string, BadgeTone> = {
@@ -81,6 +83,7 @@ export function ProjectEditor({
   aiConfigured,
   voiceConfigured,
   renderWorkerConfigured,
+  youtubeChannelConnected,
 }: {
   project: FullProject;
   canCreate: boolean;
@@ -88,10 +91,13 @@ export function ProjectEditor({
   aiConfigured: boolean;
   voiceConfigured: boolean;
   renderWorkerConfigured: boolean;
+  youtubeChannelConnected: boolean;
 }) {
+  const router = useRouter();
   const [tab, setTab] = useState<"scenes" | "script" | "questions" | "settings">("scenes");
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(project.scenes[0]?.id ?? null);
   const [isPending, startTransition] = useTransition();
+  const [isPublishing, setIsPublishing] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [regenInstructions, setRegenInstructions] = useState("");
   const [questionSearch, setQuestionSearch] = useState<{ id: string; prompt: string; correctOption: string }[]>([]);
@@ -107,6 +113,33 @@ export function ProjectEditor({
     ["SCRIPT_APPROVED", "ASSETS_GENERATING", "VOICE_GENERATING", "READY_TO_RENDER", "RENDER_FAILED"].includes(
       project.status
     ) && (!latestRenderJob || latestRenderJob.status === "FAILED" || latestRenderJob.status === "CANCELLED");
+
+  const canPublish =
+    youtubeChannelConnected &&
+    latestRenderJob?.status === "COMPLETE" &&
+    !!latestRenderJob.outputUrl &&
+    project.youtubeUploadStatus !== "UPLOADING" &&
+    project.youtubeUploadStatus !== "UPLOADED";
+  const publishDisabledReason = !youtubeChannelConnected
+    ? "Connect a YouTube channel in Settings first"
+    : latestRenderJob?.status !== "COMPLETE"
+      ? "Render the video before publishing"
+      : undefined;
+
+  function handlePublish() {
+    setGenError(null);
+    setIsPublishing(true);
+    fetch(`/api/video-studio/${project.id}/publish-youtube`, { method: "POST" })
+      .then(async (res) => {
+        const body = (await res.json()) as { ok?: true; youtubeVideoId?: string; error?: string };
+        if (!res.ok || body.error) {
+          setGenError(body.error ?? "Upload failed.");
+        }
+        router.refresh();
+      })
+      .catch(() => setGenError("Upload failed."))
+      .finally(() => setIsPublishing(false));
+  }
 
   function handleGenerateAllVoices() {
     setGenError(null);
@@ -251,14 +284,40 @@ export function ProjectEditor({
               Render
             </button>
           )}
-          <button
-            type="button"
-            disabled
-            title="Available in a later phase — YouTube publishing isn't built yet"
-            className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-muted opacity-50"
-          >
-            Publish
-          </button>
+          {canCreate && project.youtubeUploadStatus === "UPLOADED" && project.youtubeVideoId && (
+            <a
+              href={`https://youtu.be/${project.youtubeVideoId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-success/40 px-4 py-2 text-sm text-success hover:border-success"
+            >
+              View on YouTube
+            </a>
+          )}
+          {canCreate && project.youtubeUploadStatus === "FAILED" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-danger">{project.youtubeUploadError ?? "Upload failed."}</span>
+              <button
+                type="button"
+                disabled={isPublishing}
+                onClick={handlePublish}
+                className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted disabled:opacity-50"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {canCreate && project.youtubeUploadStatus !== "UPLOADED" && project.youtubeUploadStatus !== "FAILED" && (
+            <button
+              type="button"
+              disabled={!canPublish || isPublishing || project.youtubeUploadStatus === "UPLOADING"}
+              title={project.youtubeUploadStatus === "UPLOADING" ? "Uploading…" : publishDisabledReason}
+              onClick={handlePublish}
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted disabled:opacity-50"
+            >
+              {isPublishing || project.youtubeUploadStatus === "UPLOADING" ? "Publishing…" : "Publish"}
+            </button>
+          )}
         </div>
       </div>
 

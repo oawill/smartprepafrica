@@ -52,3 +52,23 @@ export async function deletePronunciationOverride(formData: FormData) {
 
   revalidatePath("/dashboard/admin/video-studio/settings");
 }
+
+export async function disconnectYouTubeChannel() {
+  const session = await requireActionPermission("video_studio.create");
+  const connection = await prisma.youTubeConnection.findFirst();
+  if (!connection) return;
+
+  await prisma.youTubeConnection.delete({ where: { id: connection.id } });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "YOUTUBE_CHANNEL_DISCONNECTED",
+    resourceType: "YouTubeConnection",
+    resourceId: connection.id,
+    result: "SUCCESS",
+    before: { channelId: connection.channelId, channelTitle: connection.channelTitle },
+  });
+
+  revalidatePath("/dashboard/admin/video-studio/settings");
+}

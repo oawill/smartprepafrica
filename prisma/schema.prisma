@@ -138,10 +138,11 @@ model User {
   partnerCommissionsAsSource PartnerCommission[] @relation("CommissionSourceUser")
   partnerAuditActions        PartnerAuditLog[]   @relation("AuditActor")
 
-  adminAuditActions AuditLog[]       @relation("AdminAuditActor")
-  loginActivity     LoginActivity[]  @relation("LoginActivityUser")
-  videoProjects     VideoProject[]
-  videoRenderJobs   VideoRenderJob[]
+  adminAuditActions  AuditLog[]          @relation("AdminAuditActor")
+  loginActivity      LoginActivity[]     @relation("LoginActivityUser")
+  videoProjects      VideoProject[]
+  videoRenderJobs    VideoRenderJob[]
+  youtubeConnections YouTubeConnection[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -627,6 +628,15 @@ model VideoProject {
   ctaDestination String?
   campaignId     String?
 
+  // YouTube distribution (Phase 4). youtubePrivacyStatus is recorded at
+  // upload time, not editable in-app yet — changing visibility happens in
+  // YouTube Studio until a later phase adds an in-app control.
+  youtubeVideoId       String?
+  youtubeUploadStatus  YouTubeUploadStatus @default(NOT_STARTED)
+  youtubeUploadError   String?
+  youtubePrivacyStatus String?
+  youtubePublishedAt   DateTime?
+
   createdBy   User     @relation(fields: [createdById], references: [id])
   createdById String
   createdAt   DateTime @default(now())
@@ -777,6 +787,31 @@ model VideoRenderJob {
 
   @@index([projectId, queuedAt])
   @@index([status])
+}
+
+enum YouTubeUploadStatus {
+  NOT_STARTED
+  UPLOADING
+  UPLOADED
+  FAILED
+}
+
+// Singleton by convention (one shared SmartPrepAfrica channel, not
+// per-admin) — the connect callback deletes any existing row before
+// creating the new one, so there is only ever at most one of these.
+model YouTubeConnection {
+  id                    String  @id @default(cuid())
+  channelId             String  @unique
+  channelTitle          String
+  channelThumbnailUrl   String?
+  refreshTokenEncrypted String
+  scope                 String
+
+  connectedBy   User   @relation(fields: [connectedById], references: [id])
+  connectedById String
+
+  connectedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ---------- Exam prep ----------

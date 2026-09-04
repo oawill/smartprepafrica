@@ -15,6 +15,12 @@ const RENDER_TONE: Record<string, BadgeTone> = {
   CANCELLED: "neutral",
 };
 
+const YOUTUBE_TONE: Record<string, BadgeTone> = {
+  UPLOADING: "info",
+  UPLOADED: "success",
+  FAILED: "danger",
+};
+
 type QueueRow = {
   id: string;
   projectId: string;
@@ -33,7 +39,7 @@ export default async function ProductionQueuePage() {
   const session = await requireAdminPagePermission("video_studio.view");
   const canManage = hasPermission(session.user.adminRole, "video_studio.create");
 
-  const [generationJobs, renderJobs] = await Promise.all([
+  const [generationJobs, renderJobs, youtubeUploads] = await Promise.all([
     prisma.videoGenerationLog.findMany({
       include: { project: { select: { id: true, title: true } } },
       orderBy: { startedAt: "desc" },
@@ -42,6 +48,12 @@ export default async function ProductionQueuePage() {
     prisma.videoRenderJob.findMany({
       include: { project: { select: { id: true, title: true } } },
       orderBy: { queuedAt: "desc" },
+      take: 100,
+    }),
+    prisma.videoProject.findMany({
+      where: { youtubeUploadStatus: { not: "NOT_STARTED" } },
+      select: { id: true, title: true, youtubeUploadStatus: true, youtubeUploadError: true, youtubeVideoId: true, youtubePublishedAt: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
       take: 100,
     }),
   ]);
@@ -83,15 +95,24 @@ export default async function ProductionQueuePage() {
         renderJob: { id: job.id, status: job.status },
       };
     }),
+    ...youtubeUploads.map((project): QueueRow => ({
+      id: `yt-${project.id}`,
+      projectId: project.id,
+      projectTitle: project.title,
+      operation: "YOUTUBE UPLOAD",
+      statusLabel: project.youtubeUploadStatus,
+      statusTone: YOUTUBE_TONE[project.youtubeUploadStatus] ?? "neutral",
+      detail: project.youtubeUploadStatus === "FAILED" ? (project.youtubeUploadError ?? "—") : project.youtubeVideoId ?? "—",
+      cost: "—",
+      when: project.youtubePublishedAt ?? project.updatedAt,
+      durationLabel: "—",
+    })),
   ].sort((a, b) => b.when.getTime() - a.when.getTime());
 
   return (
     <div>
       <h1 className="text-h2 font-semibold text-text-primary">Production Queue</h1>
-      <p className="mt-1 text-sm text-text-secondary">
-        Real jobs across script generation, voice generation, and rendering. Upload jobs appear here once YouTube
-        publishing is built.
-      </p>
+      <p className="mt-1 text-sm text-text-secondary">Real jobs across script generation, voice generation, rendering, and YouTube upload.</p>
 
       <div className="mt-6">
         <Card>

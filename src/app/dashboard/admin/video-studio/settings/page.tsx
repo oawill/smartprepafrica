@@ -7,8 +7,9 @@ import { isVideoAiConfigured, getVideoScriptModelId } from "@/lib/ai/video/provi
 import { isVoiceConfigured } from "@/lib/ai/voice/provider";
 import { isBlobStorageConfigured } from "@/lib/storage/blob-storage";
 import { isRenderWorkerConfigured } from "@/lib/video/render-worker";
+import { isYouTubeConfigured } from "@/lib/youtube/config";
 import { prisma } from "@/lib/prisma";
-import { createPronunciationOverride, deletePronunciationOverride } from "@/app/dashboard/admin/video-studio/settings/actions";
+import { createPronunciationOverride, deletePronunciationOverride, disconnectYouTubeChannel } from "@/app/dashboard/admin/video-studio/settings/actions";
 
 function NotConfigured({ label }: { label: string }) {
   return (
@@ -19,14 +20,17 @@ function NotConfigured({ label }: { label: string }) {
   );
 }
 
-export default async function VideoStudioSettingsPage() {
+export default async function VideoStudioSettingsPage({ searchParams }: { searchParams: Promise<{ youtube?: string }> }) {
   const session = await requireAdminPagePermission("video_studio.view");
+  const { youtube: youtubeStatus } = await searchParams;
   const aiConfigured = isVideoAiConfigured();
   const voiceConfigured = isVoiceConfigured();
   const storageConfigured = isBlobStorageConfigured();
   const renderWorkerConfigured = isRenderWorkerConfigured();
+  const youtubeConfigured = isYouTubeConfigured();
   const canManage = hasPermission(session.user.adminRole, "video_studio.create");
   const overrides = await prisma.voicePronunciationOverride.findMany({ orderBy: { displayText: "asc" } });
+  const youtubeConnection = youtubeConfigured ? await prisma.youTubeConnection.findFirst() : null;
 
   return (
     <div className="max-w-2xl">
@@ -35,6 +39,15 @@ export default async function VideoStudioSettingsPage() {
         Integration and default-behavior settings. API credentials are never exposed to the browser — every value
         below is read from server-side environment configuration.
       </p>
+
+      {youtubeStatus === "connected" && (
+        <p className="mt-4 rounded-lg border border-success/40 bg-success-surface px-3 py-2 text-sm text-success">YouTube channel connected.</p>
+      )}
+      {youtubeStatus === "error" && (
+        <p className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-3 py-2 text-sm text-danger">
+          Couldn&apos;t connect the YouTube channel. Check the server logs and try again.
+        </p>
+      )}
 
       <div className="mt-6 space-y-4">
         <Card title="AI (script & scene generation)">
@@ -139,8 +152,51 @@ export default async function VideoStudioSettingsPage() {
         </Card>
 
         <Card title="YouTube">
-          <NotConfigured label="YouTube channel connection" />
-          <p className="mt-2 text-xs text-text-muted">OAuth and upload flow are a later phase. Uploads will default to Private/Unlisted, never Public automatically.</p>
+          {!youtubeConfigured ? (
+            <>
+              <NotConfigured label="YouTube app credentials" />
+              <p className="mt-2 text-xs text-text-muted">
+                Set <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, and{" "}
+                <code>YOUTUBE_TOKEN_ENCRYPTION_KEY</code> to enable connecting a channel.
+              </p>
+            </>
+          ) : youtubeConnection ? (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {youtubeConnection.channelThumbnailUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={youtubeConnection.channelThumbnailUrl} alt="" className="h-8 w-8 rounded-full" />
+                  )}
+                  <span className="text-sm text-text-primary">{youtubeConnection.channelTitle}</span>
+                </div>
+                <Badge tone="success">Connected</Badge>
+              </div>
+              {canManage && (
+                <form action={disconnectYouTubeChannel} className="mt-3">
+                  <button type="submit" className="text-xs text-danger hover:underline">
+                    Disconnect
+                  </button>
+                </form>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-text-secondary">Channel connection</span>
+                <Badge tone="neutral">Not connected</Badge>
+              </div>
+              {canManage && (
+                <a
+                  href="/api/youtube/oauth/connect"
+                  className="mt-3 inline-block rounded-lg bg-brand px-3 py-2 text-xs font-medium text-brand-foreground hover:bg-brand-hover"
+                >
+                  Connect channel
+                </a>
+              )}
+            </>
+          )}
+          <p className="mt-2 text-xs text-text-muted">Uploads always default to Private — never Public automatically.</p>
         </Card>
 
         <Card title="Branding">

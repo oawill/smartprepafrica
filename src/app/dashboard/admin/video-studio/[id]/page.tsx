@@ -6,6 +6,7 @@ import { isVideoAiConfigured } from "@/lib/ai/video/provider";
 import { isVoiceConfigured } from "@/lib/ai/voice/provider";
 import { isBlobStorageConfigured } from "@/lib/storage/blob-storage";
 import { isRenderWorkerConfigured } from "@/lib/video/render-worker";
+import { isYouTubeConfigured } from "@/lib/youtube/config";
 import { ProjectEditor } from "@/app/dashboard/admin/video-studio/[id]/project-editor";
 
 export default async function VideoProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +31,7 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
 
   const canCreate = hasPermission(session.user.adminRole, "video_studio.create");
   const canReview = hasPermission(session.user.adminRole, "video_studio.review");
+  const youtubeChannelConnected = isYouTubeConfigured() ? !!(await prisma.youTubeConnection.findFirst()) : false;
 
   return (
     <ProjectEditor
@@ -39,6 +41,7 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
       aiConfigured={isVideoAiConfigured()}
       voiceConfigured={isVoiceConfigured() && isBlobStorageConfigured()}
       renderWorkerConfigured={isRenderWorkerConfigured()}
+      youtubeChannelConnected={youtubeChannelConnected}
     />
   );
 }
