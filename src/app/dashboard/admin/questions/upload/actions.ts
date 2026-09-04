@@ -8,6 +8,7 @@ import {
   parseQuotedCsv,
   rowsToObjects,
   validateRow,
+  VALID_EXAMS,
   type ParsedQuestionRow,
   type RowValidation,
   type PassageLookup,
@@ -30,7 +31,12 @@ async function flagDuplicates(rows: ParsedQuestionRow[], subjectIdByName: Map<st
   const duplicateOfId = new Map<number, string>();
   for (const row of rows) {
     const subjectId = subjectIdByName.get(row.subjectName.trim().toLowerCase());
-    if (!subjectId || !row.prompt) continue;
+    // An invalid exam value (e.g. "POST-UTME" instead of "POST_UTME") isn't
+    // a valid Prisma ExamType — querying with it throws before validateRow
+    // ever gets a chance to report the real problem. validateRow() already
+    // rejects this row on its own, so skipping the duplicate check here is
+    // safe: the row is going to be flagged ERROR and skipped regardless.
+    if (!subjectId || !row.prompt || !VALID_EXAMS.has(row.exam)) continue;
     const normalized = row.prompt.trim().toLowerCase();
     const existing = await prisma.question.findFirst({
       where: { subjectId, exam: row.exam as never, prompt: { equals: row.prompt.trim(), mode: "insensitive" } },

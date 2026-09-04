@@ -143,7 +143,7 @@ export function rowsToObjects(rows: string[][]): ParsedQuestionRow[] {
   });
 }
 
-const VALID_EXAMS = new Set(["WAEC", "NECO", "UTME", "POST_UTME"]);
+export const VALID_EXAMS = new Set(["WAEC", "NECO", "UTME", "POST_UTME"]);
 const VALID_DIFFICULTIES = new Set(["EASY", "MEDIUM", "HARD"]);
 const VALID_SOURCE_TYPES = new Set([
   "OFFICIAL_PAST_QUESTION",
