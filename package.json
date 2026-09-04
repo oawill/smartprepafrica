@@ -20,9 +20,11 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.39",
+    "@ai-sdk/openai": "^4.0.58",
     "@ai-sdk/react": "^4.0.69",
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/client": "^6.19.3",
+    "@vercel/blob": "^2.8.0",
     "ai": "^7.0.66",
     "bcryptjs": "^3.0.3",
     "katex": "^0.18.4",

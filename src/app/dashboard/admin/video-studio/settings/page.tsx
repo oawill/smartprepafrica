@@ -1,7 +1,13 @@
 import { Card } from "@/components/dashboard/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/form";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
+import { hasPermission } from "@/lib/admin/permissions";
 import { isVideoAiConfigured, getVideoScriptModelId } from "@/lib/ai/video/provider";
+import { isVoiceConfigured } from "@/lib/ai/voice/provider";
+import { isBlobStorageConfigured } from "@/lib/storage/blob-storage";
+import { prisma } from "@/lib/prisma";
+import { createPronunciationOverride, deletePronunciationOverride } from "@/app/dashboard/admin/video-studio/settings/actions";
 
 function NotConfigured({ label }: { label: string }) {
   return (
@@ -13,8 +19,12 @@ function NotConfigured({ label }: { label: string }) {
 }
 
 export default async function VideoStudioSettingsPage() {
-  await requireAdminPagePermission("video_studio.view");
+  const session = await requireAdminPagePermission("video_studio.view");
   const aiConfigured = isVideoAiConfigured();
+  const voiceConfigured = isVoiceConfigured();
+  const storageConfigured = isBlobStorageConfigured();
+  const canManage = hasPermission(session.user.adminRole, "video_studio.create");
+  const overrides = await prisma.voicePronunciationOverride.findMany({ orderBy: { displayText: "asc" } });
 
   return (
     <div className="max-w-2xl">
@@ -38,8 +48,70 @@ export default async function VideoStudioSettingsPage() {
         </Card>
 
         <Card title="Voice generation">
-          <NotConfigured label="Text-to-speech provider" />
-          <p className="mt-2 text-xs text-text-muted">Added in a later phase — no TTS provider is integrated yet.</p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">OpenAI TTS (tts-1)</span>
+            <Badge tone={voiceConfigured ? "success" : "neutral"}>{voiceConfigured ? "Configured" : "Not configured"}</Badge>
+          </div>
+          {!voiceConfigured && (
+            <p className="mt-2 text-xs text-text-muted">
+              Set <code>OPENAI_API_KEY</code> to enable narration voice generation.
+            </p>
+          )}
+        </Card>
+
+        <Card title="Audio storage">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">Vercel Blob</span>
+            <Badge tone={storageConfigured ? "success" : "neutral"}>{storageConfigured ? "Configured" : "Not configured"}</Badge>
+          </div>
+          {!storageConfigured && (
+            <p className="mt-2 text-xs text-text-muted">
+              Enable a Blob store for this project in the Vercel dashboard — <code>BLOB_READ_WRITE_TOKEN</code> is set
+              automatically once attached.
+            </p>
+          )}
+        </Card>
+
+        <Card title="Pronunciation overrides">
+          <p className="text-xs text-text-muted">
+            Applied automatically before every voice generation call — corrects scientific/technical terms TTS
+            providers commonly mispronounce.
+          </p>
+          {overrides.length > 0 && (
+            <ul className="mt-3 space-y-1.5 text-sm">
+              {overrides.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-1.5">
+                  <span className="text-text-primary">
+                    {o.displayText} <span className="text-text-muted">→</span> {o.pronunciationText}
+                    {o.phoneme && <span className="ml-1 text-xs text-text-muted">({o.phoneme})</span>}
+                  </span>
+                  {canManage && (
+                    <form action={deletePronunciationOverride}>
+                      <input type="hidden" name="id" value={o.id} />
+                      <button type="submit" className="text-xs text-danger hover:underline">
+                        Remove
+                      </button>
+                    </form>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {canManage && (
+            <form action={createPronunciationOverride} className="mt-3 grid gap-2 sm:grid-cols-3">
+              <Input name="displayText" placeholder="Term, e.g. WAEC" required />
+              <Input name="pronunciationText" placeholder="Pronounce as, e.g. way-eck" required />
+              <div className="flex gap-2">
+                <Input name="phoneme" placeholder="IPA (optional)" className="flex-1" />
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-lg bg-brand px-3 py-2 text-xs font-medium text-brand-foreground hover:bg-brand-hover"
+                >
+                  Add
+                </button>
+              </div>
+            </form>
+          )}
         </Card>
 
         <Card title="Visual generation">
@@ -53,11 +125,6 @@ export default async function VideoStudioSettingsPage() {
         <Card title="Video rendering">
           <NotConfigured label="Rendering engine" />
           <p className="mt-2 text-xs text-text-muted">No render job system exists yet — this app has no background-job infrastructure today.</p>
-        </Card>
-
-        <Card title="Storage">
-          <NotConfigured label="Media storage provider" />
-          <p className="mt-2 text-xs text-text-muted">No file/blob storage is integrated anywhere in this app yet.</p>
         </Card>
 
         <Card title="YouTube">

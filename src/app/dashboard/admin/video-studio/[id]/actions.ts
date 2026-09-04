@@ -5,6 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { requireActionPermission } from "@/lib/admin/authz";
 import { logAudit } from "@/lib/admin/audit";
 import { generateVideoScript, regenerateVideoScene } from "@/lib/ai/video/script-generator";
+import { isVoiceConfigured } from "@/lib/ai/voice/provider";
+import { openAiVoiceProvider } from "@/lib/ai/voice/openai-provider";
+import { applyPronunciationOverrides } from "@/lib/ai/voice/pronunciation";
+import { isBlobStorageConfigured, uploadAudio } from "@/lib/storage/blob-storage";
 import type { VideoSceneQuestionSource } from "@prisma/client";
 
 async function projectContext(projectId: string) {
@@ -132,6 +136,125 @@ export async function regenerateSceneAction(sceneId: string, instructions?: stri
 
   revalidatePath(`/dashboard/admin/video-studio/${scene.projectId}`);
   return { ok: true };
+}
+
+/** Generates real narration audio for one scene: applies pronunciation
+ * overrides, calls the configured VoiceProvider, uploads the result to
+ * Blob storage, and logs a real VideoGenerationLog row — success or
+ * failure — exactly like script generation does. Scenes with no
+ * narration text (e.g. BRAND_INTRO) are rejected with a clear message
+ * rather than silently "succeeding" with nothing generated. */
+export async function generateSceneVoiceAction(sceneId: string, voiceId = "alloy"): Promise<ActionResult> {
+  const session = await requireActionPermission("video_studio.create");
+  const scene = await prisma.videoScene.findUniqueOrThrow({ where: { id: sceneId } });
+
+  if (!scene.narration || !scene.narration.trim()) {
+    return { ok: false, error: "This scene has no narration text to generate voice for." };
+  }
+  if (!isVoiceConfigured()) {
+    return { ok: false, error: "Voice generation is not configured. Set OPENAI_API_KEY." };
+  }
+  if (!isBlobStorageConfigured()) {
+    return { ok: false, error: "Audio storage is not configured. Set BLOB_READ_WRITE_TOKEN (enable Vercel Blob)." };
+  }
+
+  const startedAt = new Date();
+  await prisma.videoScene.update({ where: { id: sceneId }, data: { voiceStatus: "GENERATING", voiceError: null } });
+
+  try {
+    const text = await applyPronunciationOverrides(scene.narration);
+    const speech = await openAiVoiceProvider.generateSpeech({ text, voiceId });
+    const { url } = await uploadAudio({
+      pathname: `video-studio/${scene.projectId}/scenes/${scene.id}.${speech.format}`,
+      data: speech.audio,
+      contentType: `audio/${speech.format}`,
+    });
+
+    await prisma.videoScene.update({
+      where: { id: sceneId },
+      data: {
+        voiceStatus: "READY",
+        voiceAudioUrl: url,
+        voiceDurationSec: speech.estimatedDurationSec,
+        voiceProvider: openAiVoiceProvider.name,
+        voiceId,
+        voiceError: null,
+      },
+    });
+
+    await prisma.videoGenerationLog.create({
+      data: {
+        projectId: scene.projectId,
+        stage: "VOICE_GENERATION",
+        provider: openAiVoiceProvider.name,
+        model: "tts-1",
+        status: "SUCCEEDED",
+        characterCount: text.length,
+        estimatedCostKobo: openAiVoiceProvider.estimateCostKobo(text.length),
+        startedAt,
+        completedAt: new Date(),
+      },
+    });
+
+    await logAudit({
+      actorUserId: session.user.id,
+      actorRole: session.user.role,
+      action: "VIDEO_SCENE_VOICE_GENERATED",
+      resourceType: "VideoScene",
+      resourceId: sceneId,
+      result: "SUCCESS",
+    });
+
+    revalidatePath(`/dashboard/admin/video-studio/${scene.projectId}`);
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Voice generation failed.";
+    await prisma.videoScene.update({ where: { id: sceneId }, data: { voiceStatus: "FAILED", voiceError: message } });
+    await prisma.videoGenerationLog.create({
+      data: {
+        projectId: scene.projectId,
+        stage: "VOICE_GENERATION",
+        provider: openAiVoiceProvider.name,
+        model: "tts-1",
+        status: "FAILED",
+        errorMessage: message,
+        startedAt,
+        completedAt: new Date(),
+      },
+    });
+    revalidatePath(`/dashboard/admin/video-studio/${scene.projectId}`);
+    return { ok: false, error: message };
+  }
+}
+
+/** Generates voice for every scene in the project that has narration and
+ * isn't already READY, sequentially (real per-call cost and provider rate
+ * limits — not parallelized). Sets the project status to VOICE_GENERATING
+ * for the duration and restores it afterward, since asset/render readiness
+ * isn't achieved by voice alone. */
+export async function generateAllVoicesAction(projectId: string): Promise<ActionResult> {
+  await requireActionPermission("video_studio.create");
+  const project = await prisma.videoProject.findUniqueOrThrow({ where: { id: projectId } });
+  const scenes = await prisma.videoScene.findMany({
+    where: { projectId, voiceStatus: { not: "READY" }, narration: { not: null } },
+    orderBy: { order: "asc" },
+  });
+
+  const pending = scenes.filter((s) => s.narration && s.narration.trim());
+  if (pending.length === 0) return { ok: true };
+
+  await prisma.videoProject.update({ where: { id: projectId }, data: { status: "VOICE_GENERATING" } });
+
+  let firstError: string | null = null;
+  for (const scene of pending) {
+    const result = await generateSceneVoiceAction(scene.id);
+    if (!result.ok && !firstError) firstError = result.error;
+  }
+
+  await prisma.videoProject.update({ where: { id: projectId }, data: { status: project.status } });
+  revalidatePath(`/dashboard/admin/video-studio/${projectId}`);
+
+  return firstError ? { ok: false, error: firstError } : { ok: true };
 }
 
 export async function updateSceneAction(formData: FormData): Promise<ActionResult> {

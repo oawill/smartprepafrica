@@ -18,6 +18,8 @@ import {
   updateProjectMetaAction,
   submitForReviewAction,
   approveScriptAction,
+  generateSceneVoiceAction,
+  generateAllVoicesAction,
 } from "@/app/dashboard/admin/video-studio/[id]/actions";
 
 type FullProject = VideoProject & {
@@ -34,6 +36,14 @@ const STATUS_TONE: Record<string, BadgeTone> = {
   SCRIPT_READY: "info",
   NEEDS_REVIEW: "warning",
   SCRIPT_APPROVED: "success",
+  VOICE_GENERATING: "info",
+};
+
+const VOICE_STATUS_TONE: Record<string, BadgeTone> = {
+  NOT_STARTED: "neutral",
+  GENERATING: "info",
+  READY: "success",
+  FAILED: "danger",
 };
 
 const SCENE_TYPES = [
@@ -53,11 +63,13 @@ export function ProjectEditor({
   canCreate,
   canReview,
   aiConfigured,
+  voiceConfigured,
 }: {
   project: FullProject;
   canCreate: boolean;
   canReview: boolean;
   aiConfigured: boolean;
+  voiceConfigured: boolean;
 }) {
   const [tab, setTab] = useState<"scenes" | "script" | "questions" | "settings">("scenes");
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(project.scenes[0]?.id ?? null);
@@ -70,6 +82,16 @@ export function ProjectEditor({
   const selectedScene = project.scenes.find((s) => s.id === selectedSceneId) ?? null;
   const totalDuration = project.scenes.reduce((sum, s) => sum + s.estimatedDurationSec, 0);
   const examLabel = `${project.countryExam.exam.name} (${project.countryExam.exam.examBody.name})`;
+  const narrationScenes = project.scenes.filter((s) => s.narration && s.narration.trim());
+  const voicesReady = narrationScenes.filter((s) => s.voiceStatus === "READY").length;
+
+  function handleGenerateAllVoices() {
+    setGenError(null);
+    startTransition(async () => {
+      const result = await generateAllVoicesAction(project.id);
+      if (!result.ok) setGenError(result.error);
+    });
+  }
 
   function handleGenerate() {
     setGenError(null);
@@ -133,6 +155,23 @@ export function ProjectEditor({
               className="rounded-lg border border-success/40 px-4 py-2 text-sm text-success hover:border-success"
             >
               Approve Script
+            </button>
+          )}
+          {canCreate && narrationScenes.length > 0 && (
+            <button
+              type="button"
+              onClick={handleGenerateAllVoices}
+              disabled={isPending || !voiceConfigured}
+              title={
+                voiceConfigured
+                  ? undefined
+                  : "Set OPENAI_API_KEY and enable Vercel Blob (BLOB_READ_WRITE_TOKEN) to generate voice"
+              }
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted disabled:opacity-50"
+            >
+              {project.status === "VOICE_GENERATING"
+                ? "Generating voices…"
+                : `Generate All Voices (${voicesReady}/${narrationScenes.length})`}
             </button>
           )}
           <button
@@ -305,6 +344,47 @@ export function ProjectEditor({
                   <Label htmlFor="narration">Narration</Label>
                   <Textarea id="narration" name="narration" defaultValue={selectedScene.narration ?? ""} rows={4} disabled={!canCreate} />
                 </div>
+
+                <div className="rounded-lg border border-border bg-surface p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-text-secondary">Voice</span>
+                    <Badge tone={VOICE_STATUS_TONE[selectedScene.voiceStatus]}>{selectedScene.voiceStatus.replaceAll("_", " ")}</Badge>
+                  </div>
+                  {selectedScene.voiceStatus === "READY" && selectedScene.voiceAudioUrl && (
+                    <div className="mt-2 space-y-1">
+                      <audio controls src={selectedScene.voiceAudioUrl} className="w-full" />
+                      <p className="text-xs text-text-muted">
+                        {selectedScene.voiceProvider} · {selectedScene.voiceId} · ~{Math.round(selectedScene.voiceDurationSec ?? 0)}s (estimated)
+                      </p>
+                    </div>
+                  )}
+                  {selectedScene.voiceStatus === "FAILED" && selectedScene.voiceError && (
+                    <p className="mt-2 text-xs text-danger">{selectedScene.voiceError}</p>
+                  )}
+                  {canCreate && (
+                    <button
+                      type="button"
+                      disabled={isPending || !voiceConfigured || !selectedScene.narration?.trim()}
+                      title={
+                        !voiceConfigured
+                          ? "Set OPENAI_API_KEY and enable Vercel Blob (BLOB_READ_WRITE_TOKEN) to generate voice"
+                          : !selectedScene.narration?.trim()
+                            ? "This scene has no narration text"
+                            : undefined
+                      }
+                      onClick={() =>
+                        startTransition(async () => {
+                          const result = await generateSceneVoiceAction(selectedScene.id);
+                          if (!result.ok) setGenError(result.error);
+                        })
+                      }
+                      className="mt-2 rounded-lg border border-brand/40 px-3 py-1.5 text-xs text-brand-text hover:border-brand disabled:opacity-50"
+                    >
+                      {selectedScene.voiceStatus === "READY" ? "Regenerate voice" : "Generate voice"}
+                    </button>
+                  )}
+                </div>
+
                 <div>
                   <Label htmlFor="onScreenText">On-screen text</Label>
                   <Textarea id="onScreenText" name="onScreenText" defaultValue={selectedScene.onScreenText ?? ""} rows={2} disabled={!canCreate} />

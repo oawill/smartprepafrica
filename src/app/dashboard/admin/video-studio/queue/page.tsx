@@ -18,8 +18,8 @@ export default async function ProductionQueuePage() {
     <div>
       <h1 className="text-h2 font-semibold text-text-primary">Production Queue</h1>
       <p className="mt-1 text-sm text-text-secondary">
-        Real generation jobs — script generation is the only asynchronous operation available in this phase.
-        Voice/render/upload jobs appear here once those phases are built.
+        Real generation jobs — script and voice generation are the only asynchronous operations available so far.
+        Render/upload jobs appear here once those phases are built.
       </p>
 
       <div className="mt-6">
@@ -56,7 +56,11 @@ export default async function ProductionQueuePage() {
                         {job.provider} · {job.model}
                       </td>
                       <td className="py-2 pr-3 text-text-secondary">
-                        {job.inputTokens + job.outputTokens > 0 ? `${job.inputTokens} in / ${job.outputTokens} out` : "—"}
+                        {job.inputTokens + job.outputTokens > 0
+                          ? `${job.inputTokens} in / ${job.outputTokens} out`
+                          : job.characterCount
+                            ? `${job.characterCount} chars`
+                            : "—"}
                       </td>
                       <td className="py-2 pr-3 text-text-secondary">
                         {job.estimatedCostKobo > 0 ? formatNaira(job.estimatedCostKobo) : "—"}

@@ -672,11 +672,41 @@ model VideoScene {
   reviewStatus VideoSceneReviewStatus @default(PENDING)
   reviewNotes  String?
 
+  // Generated narration audio (Phase 2). voiceAudioUrl points at Vercel
+  // Blob storage — this app has no other file storage, so this is also
+  // the first real asset URL in VLS that isn't a placeholder.
+  voiceStatus      VideoSceneVoiceStatus @default(NOT_STARTED)
+  voiceAudioUrl    String?
+  voiceDurationSec Float?
+  voiceProvider    String?
+  voiceId          String?
+  voiceError       String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([projectId, order])
   @@index([projectId])
+}
+
+enum VideoSceneVoiceStatus {
+  NOT_STARTED
+  GENERATING
+  READY
+  FAILED
+}
+
+// Reusable, project-independent pronunciation corrections for scientific/
+// technical terms TTS providers commonly mispronounce — applied as a
+// find/replace pass on narration text immediately before it's sent to the
+// voice provider, never stored back onto the scene.
+model VoicePronunciationOverride {
+  id                String   @id @default(cuid())
+  displayText       String   @unique
+  pronunciationText String
+  phoneme           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 // Mirrors AiUsageLog's intent but scoped to video generation, whose cost
@@ -689,15 +719,18 @@ model VideoGenerationLog {
   project   VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
 
-  stage        String // "SCRIPT_GENERATION" | "OBJECTIVES_SUGGESTION" | "SCENE_REGENERATION" | "QUESTION_GENERATION"
+  stage        String // "SCRIPT_GENERATION" | "OBJECTIVES_SUGGESTION" | "SCENE_REGENERATION" | "QUESTION_GENERATION" | "VOICE_GENERATION"
   provider     String  @default("anthropic")
   model        String
   status       String // "SUCCEEDED" | "FAILED"
   errorMessage String?
 
-  inputTokens       Int @default(0)
-  outputTokens      Int @default(0)
-  estimatedCostKobo Int @default(0)
+  inputTokens       Int  @default(0)
+  outputTokens      Int  @default(0)
+  // TTS jobs are billed per character, not per token — inputTokens/
+  // outputTokens stay 0 for those rows rather than being repurposed.
+  characterCount    Int?
+  estimatedCostKobo Int  @default(0)
 
   startedAt   DateTime  @default(now())
   completedAt DateTime?

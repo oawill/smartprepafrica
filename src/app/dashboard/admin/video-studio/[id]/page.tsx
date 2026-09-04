@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { hasPermission } from "@/lib/admin/permissions";
 import { isVideoAiConfigured } from "@/lib/ai/video/provider";
+import { isVoiceConfigured } from "@/lib/ai/voice/provider";
+import { isBlobStorageConfigured } from "@/lib/storage/blob-storage";
 import { ProjectEditor } from "@/app/dashboard/admin/video-studio/[id]/project-editor";
 
 export default async function VideoProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,6 +35,7 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
       canCreate={canCreate}
       canReview={canReview}
       aiConfigured={isVideoAiConfigured()}
+      voiceConfigured={isVoiceConfigured() && isBlobStorageConfigured()}
     />
   );
 }
