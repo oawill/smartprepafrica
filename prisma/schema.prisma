@@ -138,9 +138,10 @@ model User {
   partnerCommissionsAsSource PartnerCommission[] @relation("CommissionSourceUser")
   partnerAuditActions        PartnerAuditLog[]   @relation("AuditActor")
 
-  adminAuditActions AuditLog[]      @relation("AdminAuditActor")
-  loginActivity     LoginActivity[] @relation("LoginActivityUser")
+  adminAuditActions AuditLog[]       @relation("AdminAuditActor")
+  loginActivity     LoginActivity[]  @relation("LoginActivityUser")
   videoProjects     VideoProject[]
+  videoRenderJobs   VideoRenderJob[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -633,6 +634,7 @@ model VideoProject {
 
   scenes         VideoScene[]
   generationLogs VideoGenerationLog[]
+  renderJobs     VideoRenderJob[]
 
   @@index([status])
   @@index([subjectId])
@@ -736,6 +738,44 @@ model VideoGenerationLog {
   completedAt DateTime?
 
   @@index([projectId, startedAt])
+  @@index([status])
+}
+
+enum RenderJobStatus {
+  QUEUED
+  RENDERING
+  COMPLETE
+  FAILED
+  CANCELLED
+}
+
+// The real render job queue (brief section 29/38) — deliberately built
+// ahead of any actual worker existing. A worker, wherever it eventually
+// runs, reports progress back via POST /api/video-studio/render-jobs/[id]/
+// callback rather than needing direct database access, so it can live
+// completely outside this app's deployment (Lambda, a separate container,
+// anywhere).
+model VideoRenderJob {
+  id        String       @id @default(cuid())
+  project   VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  status          RenderJobStatus @default(QUEUED)
+  progressPercent Int             @default(0)
+
+  outputUrl         String?
+  outputDurationSec Float?
+  errorMessage      String?
+  retryCount        Int     @default(0)
+
+  requestedBy   User   @relation(fields: [requestedById], references: [id])
+  requestedById String
+
+  queuedAt    DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@index([projectId, queuedAt])
   @@index([status])
 }
 

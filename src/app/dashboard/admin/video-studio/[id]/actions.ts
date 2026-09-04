@@ -9,6 +9,7 @@ import { isVoiceConfigured } from "@/lib/ai/voice/provider";
 import { openAiVoiceProvider } from "@/lib/ai/voice/openai-provider";
 import { applyPronunciationOverrides } from "@/lib/ai/voice/pronunciation";
 import { isBlobStorageConfigured, uploadAudio } from "@/lib/storage/blob-storage";
+import { isRenderWorkerConfigured } from "@/lib/video/render-worker";
 import type { VideoSceneQuestionSource } from "@prisma/client";
 
 async function projectContext(projectId: string) {
@@ -464,4 +465,89 @@ export async function approveScriptAction(projectId: string) {
     result: "SUCCESS",
   });
   revalidatePath(`/dashboard/admin/video-studio/${projectId}`);
+}
+
+const RENDERABLE_STATUSES = new Set([
+  "SCRIPT_APPROVED",
+  "ASSETS_GENERATING",
+  "VOICE_GENERATING",
+  "READY_TO_RENDER",
+  "RENDER_FAILED",
+]);
+
+/** Queues a real, durable render job — always succeeds as a DB write once
+ * a worker is configured; there's no external call here to fail on. The
+ * job sits at QUEUED until a worker (deployed separately, wherever that
+ * ends up being) polls for it and reports progress back via the callback
+ * route below. */
+export async function queueRenderJobAction(projectId: string): Promise<ActionResult> {
+  const session = await requireActionPermission("video_studio.create");
+
+  if (!isRenderWorkerConfigured()) {
+    return { ok: false, error: "No render worker is connected yet. Set RENDER_WORKER_SECRET once one is deployed." };
+  }
+
+  const project = await prisma.videoProject.findUniqueOrThrow({ where: { id: projectId } });
+  if (!RENDERABLE_STATUSES.has(project.status)) {
+    return { ok: false, error: "Approve the script before rendering." };
+  }
+
+  const job = await prisma.videoRenderJob.create({
+    data: { projectId, requestedById: session.user.id },
+  });
+  await prisma.videoProject.update({ where: { id: projectId }, data: { status: "READY_TO_RENDER" } });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "VIDEO_RENDER_JOB_QUEUED",
+    resourceType: "VideoRenderJob",
+    resourceId: job.id,
+    result: "SUCCESS",
+  });
+
+  revalidatePath(`/dashboard/admin/video-studio/${projectId}`);
+  revalidatePath("/dashboard/admin/video-studio/queue");
+  return { ok: true };
+}
+
+export async function cancelRenderJobAction(jobId: string) {
+  const session = await requireActionPermission("video_studio.create");
+  const job = await prisma.videoRenderJob.findUniqueOrThrow({ where: { id: jobId } });
+  if (job.status !== "QUEUED") return;
+
+  await prisma.videoRenderJob.update({ where: { id: jobId }, data: { status: "CANCELLED" } });
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "VIDEO_RENDER_JOB_CANCELLED",
+    resourceType: "VideoRenderJob",
+    resourceId: jobId,
+    result: "SUCCESS",
+  });
+
+  revalidatePath(`/dashboard/admin/video-studio/${job.projectId}`);
+  revalidatePath("/dashboard/admin/video-studio/queue");
+}
+
+export async function retryRenderJobAction(jobId: string) {
+  const session = await requireActionPermission("video_studio.create");
+  const job = await prisma.videoRenderJob.findUniqueOrThrow({ where: { id: jobId } });
+  if (job.status !== "FAILED") return;
+
+  await prisma.videoRenderJob.update({
+    where: { id: jobId },
+    data: { status: "QUEUED", retryCount: { increment: 1 }, errorMessage: null, progressPercent: 0, startedAt: null, completedAt: null },
+  });
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "VIDEO_RENDER_JOB_RETRIED",
+    resourceType: "VideoRenderJob",
+    resourceId: jobId,
+    result: "SUCCESS",
+  });
+
+  revalidatePath(`/dashboard/admin/video-studio/${job.projectId}`);
+  revalidatePath("/dashboard/admin/video-studio/queue");
 }

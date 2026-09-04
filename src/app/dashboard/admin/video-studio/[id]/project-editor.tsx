@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { VideoProject, VideoScene, Question, Country, CountryExam, Exam, ExamBody, Subject, ExamTopic } from "@prisma/client";
+import type { VideoProject, VideoScene, Question, Country, CountryExam, Exam, ExamBody, Subject, ExamTopic, VideoRenderJob } from "@prisma/client";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Label, Textarea, Input } from "@/components/ui/form";
 import { EquationDisplay } from "@/components/admin/video-studio/equation-display";
@@ -20,6 +20,9 @@ import {
   approveScriptAction,
   generateSceneVoiceAction,
   generateAllVoicesAction,
+  queueRenderJobAction,
+  cancelRenderJobAction,
+  retryRenderJobAction,
 } from "@/app/dashboard/admin/video-studio/[id]/actions";
 
 type FullProject = VideoProject & {
@@ -28,6 +31,7 @@ type FullProject = VideoProject & {
   examTopic: ExamTopic | null;
   createdBy: { name: string };
   scenes: (VideoScene & { question: Pick<Question, "id" | "prompt" | "correctOption"> | null })[];
+  renderJobs: VideoRenderJob[];
 };
 
 const STATUS_TONE: Record<string, BadgeTone> = {
@@ -37,6 +41,10 @@ const STATUS_TONE: Record<string, BadgeTone> = {
   NEEDS_REVIEW: "warning",
   SCRIPT_APPROVED: "success",
   VOICE_GENERATING: "info",
+  READY_TO_RENDER: "info",
+  RENDERING: "info",
+  RENDER_COMPLETE: "success",
+  RENDER_FAILED: "danger",
 };
 
 const VOICE_STATUS_TONE: Record<string, BadgeTone> = {
@@ -44,6 +52,14 @@ const VOICE_STATUS_TONE: Record<string, BadgeTone> = {
   GENERATING: "info",
   READY: "success",
   FAILED: "danger",
+};
+
+const RENDER_STATUS_TONE: Record<string, BadgeTone> = {
+  QUEUED: "neutral",
+  RENDERING: "info",
+  COMPLETE: "success",
+  FAILED: "danger",
+  CANCELLED: "neutral",
 };
 
 const SCENE_TYPES = [
@@ -64,12 +80,14 @@ export function ProjectEditor({
   canReview,
   aiConfigured,
   voiceConfigured,
+  renderWorkerConfigured,
 }: {
   project: FullProject;
   canCreate: boolean;
   canReview: boolean;
   aiConfigured: boolean;
   voiceConfigured: boolean;
+  renderWorkerConfigured: boolean;
 }) {
   const [tab, setTab] = useState<"scenes" | "script" | "questions" | "settings">("scenes");
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(project.scenes[0]?.id ?? null);
@@ -84,6 +102,11 @@ export function ProjectEditor({
   const examLabel = `${project.countryExam.exam.name} (${project.countryExam.exam.examBody.name})`;
   const narrationScenes = project.scenes.filter((s) => s.narration && s.narration.trim());
   const voicesReady = narrationScenes.filter((s) => s.voiceStatus === "READY").length;
+  const latestRenderJob = project.renderJobs[0] ?? null;
+  const canQueueRender =
+    ["SCRIPT_APPROVED", "ASSETS_GENERATING", "VOICE_GENERATING", "READY_TO_RENDER", "RENDER_FAILED"].includes(
+      project.status
+    ) && (!latestRenderJob || latestRenderJob.status === "FAILED" || latestRenderJob.status === "CANCELLED");
 
   function handleGenerateAllVoices() {
     setGenError(null);
@@ -174,14 +197,60 @@ export function ProjectEditor({
                 : `Generate All Voices (${voicesReady}/${narrationScenes.length})`}
             </button>
           )}
-          <button
-            type="button"
-            disabled
-            title="Available in a later phase — video rendering isn't built yet"
-            className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-muted opacity-50"
-          >
-            Render
-          </button>
+          {canCreate && latestRenderJob && (latestRenderJob.status === "QUEUED" || latestRenderJob.status === "RENDERING") && (
+            <div className="flex items-center gap-2 rounded-lg border border-border-strong px-3 py-2 text-sm">
+              <Badge tone={RENDER_STATUS_TONE[latestRenderJob.status]}>
+                {latestRenderJob.status === "RENDERING" ? `Rendering ${latestRenderJob.progressPercent}%` : "Queued"}
+              </Badge>
+              {latestRenderJob.status === "QUEUED" && (
+                <button
+                  type="button"
+                  onClick={() => startTransition(() => cancelRenderJobAction(latestRenderJob.id))}
+                  className="text-xs text-danger hover:underline"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          )}
+          {canCreate && latestRenderJob?.status === "COMPLETE" && latestRenderJob.outputUrl && (
+            <a
+              href={latestRenderJob.outputUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-success/40 px-4 py-2 text-sm text-success hover:border-success"
+            >
+              View rendered video
+            </a>
+          )}
+          {canCreate && latestRenderJob?.status === "FAILED" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-danger">{latestRenderJob.errorMessage ?? "Render failed."}</span>
+              <button
+                type="button"
+                onClick={() => startTransition(() => retryRenderJobAction(latestRenderJob.id))}
+                className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {canCreate && canQueueRender && (
+            <button
+              type="button"
+              disabled={isPending || !renderWorkerConfigured}
+              title={renderWorkerConfigured ? undefined : "No render worker is connected yet"}
+              onClick={() =>
+                startTransition(async () => {
+                  const result = await queueRenderJobAction(project.id);
+                  if (!result.ok) setGenError(result.error);
+                })
+              }
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted disabled:opacity-50"
+            >
+              Render
+            </button>
+          )}
           <button
             type="button"
             disabled

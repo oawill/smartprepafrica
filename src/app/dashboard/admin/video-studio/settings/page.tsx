@@ -6,6 +6,7 @@ import { hasPermission } from "@/lib/admin/permissions";
 import { isVideoAiConfigured, getVideoScriptModelId } from "@/lib/ai/video/provider";
 import { isVoiceConfigured } from "@/lib/ai/voice/provider";
 import { isBlobStorageConfigured } from "@/lib/storage/blob-storage";
+import { isRenderWorkerConfigured } from "@/lib/video/render-worker";
 import { prisma } from "@/lib/prisma";
 import { createPronunciationOverride, deletePronunciationOverride } from "@/app/dashboard/admin/video-studio/settings/actions";
 
@@ -23,6 +24,7 @@ export default async function VideoStudioSettingsPage() {
   const aiConfigured = isVideoAiConfigured();
   const voiceConfigured = isVoiceConfigured();
   const storageConfigured = isBlobStorageConfigured();
+  const renderWorkerConfigured = isRenderWorkerConfigured();
   const canManage = hasPermission(session.user.adminRole, "video_studio.create");
   const overrides = await prisma.voicePronunciationOverride.findMany({ orderBy: { displayText: "asc" } });
 
@@ -123,8 +125,17 @@ export default async function VideoStudioSettingsPage() {
         </Card>
 
         <Card title="Video rendering">
-          <NotConfigured label="Rendering engine" />
-          <p className="mt-2 text-xs text-text-muted">No render job system exists yet — this app has no background-job infrastructure today.</p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">Render worker</span>
+            <Badge tone={renderWorkerConfigured ? "success" : "neutral"}>
+              {renderWorkerConfigured ? "Configured" : "Not configured"}
+            </Badge>
+          </div>
+          <p className="mt-2 text-xs text-text-muted">
+            {renderWorkerConfigured
+              ? "The render job queue and worker-callback API are live. Queued jobs wait for a worker to poll them."
+              : "The render job queue itself is real (Production Queue shows it once jobs exist) — set RENDER_WORKER_SECRET only once an actual render worker is deployed and polling VideoRenderJob rows, or queued jobs will sit with nothing processing them."}
+          </p>
         </Card>
 
         <Card title="YouTube">
