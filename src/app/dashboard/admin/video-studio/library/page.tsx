@@ -16,10 +16,10 @@ const STATUS_TONE: Record<string, BadgeTone> = {
 export default async function VideoLibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; subjectId?: string; videoType?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; subjectId?: string; videoType?: string; created?: string }>;
 }) {
   await requireAdminPagePermission("video_studio.view");
-  const { q, status, subjectId, videoType } = await searchParams;
+  const { q, status, subjectId, videoType, created } = await searchParams;
 
   const [projects, subjects] = await Promise.all([
     prisma.videoProject.findMany({
@@ -47,10 +47,21 @@ export default async function VideoLibraryPage({
           <h1 className="text-h2 font-semibold text-text-primary">Video Library</h1>
           <p className="mt-1 text-sm text-text-secondary">{projects.length} project(s).</p>
         </div>
-        <Link href="/dashboard/admin/video-studio/new" className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover">
-          + Create Video
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/dashboard/admin/video-studio/new/bulk" className="rounded-full border border-border-strong px-5 py-2 text-sm text-text-secondary hover:border-text-muted">
+            Bulk create
+          </Link>
+          <Link href="/dashboard/admin/video-studio/new" className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover">
+            + Create Video
+          </Link>
+        </div>
       </div>
+
+      {created && (
+        <p className="mt-4 rounded-lg border border-success/40 bg-success-surface px-3 py-2 text-sm text-success">
+          {created} draft project{created === "1" ? "" : "s"} created.
+        </p>
+      )}
 
       <form className="mt-4 flex flex-wrap gap-2 text-sm">
         <input
