@@ -140,6 +140,7 @@ model User {
 
   adminAuditActions AuditLog[]      @relation("AdminAuditActor")
   loginActivity     LoginActivity[] @relation("LoginActivityUser")
+  videoProjects     VideoProject[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -455,6 +456,7 @@ model CountryExam {
   subjects      CountryExamSubject[]
   questions     Question[]
   passageGroups PassageGroup[]
+  videoProjects VideoProject[]
 
   @@unique([countryId, examId])
   @@index([status])
@@ -485,6 +487,7 @@ model ExamTopic {
   name                 String
   order                Int                @default(0)
   questions            Question[]
+  videoProjects        VideoProject[]
 
   @@index([countryExamSubjectId])
 }
@@ -503,6 +506,204 @@ model CountryPlanPrice {
   updatedAt  DateTime         @updatedAt
 
   @@unique([countryId, plan])
+}
+
+// ---------- Video Learning Studio (VLS) ----------
+// Phase 1: curriculum-linked project creation + real AI script/scene
+// generation + review workflow. No rendering, voice, storage, or YouTube
+// integration yet — those need infrastructure this app doesn't have today
+// (see VideoProjectStatus values beyond SCRIPT_APPROVED, reserved but
+// unused until later phases).
+
+enum VideoProjectStatus {
+  DRAFT
+  SCRIPT_GENERATING
+  SCRIPT_READY
+  NEEDS_REVIEW
+  SCRIPT_APPROVED
+  ASSETS_GENERATING
+  VOICE_GENERATING
+  READY_TO_RENDER
+  RENDERING
+  RENDER_COMPLETE
+  RENDER_FAILED
+  FINAL_REVIEW
+  APPROVED
+  READY_TO_PUBLISH
+  PUBLISHED
+  ARCHIVED
+}
+
+enum VideoType {
+  FULL_LESSON
+  QUICK_REVISION
+  PAST_QUESTION_WALKTHROUGH
+  CONCEPT_EXPLAINER
+  WORKED_EXAMPLE
+  PRACTICAL_DEMONSTRATION
+  EXAM_TIPS
+  TOPIC_SUMMARY
+  YOUTUBE_SHORT
+  REVISION_SHORT
+}
+
+enum VideoAspectRatio {
+  LANDSCAPE_16_9
+  VERTICAL_9_16
+  SQUARE_1_1
+}
+
+enum VideoSceneType {
+  HOOK
+  BRAND_INTRO
+  LEARNING_OBJECTIVE
+  CONCEPT
+  DEFINITION
+  EXAMPLE
+  WORKED_EXAMPLE
+  EQUATION
+  DIAGRAM
+  ANIMATION
+  COMPARISON
+  EXAM_TIP
+  WAEC_QUESTION
+  MULTIPLE_CHOICE
+  QUESTION_TIMER
+  ANSWER_REVEAL
+  SUMMARY
+  CALL_TO_ACTION
+  OUTRO
+}
+
+enum VideoSceneReviewStatus {
+  PENDING
+  FLAGGED
+  APPROVED
+}
+
+// A scene's question can come from the real question bank (already
+// published SmartPrepAfrica content, no extra review needed) or be an AI
+// draft that must never touch the Question table until an admin approves
+// it into the real bank through the existing question-review workflow.
+enum VideoSceneQuestionSource {
+  NONE
+  EXISTING_QUESTION
+  AI_DRAFT
+}
+
+// The top-level production unit. Deliberately not scoped to any one
+// subject — countryExamId + subjectId + topic is the same generic
+// curriculum link every other exam-content model in this app uses.
+model VideoProject {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+
+  countryExam   CountryExam @relation(fields: [countryExamId], references: [id])
+  countryExamId String
+  subject       Subject     @relation(fields: [subjectId], references: [id])
+  subjectId     String
+  // Plain string, matching Question.topic/Lesson.topic — the load-bearing
+  // convention this codebase repeatedly protects. ExamTopic has real rows
+  // only where seeded; link to it opportunistically, never require it.
+  topic         String
+  examTopic     ExamTopic?  @relation(fields: [examTopicId], references: [id])
+  examTopicId   String?
+  gradeLevel    String? // e.g. "SS3" — matches Question.grade / StudentProfile.gradeLevel
+
+  videoType         VideoType
+  aspectRatio       VideoAspectRatio @default(LANDSCAPE_16_9)
+  targetDurationSec Int
+  language          String           @default("English")
+
+  learningObjectives String[] @default([])
+
+  status VideoProjectStatus @default(DRAFT)
+
+  // Conversion-loop attribution — configurable now, not wired to a real
+  // analytics pipeline until the YouTube/publish phases exist.
+  ctaLabel       String?
+  ctaDestination String?
+  campaignId     String?
+
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  scenes         VideoScene[]
+  generationLogs VideoGenerationLog[]
+
+  @@index([status])
+  @@index([subjectId])
+  @@index([countryExamId])
+}
+
+model VideoScene {
+  id        String       @id @default(cuid())
+  project   VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  order                Int
+  sceneType            VideoSceneType
+  title                String
+  estimatedDurationSec Int            @default(15)
+
+  narration             String?
+  onScreenText          String?
+  visualDirection       String?
+  animationInstructions String?
+  learningObjective     String?
+
+  // Scientific/mathematical notation as plain source text (e.g.
+  // "HCl + NaOH -> NaCl + H_2O"), rendered with KaTeX at display time —
+  // never stored pre-rendered.
+  equation           String?
+  diagramDescription String?
+
+  questionSource           VideoSceneQuestionSource @default(NONE)
+  question                 Question?                @relation(fields: [questionId], references: [id])
+  questionId               String?
+  draftQuestionPrompt      String?
+  draftQuestionOptions     Json?
+  draftQuestionAnswer      String?
+  draftQuestionExplanation String?
+
+  reviewStatus VideoSceneReviewStatus @default(PENDING)
+  reviewNotes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, order])
+  @@index([projectId])
+}
+
+// Mirrors AiUsageLog's intent but scoped to video generation, whose cost
+// shape (script tokens today; TTS/image/render usage later) doesn't fit
+// AiUsageLog's coach-specific fields. Also the real data backing the
+// Production Queue in Phase 1, since script generation is the only
+// async-ish operation that exists yet.
+model VideoGenerationLog {
+  id        String       @id @default(cuid())
+  project   VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  stage        String // "SCRIPT_GENERATION" | "OBJECTIVES_SUGGESTION" | "SCENE_REGENERATION" | "QUESTION_GENERATION"
+  provider     String  @default("anthropic")
+  model        String
+  status       String // "SUCCEEDED" | "FAILED"
+  errorMessage String?
+
+  inputTokens       Int @default(0)
+  outputTokens      Int @default(0)
+  estimatedCostKobo Int @default(0)
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([projectId, startedAt])
+  @@index([status])
 }
 
 // ---------- Exam prep ----------
@@ -524,6 +725,7 @@ model Subject {
   sponsorshipPrograms SponsorshipProgram[]
   countryExamSubjects CountryExamSubject[]
   targetedByStudents  StudentProfile[]     @relation("StudentTargetSubjects")
+  videoProjects       VideoProject[]
 
   aiConversations AiConversation[]
   topicMastery    StudentTopicMastery[]
@@ -586,7 +788,8 @@ model Question {
   examTopic     ExamTopic?   @relation(fields: [examTopicId], references: [id])
   examTopicId   String?
 
-  responses QuestionResponse[]
+  responses   QuestionResponse[]
+  videoScenes VideoScene[]
 
   @@index([status])
   @@index([subjectId])

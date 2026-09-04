@@ -55,6 +55,15 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    label: "Video Learning Studio",
+    items: [
+      { label: "Dashboard", href: "/dashboard/admin/video-studio", permission: "video_studio.view" },
+      { label: "Video Library", href: "/dashboard/admin/video-studio/library", permission: "video_studio.view" },
+      { label: "Production Queue", href: "/dashboard/admin/video-studio/queue", permission: "video_studio.view" },
+      { label: "Settings", href: "/dashboard/admin/video-studio/settings", permission: "video_studio.view" },
+    ],
+  },
+  {
     label: "Users",
     items: [
       { label: "Students", href: "/dashboard/admin/users/students", permission: "users.view" },

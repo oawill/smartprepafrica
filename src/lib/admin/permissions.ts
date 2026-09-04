@@ -37,7 +37,10 @@ export type Permission =
   | "legal.update"
   | "support.manage"
   | "analytics.view"
-  | "countries.manage";
+  | "countries.manage"
+  | "video_studio.view"
+  | "video_studio.create"
+  | "video_studio.review";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -77,6 +80,9 @@ const ALL_PERMISSIONS: Permission[] = [
   "support.manage",
   "analytics.view",
   "countries.manage",
+  "video_studio.view",
+  "video_studio.create",
+  "video_studio.review",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -98,6 +104,8 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "lessons.view",
     "lessons.edit",
     "lessons.publish",
+    "video_studio.view",
+    "video_studio.create",
   ],
   CONTENT_REVIEWER: [
     "questions.view",
@@ -109,6 +117,8 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "lessons.view",
     "lessons.approve",
     "lessons.publish",
+    "video_studio.view",
+    "video_studio.review",
   ],
   SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "users.view", "courses.view", "courses.approve"],
   USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke"],
