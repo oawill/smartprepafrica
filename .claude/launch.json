@@ -6,6 +6,12 @@
       "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
       "runtimeArgs": ["node_modules/next/dist/bin/next", "dev", "-p", "3002"],
       "port": 3002
+    },
+    {
+      "name": "smartprep-prod",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["node_modules/next/dist/bin/next", "start", "-p", "3003"],
+      "port": 3003
     }
   ]
 }

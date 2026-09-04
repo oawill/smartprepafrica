@@ -58,15 +58,20 @@ const SWIPE_THRESHOLD_PX = 40;
 export function HeroCarousel() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  // Lazy initializer (not an effect + setState) avoids an extra render pass
-  // — still SSR-safe since it only runs client-side, on mount.
-  const [reducedMotion, setReducedMotion] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
+  // Must start identical on server and client (the server can't know the
+  // browser's OS-level preference) — reading matchMedia here happens only
+  // after mount, in the effect below, matching the pattern already used in
+  // ThemeToggle. A lazy initializer that reads `window` would still run
+  // during the client's first (hydrating) render and could disagree with
+  // the server's output, which is a real hydration mismatch, not just an
+  // SSR crash risk.
+  const [reducedMotion, setReducedMotion] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from an external system (the OS-level media-query preference) on mount, not deriving from props/state
+    setReducedMotion(query.matches);
     const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     query.addEventListener("change", onChange);
     return () => query.removeEventListener("change", onChange);
