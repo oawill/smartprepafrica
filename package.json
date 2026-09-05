@@ -24,6 +24,9 @@
     "@ai-sdk/react": "^4.0.69",
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/client": "^6.19.3",
+    "@remotion/cli": "^4.0.520",
+    "@remotion/google-fonts": "^4.0.520",
+    "@remotion/lambda": "^4.0.520",
     "@vercel/blob": "^2.8.0",
     "ai": "^7.0.66",
     "bcryptjs": "^3.0.3",
@@ -36,6 +39,7 @@
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
+    "remotion": "^4.0.520",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -56,6 +60,6 @@
     "@prisma/client@6.19.3": true,
     "prisma@6.19.3": true,
     "@prisma/engines@6.19.3": true,
-    "esbuild@0.28.2": true
+    "esbuild@0.28.1": true
   }
 }

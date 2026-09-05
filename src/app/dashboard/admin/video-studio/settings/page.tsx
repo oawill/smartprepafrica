@@ -6,7 +6,7 @@ import { hasPermission } from "@/lib/admin/permissions";
 import { isVideoAiConfigured, getVideoScriptModelId } from "@/lib/ai/video/provider";
 import { isVoiceConfigured } from "@/lib/ai/voice/provider";
 import { isBlobStorageConfigured } from "@/lib/storage/blob-storage";
-import { isRenderWorkerConfigured } from "@/lib/video/render-worker";
+import { isRemotionConfigured } from "@/lib/video/render-worker";
 import { isYouTubeConfigured } from "@/lib/youtube/config";
 import { prisma } from "@/lib/prisma";
 import { createPronunciationOverride, deletePronunciationOverride, disconnectYouTubeChannel } from "@/app/dashboard/admin/video-studio/settings/actions";
@@ -26,7 +26,7 @@ export default async function VideoStudioSettingsPage({ searchParams }: { search
   const aiConfigured = isVideoAiConfigured();
   const voiceConfigured = isVoiceConfigured();
   const storageConfigured = isBlobStorageConfigured();
-  const renderWorkerConfigured = isRenderWorkerConfigured();
+  const renderWorkerConfigured = isRemotionConfigured();
   const youtubeConfigured = isYouTubeConfigured();
   const canManage = hasPermission(session.user.adminRole, "video_studio.create");
   const overrides = await prisma.voicePronunciationOverride.findMany({ orderBy: { displayText: "asc" } });
@@ -139,15 +139,15 @@ export default async function VideoStudioSettingsPage({ searchParams }: { search
 
         <Card title="Video rendering">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">Render worker</span>
+            <span className="text-sm text-text-secondary">Remotion Lambda</span>
             <Badge tone={renderWorkerConfigured ? "success" : "neutral"}>
               {renderWorkerConfigured ? "Configured" : "Not configured"}
             </Badge>
           </div>
           <p className="mt-2 text-xs text-text-muted">
             {renderWorkerConfigured
-              ? "The render job queue and worker-callback API are live. Queued jobs wait for a worker to poll them."
-              : "The render job queue itself is real (Production Queue shows it once jobs exist) — set RENDER_WORKER_SECRET only once an actual render worker is deployed and polling VideoRenderJob rows, or queued jobs will sit with nothing processing them."}
+              ? "Rendering runs on your deployed Remotion Lambda function. Scene types without a bespoke design (see remotion/scenes/) fall back to a plain on-brand template rather than looking wrong."
+              : "Set REMOTION_AWS_ACCESS_KEY_ID, REMOTION_AWS_SECRET_ACCESS_KEY, REMOTION_AWS_REGION, REMOTION_FUNCTION_NAME, REMOTION_SERVE_URL, and REMOTION_WEBHOOK_SECRET once you've deployed a Remotion Lambda function and site (see remotion.dev/docs/lambda/setup) — until then, Render stays disabled."}
           </p>
         </Card>
 

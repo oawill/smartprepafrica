@@ -778,6 +778,13 @@ model VideoRenderJob {
   errorMessage      String?
   retryCount        Int     @default(0)
 
+  // Remotion Lambda's own render identifiers, stored purely for operator
+  // traceability (e.g. cross-referencing AWS Lambda/S3 consoles) — the
+  // webhook that reports completion looks the job up via a `jobId` it
+  // passed as customData at trigger time, not via these.
+  remotionRenderId   String?
+  remotionBucketName String?
+
   requestedBy   User   @relation(fields: [requestedById], references: [id])
   requestedById String
 

@@ -272,7 +272,7 @@ export function ProjectEditor({
             <button
               type="button"
               disabled={isPending || !renderWorkerConfigured}
-              title={renderWorkerConfigured ? undefined : "No render worker is connected yet"}
+              title={renderWorkerConfigured ? undefined : "Rendering isn't configured yet (see Settings)"}
               onClick={() =>
                 startTransition(async () => {
                   const result = await queueRenderJobAction(project.id);

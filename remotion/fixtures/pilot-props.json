@@ -1,0 +1,88 @@
+{
+  "project": {
+    "title": "Acids, Bases and Salts Explained",
+    "subjectName": "Chemistry",
+    "topic": "Acids, Bases and Salts",
+    "aspectRatio": "LANDSCAPE_16_9"
+  },
+  "scenes": [
+    {
+      "id": "s1",
+      "order": 1,
+      "sceneType": "HOOK",
+      "title": "The Secret Chemistry in Your Kitchen",
+      "estimatedDurationSec": 3,
+      "narration": null,
+      "onScreenText": "Ever wondered why lemons taste sour?",
+      "equation": null,
+      "diagramDescription": null,
+      "voiceAudioUrl": null,
+      "voiceDurationSec": null
+    },
+    {
+      "id": "s2",
+      "order": 2,
+      "sceneType": "BRAND_INTRO",
+      "title": "SmartPrepAfrica",
+      "estimatedDurationSec": 2,
+      "narration": null,
+      "onScreenText": null,
+      "equation": null,
+      "diagramDescription": null,
+      "voiceAudioUrl": null,
+      "voiceDurationSec": null
+    },
+    {
+      "id": "s3",
+      "order": 3,
+      "sceneType": "DEFINITION",
+      "title": "What Is An Acid?",
+      "estimatedDurationSec": 3,
+      "narration": null,
+      "onScreenText": "A substance that releases H+ ions in water.",
+      "equation": null,
+      "diagramDescription": null,
+      "voiceAudioUrl": null,
+      "voiceDurationSec": null
+    },
+    {
+      "id": "s4",
+      "order": 4,
+      "sceneType": "EQUATION",
+      "title": "Neutralization Reaction",
+      "estimatedDurationSec": 3,
+      "narration": null,
+      "onScreenText": null,
+      "equation": "HCl + NaOH \\rightarrow NaCl + H_2O",
+      "diagramDescription": null,
+      "voiceAudioUrl": null,
+      "voiceDurationSec": null
+    },
+    {
+      "id": "s5",
+      "order": 5,
+      "sceneType": "DIAGRAM",
+      "title": "pH Scale Diagram",
+      "estimatedDurationSec": 3,
+      "narration": null,
+      "onScreenText": "0 = strongly acidic, 14 = strongly alkaline.",
+      "equation": null,
+      "diagramDescription": "A horizontal pH scale from 0 to 14.",
+      "voiceAudioUrl": null,
+      "voiceDurationSec": null
+    },
+    {
+      "id": "s6",
+      "order": 6,
+      "sceneType": "OUTRO",
+      "title": "See You Next Time",
+      "estimatedDurationSec": 2,
+      "narration": null,
+      "onScreenText": null,
+      "equation": null,
+      "diagramDescription": null,
+      "voiceAudioUrl": null,
+      "voiceDurationSec": null
+    }
+  ]
+}

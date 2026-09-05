@@ -9,7 +9,8 @@ import { isVoiceConfigured } from "@/lib/ai/voice/provider";
 import { openAiVoiceProvider } from "@/lib/ai/voice/openai-provider";
 import { applyPronunciationOverrides } from "@/lib/ai/voice/pronunciation";
 import { isBlobStorageConfigured, uploadAudio } from "@/lib/storage/blob-storage";
-import { isRenderWorkerConfigured } from "@/lib/video/render-worker";
+import { isRemotionConfigured } from "@/lib/video/render-worker";
+import { triggerRemotionRender } from "@/lib/video/remotion-render";
 import type { VideoSceneQuestionSource } from "@prisma/client";
 
 async function projectContext(projectId: string) {
@@ -483,11 +484,14 @@ const RENDERABLE_STATUSES = new Set([
 export async function queueRenderJobAction(projectId: string): Promise<ActionResult> {
   const session = await requireActionPermission("video_studio.create");
 
-  if (!isRenderWorkerConfigured()) {
-    return { ok: false, error: "No render worker is connected yet. Set RENDER_WORKER_SECRET once one is deployed." };
+  if (!isRemotionConfigured()) {
+    return { ok: false, error: "Rendering isn't configured yet — set the REMOTION_* environment variables once a Lambda function and site are deployed." };
   }
 
-  const project = await prisma.videoProject.findUniqueOrThrow({ where: { id: projectId } });
+  const project = await prisma.videoProject.findUniqueOrThrow({
+    where: { id: projectId },
+    include: { subject: true, scenes: true },
+  });
   if (!RENDERABLE_STATUSES.has(project.status)) {
     return { ok: false, error: "Approve the script before rendering." };
   }
@@ -505,6 +509,18 @@ export async function queueRenderJobAction(projectId: string): Promise<ActionRes
     resourceId: job.id,
     result: "SUCCESS",
   });
+
+  try {
+    await triggerRemotionRender(job.id, project);
+    await prisma.videoProject.update({ where: { id: projectId }, data: { status: "RENDERING" } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not start the render.";
+    await prisma.videoRenderJob.update({ where: { id: job.id }, data: { status: "FAILED", errorMessage: message } });
+    await prisma.videoProject.update({ where: { id: projectId }, data: { status: "RENDER_FAILED" } });
+    revalidatePath(`/dashboard/admin/video-studio/${projectId}`);
+    revalidatePath("/dashboard/admin/video-studio/queue");
+    return { ok: false, error: message };
+  }
 
   revalidatePath(`/dashboard/admin/video-studio/${projectId}`);
   revalidatePath("/dashboard/admin/video-studio/queue");
@@ -537,7 +553,16 @@ export async function retryRenderJobAction(jobId: string) {
 
   await prisma.videoRenderJob.update({
     where: { id: jobId },
-    data: { status: "QUEUED", retryCount: { increment: 1 }, errorMessage: null, progressPercent: 0, startedAt: null, completedAt: null },
+    data: {
+      status: "QUEUED",
+      retryCount: { increment: 1 },
+      errorMessage: null,
+      progressPercent: 0,
+      startedAt: null,
+      completedAt: null,
+      remotionRenderId: null,
+      remotionBucketName: null,
+    },
   });
   await logAudit({
     actorUserId: session.user.id,
@@ -547,6 +572,26 @@ export async function retryRenderJobAction(jobId: string) {
     resourceId: jobId,
     result: "SUCCESS",
   });
+
+  // A retry has to actually re-trigger the render — this app has no
+  // worker polling QUEUED jobs on its own, so leaving it there (like the
+  // pre-Remotion design did, back when an external worker was assumed to
+  // notice) would just strand it exactly like an unconfigured render
+  // worker would have.
+  if (isRemotionConfigured()) {
+    const project = await prisma.videoProject.findUniqueOrThrow({
+      where: { id: job.projectId },
+      include: { subject: true, scenes: true },
+    });
+    try {
+      await triggerRemotionRender(jobId, project);
+      await prisma.videoProject.update({ where: { id: job.projectId }, data: { status: "RENDERING" } });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not start the render.";
+      await prisma.videoRenderJob.update({ where: { id: jobId }, data: { status: "FAILED", errorMessage: message } });
+      await prisma.videoProject.update({ where: { id: job.projectId }, data: { status: "RENDER_FAILED" } });
+    }
+  }
 
   revalidatePath(`/dashboard/admin/video-studio/${job.projectId}`);
   revalidatePath("/dashboard/admin/video-studio/queue");
