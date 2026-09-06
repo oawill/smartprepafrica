@@ -65,9 +65,11 @@ export default function SatLandingPage() {
               <p className="text-sm text-brand-text">Set and track a target SAT score →</p>
             </Card>
           </Link>
-          <Card title="Study Plan">
-            <ComingSoon label="A personalized study plan based on your performance" />
-          </Card>
+          <Link href="/international-exams/sat/study-plan">
+            <Card title="Study Plan" className="transition hover:border-border-strong">
+              <p className="text-sm text-brand-text">Get a personalized study plan →</p>
+            </Card>
+          </Link>
           <Card title="AI Tutor">
             <ComingSoon label="Ask SmartPrep AI about any question" />
           </Card>
