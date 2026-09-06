@@ -39,23 +39,26 @@ function useElapsedTime() {
 export function SatSessionRunner({
   attemptId,
   items,
+  initialIndex = 0,
   onSaveAnswer,
   onSubmit,
   onToggleFlag,
 }: {
   attemptId: string;
   items: SatSessionItem[];
+  initialIndex?: number;
   onSaveAnswer: (itemId: string, answer: { selectedOption?: string; numericAnswer?: string }) => Promise<void>;
   onSubmit: (attemptId: string) => Promise<void>;
   onToggleFlag?: (itemId: string) => Promise<void>;
 }) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(initialIndex);
   const [answers, setAnswers] = useState<Record<string, string | null>>(
     Object.fromEntries(items.map((i) => [i.itemId, i.selectedOption ?? i.numericAnswer]))
   );
   const [flagged, setFlagged] = useState<Record<string, boolean>>(
     Object.fromEntries(items.map((i) => [i.itemId, i.flagged]))
   );
+  const [saveFailed, setSaveFailed] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
   const elapsed = useElapsedTime();
 
@@ -73,19 +76,40 @@ export function SatSessionRunner({
     });
   }
 
+  /** Autosave hardening: a save that fails (dropped connection, etc.) is
+   * surfaced rather than silently trusted — the optimistic UI already
+   * shows the answer as selected, so a failure must be visible or the
+   * student would believe an unsaved answer was recorded. */
+  function persistAnswer(itemId: string, answer: { selectedOption?: string; numericAnswer?: string }) {
+    startTransition(async () => {
+      try {
+        await onSaveAnswer(itemId, answer);
+        setSaveFailed((prev) => ({ ...prev, [itemId]: false }));
+      } catch {
+        setSaveFailed((prev) => ({ ...prev, [itemId]: true }));
+      }
+    });
+  }
+
   function selectOption(optionKey: string) {
     setAnswers((prev) => ({ ...prev, [current.itemId]: optionKey }));
-    startTransition(async () => {
-      await onSaveAnswer(current.itemId, { selectedOption: optionKey });
-    });
+    persistAnswer(current.itemId, { selectedOption: optionKey });
   }
 
   function saveNumericAnswer() {
     const value = (answers[current.itemId] ?? "").trim();
     if (!value) return;
-    startTransition(async () => {
-      await onSaveAnswer(current.itemId, { numericAnswer: value });
-    });
+    persistAnswer(current.itemId, { numericAnswer: value });
+  }
+
+  function retrySave() {
+    const value = answers[current.itemId];
+    if (!value) return;
+    if (isNumeric) {
+      persistAnswer(current.itemId, { numericAnswer: value });
+    } else {
+      persistAnswer(current.itemId, { selectedOption: value });
+    }
   }
 
   function submit() {
@@ -129,6 +153,15 @@ export function SatSessionRunner({
       <div className="mt-6 text-lg font-medium text-text-primary">
         <MessageContent content={current.prompt} />
       </div>
+
+      {saveFailed[current.itemId] && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-danger/40 bg-danger-surface px-3 py-2 text-xs text-danger">
+          <span>Your last answer didn&apos;t save — check your connection.</span>
+          <button type="button" onClick={retrySave} className="font-medium underline">
+            Retry
+          </button>
+        </div>
+      )}
 
       {isNumeric ? (
         <div className="mt-4 flex items-center gap-2">

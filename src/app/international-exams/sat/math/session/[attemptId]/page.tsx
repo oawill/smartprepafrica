@@ -5,6 +5,7 @@ import { isSatEnabled } from "@/lib/sat/config";
 import { SatSessionRunner } from "@/components/sat/sat-session-runner";
 import { saveMathAnswer, submitMathAttempt } from "@/app/international-exams/sat/math/actions";
 import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
+import { firstUnansweredIndex } from "@/lib/sat/session-helpers";
 
 export default async function SatMathSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
@@ -34,6 +35,7 @@ export default async function SatMathSessionPage({ params }: { params: Promise<{
     <SatSessionRunner
       attemptId={attempt.id}
       items={items}
+      initialIndex={firstUnansweredIndex(items)}
       onSaveAnswer={saveMathAnswer}
       onSubmit={submitMathAttempt}
       onToggleFlag={toggleSatFlag}

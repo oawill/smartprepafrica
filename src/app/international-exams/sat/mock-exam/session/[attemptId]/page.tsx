@@ -12,6 +12,8 @@ import {
   startMockExamMathSection,
 } from "@/app/international-exams/sat/mock-exam/actions";
 import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
+import { computeRemainingModuleSec } from "@/lib/sat/mock-exam-service";
+import { firstUnansweredIndex } from "@/lib/sat/session-helpers";
 
 export default async function SatMockExamSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
@@ -46,6 +48,11 @@ export default async function SatMockExamSessionPage({ params }: { params: Promi
     }));
   }
 
+  const remainingSec = computeRemainingModuleSec(
+    attempt.currentModuleStartedAt,
+    SAT_CONFIG.mockExam.moduleTimeLimitSec
+  );
+
   // R&W is done once its composite section score is set — submitting
   // Module 2 is what sets it. Until then, we're always in R&W: Module 2
   // if it exists, otherwise Module 1 (always created at attempt start).
@@ -55,12 +62,20 @@ export default async function SatMockExamSessionPage({ params }: { params: Promi
       "use server";
       await submitMockExamAttemptModule(attemptIdArg, "READING_WRITING", inModule2 ? 2 : 1);
     }
+    // Autosave hardening: the module's time fully elapsed while the
+    // student was away — submit what they had rather than render a
+    // countdown stuck at zero.
+    if (remainingSec <= 0) {
+      await submitMockExamAttemptModule(attemptId, "READING_WRITING", inModule2 ? 2 : 1);
+    }
+    const currentItems = inModule2 ? rwM2 : rwM1;
     return (
       <SatMockExamRunner
         attemptId={attempt.id}
         moduleLabel={`${SAT_SECTION_LABELS.READING_WRITING} — Module ${inModule2 ? 2 : 1}`}
-        timeLimitSec={SAT_CONFIG.mockExam.moduleTimeLimitSec}
-        items={toRunnerItems(inModule2 ? rwM2 : rwM1)}
+        initialRemainingSec={remainingSec}
+        initialIndex={firstUnansweredIndex(currentItems)}
+        items={toRunnerItems(currentItems)}
         onSaveAnswer={saveMockExamAnswer}
         onSubmitModule={handleSubmit}
         onToggleFlag={toggleSatFlag}
@@ -110,12 +125,17 @@ export default async function SatMockExamSessionPage({ params }: { params: Promi
     "use server";
     await submitMockExamAttemptModule(attemptIdArg, "MATH", mathInModule2 ? 2 : 1);
   }
+  if (remainingSec <= 0) {
+    await submitMockExamAttemptModule(attemptId, "MATH", mathInModule2 ? 2 : 1);
+  }
+  const currentMathItems = mathInModule2 ? mathM2 : mathM1;
   return (
     <SatMockExamRunner
       attemptId={attempt.id}
       moduleLabel={`${SAT_SECTION_LABELS.MATH} — Module ${mathInModule2 ? 2 : 1}`}
-      timeLimitSec={SAT_CONFIG.mockExam.moduleTimeLimitSec}
-      items={toRunnerItems(mathInModule2 ? mathM2 : mathM1)}
+      initialRemainingSec={remainingSec}
+      initialIndex={firstUnansweredIndex(currentMathItems)}
+      items={toRunnerItems(currentMathItems)}
       onSaveAnswer={saveMockExamAnswer}
       onSubmitModule={handleSubmitMath}
       onToggleFlag={toggleSatFlag}

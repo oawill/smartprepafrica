@@ -5,6 +5,7 @@ import { isSatEnabled } from "@/lib/sat/config";
 import { SatSessionRunner } from "@/components/sat/sat-session-runner";
 import { saveReadingWritingAnswer, submitReadingWritingAttempt } from "@/app/international-exams/sat/reading-writing/actions";
 import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
+import { firstUnansweredIndex } from "@/lib/sat/session-helpers";
 
 export default async function SatReadingWritingSessionPage({
   params,
@@ -38,6 +39,7 @@ export default async function SatReadingWritingSessionPage({
     <SatSessionRunner
       attemptId={attempt.id}
       items={items}
+      initialIndex={firstUnansweredIndex(items)}
       onSaveAnswer={saveReadingWritingAnswer}
       onSubmit={submitReadingWritingAttempt}
       onToggleFlag={toggleSatFlag}

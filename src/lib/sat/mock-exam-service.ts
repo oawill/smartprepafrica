@@ -15,6 +15,18 @@ const DIFFICULTY_POOL: Record<"EASIER" | "HARDER", ("EASY" | "MEDIUM" | "HARD")[
   HARDER: ["MEDIUM", "HARD"],
 };
 
+/** Autosave hardening: the countdown a refresh/disconnect would
+ * otherwise reset to full time is instead recomputed from the
+ * server-persisted module start timestamp, so the actual remaining
+ * time survives. Never negative — a module whose time has fully
+ * elapsed while the student was away returns 0, which the session page
+ * treats as "submit now" rather than rendering a stuck countdown. */
+export function computeRemainingModuleSec(moduleStartedAt: Date | null, timeLimitSec: number): number {
+  if (!moduleStartedAt) return timeLimitSec;
+  const elapsedSec = Math.floor((new Date().getTime() - moduleStartedAt.getTime()) / 1000);
+  return Math.max(0, timeLimitSec - elapsedSec);
+}
+
 /** Mock Exam starts with Reading & Writing Module 1 only — Math Module 1
  * and every Module 2 are created lazily as the student advances, since
  * Module 2's content pool depends on the adaptive routing decision (which
@@ -33,6 +45,7 @@ export async function createMockExamAttempt(userId: string): Promise<string> {
     data: {
       userId,
       kind: "MOCK_EXAM",
+      currentModuleStartedAt: new Date(),
       items: { create: module1.map((c, i) => ({ contentId: c.id, module: 1, order: i })) },
     },
   });
@@ -58,6 +71,7 @@ export async function startMockExamMathModule1(attemptId: string, userId: string
   await prisma.satAttemptItem.createMany({
     data: module1.map((c, i) => ({ attemptId, contentId: c.id, module: 1, order: existingCount + i })),
   });
+  await prisma.satAttempt.update({ where: { id: attemptId }, data: { currentModuleStartedAt: new Date() } });
 }
 
 /** Scores the just-finished module. For Module 1, routes to an adaptive
@@ -99,7 +113,10 @@ export async function submitMockExamModule(
     await prisma.satAttemptItem.createMany({
       data: module2.map((c, i) => ({ attemptId, contentId: c.id, module: 2, order: existingCount + i })),
     });
-    await prisma.satAttempt.update({ where: { id: attemptId }, data: { [TIER_FIELD[section]]: tier } });
+    await prisma.satAttempt.update({
+      where: { id: attemptId },
+      data: { [TIER_FIELD[section]]: tier, currentModuleStartedAt: new Date() },
+    });
     return;
   }
 

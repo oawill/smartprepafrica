@@ -2566,6 +2566,15 @@ model SatAttempt {
   readingWritingModule2Tier String?
   mathModule2Tier            String?
 
+  // Set each time a new Mock Exam module begins (attempt creation, R&W
+  // Module 2 routing, the Math-section break ending, Math Module 2
+  // routing) so the countdown survives a refresh/disconnect — the
+  // session page computes remaining time from this timestamp server-side
+  // rather than trusting client-side countdown state, which resets to
+  // full time on every reload. Unused for Skill Practice/Diagnostic,
+  // which have no countdown.
+  currentModuleStartedAt DateTime?
+
   items SatAttemptItem[]
 
   @@index([userId, kind])

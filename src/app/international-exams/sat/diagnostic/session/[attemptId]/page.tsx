@@ -5,6 +5,7 @@ import { isSatEnabled } from "@/lib/sat/config";
 import { SatSessionRunner } from "@/components/sat/sat-session-runner";
 import { saveDiagnosticAnswer, submitSatDiagnostic } from "@/app/international-exams/sat/diagnostic/actions";
 import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
+import { firstUnansweredIndex } from "@/lib/sat/session-helpers";
 
 export default async function SatDiagnosticSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
@@ -34,6 +35,7 @@ export default async function SatDiagnosticSessionPage({ params }: { params: Pro
     <SatSessionRunner
       attemptId={attempt.id}
       items={items}
+      initialIndex={firstUnansweredIndex(items)}
       onSaveAnswer={saveDiagnosticAnswer}
       onSubmit={submitSatDiagnostic}
       onToggleFlag={toggleSatFlag}
