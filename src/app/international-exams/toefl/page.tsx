@@ -41,7 +41,9 @@ export default function ToeflLandingPage() {
                 ? "/international-exams/toefl/reading"
                 : skill === "LISTENING"
                   ? "/international-exams/toefl/listening"
-                  : null;
+                  : skill === "WRITING"
+                    ? "/international-exams/toefl/writing"
+                    : null;
             return href ? (
               <Link key={skill} href={href}>
                 <Card title={TOEFL_SKILL_LABELS[skill]} className="transition hover:border-border-strong">

@@ -18,6 +18,10 @@ export const TOEFL_CONFIG = {
     READING: { defaultTimeSec: null as number | null, defaultQuestionCount: null as number | null },
     LISTENING: { defaultTimeSec: null as number | null, defaultQuestionCount: null as number | null },
     SPEAKING: { prepTimeSec: null as number | null, recordTimeSec: null as number | null },
-    WRITING: { timeSec: null as number | null, minWords: null as number | null },
+    // Real TOEFL independent-writing-task timing/word-count minimum — a
+    // factual exam-format parameter, not ETS's copyrighted question
+    // content, so stating it directly is fine (same footing as the
+    // 0-6 score scale above).
+    WRITING: { timeSec: 1800 as number | null, minWords: 300 as number | null },
   },
 } as const;

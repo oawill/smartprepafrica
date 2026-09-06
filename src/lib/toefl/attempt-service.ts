@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { computeSkillScore } from "@/lib/toefl/scoring";
+import { countWords } from "@/lib/toefl/text";
 import type { ToeflSkill } from "@prisma/client";
 
 /** Every skill's practice attempt writes its score into a different
@@ -50,6 +51,29 @@ export async function createSkillPracticeAttempt(userId: string, skill: ToeflSki
   return attempt.id;
 }
 
+/** Reading/Listening bundle every published item into one attempt (answer
+ * a set of N). Writing and Speaking don't — a student picks exactly one
+ * prompt, responds, submits — so this creates a single-item attempt
+ * instead. Shared here (not duplicated per skill) since Speaking needs
+ * the identical shape in the next step. */
+export async function createSingleItemAttempt(userId: string, skill: ToeflSkill, contentId: string): Promise<string> {
+  const content = await prisma.toeflContent.findUnique({ where: { id: contentId } });
+  if (!content || content.status !== "PUBLISHED" || content.skill !== skill) {
+    throw new Error("That prompt isn't available.");
+  }
+
+  const attempt = await prisma.toeflAttempt.create({
+    data: {
+      userId,
+      kind: "SKILL_PRACTICE",
+      skill,
+      items: { create: [{ contentId, order: 0 }] },
+    },
+  });
+
+  return attempt.id;
+}
+
 /** Shared save-answer logic for MCQ skills (Reading, Listening). Speaking
  * and Writing record free-form responses instead and will need their own
  * recording functions when those steps land. */
@@ -80,5 +104,36 @@ export async function submitSkillAttempt(attemptId: string, userId: string, skil
   await prisma.toeflAttempt.update({
     where: { id: attemptId },
     data: { submittedAt: new Date(), [SKILL_SCORE_FIELD[skill]]: score },
+  });
+}
+
+export async function saveWritingDraft(itemId: string, userId: string, text: string) {
+  const item = await prisma.toeflAttemptItem.findUniqueOrThrow({
+    where: { id: itemId },
+    include: { attempt: { select: { userId: true, submittedAt: true } } },
+  });
+  if (item.attempt.userId !== userId) throw new Error("Attempt not found.");
+  if (item.attempt.submittedAt) throw new Error("This attempt has already been submitted.");
+
+  await prisma.toeflAttemptItem.update({
+    where: { id: itemId },
+    data: { writingText: text, writingWordCount: countWords(text) },
+  });
+}
+
+/** No score is computed here — there's no writing evaluator yet (Step 13).
+ * Marking the item UNAVAILABLE rather than leaving evalStatus at its
+ * NOT_EVALUATED default makes the "no automated feedback yet" state
+ * explicit and queryable, not just an absence of data. */
+export async function submitWritingAttempt(attemptId: string, userId: string) {
+  await assertOwnedInProgressToeflAttempt(attemptId, userId);
+
+  await prisma.toeflAttemptItem.updateMany({
+    where: { attemptId },
+    data: { evalStatus: "UNAVAILABLE" },
+  });
+  await prisma.toeflAttempt.update({
+    where: { id: attemptId },
+    data: { submittedAt: new Date() },
   });
 }
