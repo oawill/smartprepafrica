@@ -47,6 +47,7 @@ export function SatMockExamRunner({
   items,
   onSaveAnswer,
   onSubmitModule,
+  onToggleFlag,
 }: {
   attemptId: string;
   moduleLabel: string;
@@ -54,10 +55,14 @@ export function SatMockExamRunner({
   items: SatSessionItem[];
   onSaveAnswer: (itemId: string, answer: { selectedOption?: string; numericAnswer?: string }) => Promise<void>;
   onSubmitModule: (attemptId: string) => Promise<void>;
+  onToggleFlag?: (itemId: string) => Promise<void>;
 }) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | null>>(
     Object.fromEntries(items.map((i) => [i.itemId, i.selectedOption ?? i.numericAnswer]))
+  );
+  const [flagged, setFlagged] = useState<Record<string, boolean>>(
+    Object.fromEntries(items.map((i) => [i.itemId, i.flagged]))
   );
   const [isPending, startTransition] = useTransition();
 
@@ -90,15 +95,38 @@ export function SatMockExamRunner({
     });
   }
 
+  function toggleFlag() {
+    if (!onToggleFlag) return;
+    setFlagged((prev) => ({ ...prev, [current.itemId]: !prev[current.itemId] }));
+    startTransition(async () => {
+      await onToggleFlag(current.itemId);
+    });
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <div className="flex items-center justify-between text-xs text-text-muted">
         <span>
           {moduleLabel} · Question {index + 1} of {items.length}
         </span>
-        <span>
-          {answeredCount} / {items.length} answered · {remaining} remaining
-        </span>
+        <div className="flex items-center gap-3">
+          <span>
+            {answeredCount} / {items.length} answered · {remaining} remaining
+          </span>
+          {onToggleFlag && (
+            <button
+              type="button"
+              onClick={toggleFlag}
+              className={`rounded-full border px-2.5 py-1 text-xs ${
+                flagged[current.itemId]
+                  ? "border-warning/50 bg-warning-surface text-warning"
+                  : "border-border-strong text-text-secondary hover:border-text-muted"
+              }`}
+            >
+              {flagged[current.itemId] ? "🚩 Flagged" : "Flag for review"}
+            </button>
+          )}
+        </div>
       </div>
 
       {current.passage && (

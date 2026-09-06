@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isSatEnabled } from "@/lib/sat/config";
 import { SatSessionRunner } from "@/components/sat/sat-session-runner";
 import { saveDiagnosticAnswer, submitSatDiagnostic } from "@/app/international-exams/sat/diagnostic/actions";
+import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
 
 export default async function SatDiagnosticSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
@@ -26,6 +27,7 @@ export default async function SatDiagnosticSessionPage({ params }: { params: Pro
     options: item.content.options,
     selectedOption: item.selectedOption,
     numericAnswer: item.numericAnswer,
+    flagged: item.flagged,
   }));
 
   return (
@@ -34,6 +36,7 @@ export default async function SatDiagnosticSessionPage({ params }: { params: Pro
       items={items}
       onSaveAnswer={saveDiagnosticAnswer}
       onSubmit={submitSatDiagnostic}
+      onToggleFlag={toggleSatFlag}
     />
   );
 }

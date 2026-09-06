@@ -11,6 +11,7 @@ import {
   submitMockExamAttemptModule,
   startMockExamMathSection,
 } from "@/app/international-exams/sat/mock-exam/actions";
+import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
 
 export default async function SatMockExamSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
@@ -41,6 +42,7 @@ export default async function SatMockExamSessionPage({ params }: { params: Promi
       options: item.content.options,
       selectedOption: item.selectedOption,
       numericAnswer: item.numericAnswer,
+      flagged: item.flagged,
     }));
   }
 
@@ -61,6 +63,7 @@ export default async function SatMockExamSessionPage({ params }: { params: Promi
         items={toRunnerItems(inModule2 ? rwM2 : rwM1)}
         onSaveAnswer={saveMockExamAnswer}
         onSubmitModule={handleSubmit}
+        onToggleFlag={toggleSatFlag}
       />
     );
   }
@@ -115,6 +118,7 @@ export default async function SatMockExamSessionPage({ params }: { params: Promi
       items={toRunnerItems(mathInModule2 ? mathM2 : mathM1)}
       onSaveAnswer={saveMockExamAnswer}
       onSubmitModule={handleSubmitMath}
+      onToggleFlag={toggleSatFlag}
     />
   );
 }

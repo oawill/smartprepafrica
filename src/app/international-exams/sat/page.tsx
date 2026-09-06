@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Card } from "@/components/dashboard/card";
-import { ComingSoon } from "@/components/sat/coming-soon";
 import { isSatEnabled } from "@/lib/sat/config";
 
 export const metadata: Metadata = {
@@ -72,10 +71,15 @@ export default function SatLandingPage() {
               <p className="text-sm text-brand-text">Get a personalized study plan →</p>
             </Card>
           </Link>
-          <Card title="AI Tutor">
-            <ComingSoon label="Ask SmartPrep AI about any question" />
-          </Card>
+          <Link href="/international-exams/sat/review">
+            <Card title="Review" className="transition hover:border-border-strong">
+              <p className="text-sm text-brand-text">Review past questions by outcome →</p>
+            </Card>
+          </Link>
         </div>
+        <p className="mt-4 text-xs text-text-muted">
+          Ask SmartPrep AI is available directly on any question you get wrong in your results and review pages.
+        </p>
       </div>
     </div>
   );

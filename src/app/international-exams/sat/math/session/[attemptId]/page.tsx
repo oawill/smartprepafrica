@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isSatEnabled } from "@/lib/sat/config";
 import { SatSessionRunner } from "@/components/sat/sat-session-runner";
 import { saveMathAnswer, submitMathAttempt } from "@/app/international-exams/sat/math/actions";
+import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
 
 export default async function SatMathSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
@@ -26,9 +27,16 @@ export default async function SatMathSessionPage({ params }: { params: Promise<{
     options: item.content.options,
     selectedOption: item.selectedOption,
     numericAnswer: item.numericAnswer,
+    flagged: item.flagged,
   }));
 
   return (
-    <SatSessionRunner attemptId={attempt.id} items={items} onSaveAnswer={saveMathAnswer} onSubmit={submitMathAttempt} />
+    <SatSessionRunner
+      attemptId={attempt.id}
+      items={items}
+      onSaveAnswer={saveMathAnswer}
+      onSubmit={submitMathAttempt}
+      onToggleFlag={toggleSatFlag}
+    />
   );
 }

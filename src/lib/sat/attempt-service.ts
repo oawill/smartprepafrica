@@ -88,6 +88,19 @@ export async function recordAnswer(
   });
 }
 
+/** Toggles flagged on/off — allowed both mid-attempt and after
+ * submission, since Review Mode needs to flag/unflag items from past,
+ * already-completed attempts too, not just the one in progress. */
+export async function toggleFlag(itemId: string, userId: string) {
+  const item = await prisma.satAttemptItem.findUniqueOrThrow({
+    where: { id: itemId },
+    select: { flagged: true, attempt: { select: { userId: true } } },
+  });
+  if (item.attempt.userId !== userId) throw new Error("Item not found.");
+
+  await prisma.satAttemptItem.update({ where: { id: itemId }, data: { flagged: !item.flagged } });
+}
+
 export async function submitSkillAttempt(attemptId: string, userId: string, section: SatSection) {
   await assertOwnedInProgressSatAttempt(attemptId, userId);
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isSatEnabled } from "@/lib/sat/config";
 import { SatSessionRunner } from "@/components/sat/sat-session-runner";
 import { saveReadingWritingAnswer, submitReadingWritingAttempt } from "@/app/international-exams/sat/reading-writing/actions";
+import { toggleSatFlag } from "@/app/international-exams/sat/shared-actions";
 
 export default async function SatReadingWritingSessionPage({
   params,
@@ -30,6 +31,7 @@ export default async function SatReadingWritingSessionPage({
     options: item.content.options,
     selectedOption: item.selectedOption,
     numericAnswer: item.numericAnswer,
+    flagged: item.flagged,
   }));
 
   return (
@@ -38,6 +40,7 @@ export default async function SatReadingWritingSessionPage({
       items={items}
       onSaveAnswer={saveReadingWritingAnswer}
       onSubmit={submitReadingWritingAttempt}
+      onToggleFlag={toggleSatFlag}
     />
   );
 }
