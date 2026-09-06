@@ -28,13 +28,18 @@ export default async function ToeflDashboardPage() {
   });
 
   const submitted = attempts.filter((a) => a.submittedAt !== null);
-  const latestWithScore = submitted.find((a) => a.overallScore !== null);
-
+  // Already ordered most-recent-first (orderBy startedAt desc above). Each
+  // skill's score comes from the most recent attempt that actually set
+  // it — a single-skill practice attempt only ever fills in its own
+  // score field, so picking one row for all four (as Phase 1 did) would
+  // hide every skill practice result. Overall stays sourced only from a
+  // DIAGNOSTIC/MOCK_EXAM row, never averaged from partial skill data.
+  const overallSource = submitted.find((a) => a.overallScore !== null);
   const skillScores: Record<ToeflSkill, number | null> = {
-    READING: latestWithScore?.readingScore ?? null,
-    LISTENING: latestWithScore?.listeningScore ?? null,
-    SPEAKING: latestWithScore?.speakingScore ?? null,
-    WRITING: latestWithScore?.writingScore ?? null,
+    READING: submitted.find((a) => a.readingScore !== null)?.readingScore ?? null,
+    LISTENING: submitted.find((a) => a.listeningScore !== null)?.listeningScore ?? null,
+    SPEAKING: submitted.find((a) => a.speakingScore !== null)?.speakingScore ?? null,
+    WRITING: submitted.find((a) => a.writingScore !== null)?.writingScore ?? null,
   };
 
   const scoredSkills = (Object.entries(skillScores) as [ToeflSkill, number | null][]).filter(
@@ -86,7 +91,7 @@ export default async function ToeflDashboardPage() {
       <p className="mt-2 text-sm text-text-secondary">Estimated SmartPrepAfrica TOEFL Readiness Score.</p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <SkillReadinessCard label="Overall" score={latestWithScore?.overallScore ?? null} />
+        <SkillReadinessCard label="Overall" score={overallSource?.overallScore ?? null} />
         <SkillReadinessCard label="Reading" score={skillScores.READING} />
         <SkillReadinessCard label="Listening" score={skillScores.LISTENING} />
         <SkillReadinessCard label="Speaking" score={skillScores.SPEAKING} />
