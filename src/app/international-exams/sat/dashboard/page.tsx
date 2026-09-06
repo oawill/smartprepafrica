@@ -8,6 +8,7 @@ import { SatSectionScoreCard } from "@/components/sat/sat-section-score-card";
 import { SatEmptyState } from "@/components/sat/sat-empty-state";
 import { isSatEnabled, SAT_CONFIG } from "@/lib/sat/config";
 import { SAT_SECTION_LABELS } from "@/lib/sat/types";
+import { getScoreGoal } from "@/lib/sat/score-goal-service";
 
 export const metadata: Metadata = {
   title: "SAT Dashboard",
@@ -20,11 +21,14 @@ export default async function SatDashboardPage() {
   if (!session) redirect("/login");
   const userId = session.user.id;
 
-  const attempts = await prisma.satAttempt.findMany({
-    where: { userId },
-    orderBy: { startedAt: "desc" },
-    include: { items: { include: { content: true } } },
-  });
+  const [attempts, goal] = await Promise.all([
+    prisma.satAttempt.findMany({
+      where: { userId },
+      orderBy: { startedAt: "desc" },
+      include: { items: { include: { content: true } } },
+    }),
+    getScoreGoal(userId),
+  ]);
 
   const submitted = attempts.filter((a) => a.submittedAt !== null);
   // Most-recent-first (orderBy startedAt desc). Each section score comes
@@ -97,6 +101,26 @@ export default async function SatDashboardPage() {
         </Card>
         <SatSectionScoreCard label={SAT_SECTION_LABELS.READING_WRITING} score={readingWritingScore} />
         <SatSectionScoreCard label={SAT_SECTION_LABELS.MATH} score={mathScore} />
+      </div>
+
+      <div className="mt-4">
+        <Card title="Target Score">
+          {goal ? (
+            <p className="text-sm text-text-secondary">
+              <span className="text-lg font-semibold text-text-primary">{goal.targetScore}</span> /{" "}
+              {SAT_CONFIG.scoreScale.compositeMax}
+              {goal.testDate &&
+                ` · Test date: ${goal.testDate.toLocaleDateString("en-NG", { timeZone: "UTC" })}`}
+            </p>
+          ) : (
+            <p className="text-sm text-text-secondary">
+              No target set yet.{" "}
+              <Link href="/international-exams/sat/score-goal" className="text-brand-text hover:underline">
+                Set a score goal →
+              </Link>
+            </p>
+          )}
+        </Card>
       </div>
 
       {!hasData ? (

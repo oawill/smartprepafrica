@@ -145,6 +145,7 @@ model User {
   youtubeConnections YouTubeConnection[]
   toeflAttempts      ToeflAttempt[]
   satAttempts        SatAttempt[]
+  satScoreGoal       SatScoreGoal?
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -2580,4 +2581,18 @@ model SatAttemptItem {
   flagged        Boolean @default(false)
 
   @@unique([attemptId, contentId])
+}
+
+/** One goal per student — target composite score and, optionally, a
+ * test date. Purely informational (current vs. target, days
+ * remaining): spec explicitly forbids promising a particular score
+ * improvement, so no projection/trend logic lives here. */
+model SatScoreGoal {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @unique
+  targetScore Int
+  testDate    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

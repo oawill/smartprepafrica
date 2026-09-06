@@ -60,9 +60,11 @@ export default function SatLandingPage() {
               View your SAT dashboard →
             </Link>
           </Card>
-          <Card title="Score Goal">
-            <ComingSoon label="Set and track a target SAT score" />
-          </Card>
+          <Link href="/international-exams/sat/score-goal">
+            <Card title="Score Goal" className="transition hover:border-border-strong">
+              <p className="text-sm text-brand-text">Set and track a target SAT score →</p>
+            </Card>
+          </Link>
           <Card title="Study Plan">
             <ComingSoon label="A personalized study plan based on your performance" />
           </Card>
