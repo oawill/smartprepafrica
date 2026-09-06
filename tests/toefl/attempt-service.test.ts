@@ -3,8 +3,9 @@ import assert from "node:assert/strict";
 import {
   SKILL_SCORE_FIELD,
   submitFreeformAttempt,
-  submitDiagnosticAttempt,
+  submitExamAttempt,
   saveSpeakingRecording,
+  createMockExamAttempt,
 } from "../../src/lib/toefl/attempt-service";
 import { TOEFL_SKILLS } from "../../src/lib/toefl/types";
 
@@ -36,11 +37,17 @@ describe("submitFreeformAttempt", () => {
 });
 
 describe("Step 9 exports", () => {
-  test("submitDiagnosticAttempt is exported as a function", () => {
-    assert.equal(typeof submitDiagnosticAttempt, "function");
+  test("submitExamAttempt is exported as a function (post-rename from submitDiagnosticAttempt)", () => {
+    assert.equal(typeof submitExamAttempt, "function");
   });
 
   test("saveSpeakingRecording is exported as a function (shared by Speaking and Diagnostic)", () => {
     assert.equal(typeof saveSpeakingRecording, "function");
+  });
+});
+
+describe("Step 10 exports", () => {
+  test("createMockExamAttempt is exported as a function", () => {
+    assert.equal(typeof createMockExamAttempt, "function");
   });
 });

@@ -4,12 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { isToeflEnabled, TOEFL_CONFIG } from "@/lib/toefl/config";
 import { ExamRunner, type ExamMcqItem, type ExamWritingItem, type ExamSpeakingItem } from "@/components/toefl/diagnostic-runner";
 import {
-  saveDiagnosticAnswer,
-  submitDiagnosticSpeakingRecording,
-  finalizeDiagnosticAttempt,
-} from "@/app/international-exams/toefl/diagnostic/actions";
+  saveMockExamAnswer,
+  saveMockExamSpeakingRecording,
+  submitMockExamSpeakingRecording,
+  finalizeMockExam,
+} from "@/app/international-exams/toefl/mock-exam/actions";
 
-export default async function ToeflDiagnosticSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
+export default async function ToeflMockExamSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isToeflEnabled()) notFound();
   const session = await auth();
   if (!session) redirect("/login");
@@ -20,7 +21,7 @@ export default async function ToeflDiagnosticSessionPage({ params }: { params: P
     include: { items: { orderBy: { order: "asc" }, include: { content: true } } },
   });
   if (!attempt || attempt.userId !== session.user.id) notFound();
-  if (attempt.submittedAt) redirect(`/international-exams/toefl/diagnostic/results/${attemptId}`);
+  if (attempt.submittedAt) redirect(`/international-exams/toefl/mock-exam/results/${attemptId}`);
 
   const mcqItems: ExamMcqItem[] = attempt.items
     .filter((i) => i.content.skill === "READING" || i.content.skill === "LISTENING")
@@ -59,12 +60,13 @@ export default async function ToeflDiagnosticSessionPage({ params }: { params: P
       attemptId={attempt.id}
       startedAt={attempt.startedAt.toISOString()}
       mcqItems={mcqItems}
+      mcqTimeLimitSec={TOEFL_CONFIG.sections.READING.defaultTimeSec}
       writingItems={writingItems}
       speakingItems={speakingItems}
-      onSaveAnswer={saveDiagnosticAnswer}
-      onSaveSpeaking={submitDiagnosticSpeakingRecording}
-      onSubmitSpeaking={submitDiagnosticSpeakingRecording}
-      onFinalize={finalizeDiagnosticAttempt}
+      onSaveAnswer={saveMockExamAnswer}
+      onSaveSpeaking={saveMockExamSpeakingRecording}
+      onSubmitSpeaking={submitMockExamSpeakingRecording}
+      onFinalize={finalizeMockExam}
     />
   );
 }

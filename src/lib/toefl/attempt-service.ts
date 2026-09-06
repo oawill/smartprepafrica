@@ -84,6 +84,37 @@ export async function createDiagnosticAttempt(userId: string): Promise<string> {
   return attempt.id;
 }
 
+/** Same composition as createDiagnosticAttempt but full-length: EVERY
+ * published Writing and Speaking prompt (not just one preview each), for
+ * a genuine full-skill mock exam rather than a quick readiness check.
+ * Kept as its own function rather than parameterizing
+ * createDiagnosticAttempt — each stays simple and readable, matching how
+ * createSkillPracticeAttempt/createSingleItemAttempt already coexist as
+ * separate functions for different attempt shapes. */
+export async function createMockExamAttempt(userId: string): Promise<string> {
+  const [reading, listening, writing, speaking] = await Promise.all([
+    prisma.toeflContent.findMany({ where: { skill: "READING", status: "PUBLISHED" }, orderBy: { createdAt: "asc" } }),
+    prisma.toeflContent.findMany({ where: { skill: "LISTENING", status: "PUBLISHED" }, orderBy: { createdAt: "asc" } }),
+    prisma.toeflContent.findMany({ where: { skill: "WRITING", status: "PUBLISHED" }, orderBy: { createdAt: "asc" } }),
+    prisma.toeflContent.findMany({ where: { skill: "SPEAKING", status: "PUBLISHED" }, orderBy: { createdAt: "asc" } }),
+  ]);
+  const ordered = [...reading, ...listening, ...writing, ...speaking];
+  if (ordered.length === 0) {
+    throw new Error("Mock exam content isn't available yet.");
+  }
+
+  const attempt = await prisma.toeflAttempt.create({
+    data: {
+      userId,
+      kind: "MOCK_EXAM",
+      skill: null,
+      items: { create: ordered.map((c, i) => ({ contentId: c.id, order: i })) },
+    },
+  });
+
+  return attempt.id;
+}
+
 /** Reading/Listening bundle every published item into one attempt (answer
  * a set of N). Writing and Speaking don't — a student picks exactly one
  * prompt, responds, submits — so this creates a single-item attempt
@@ -210,8 +241,10 @@ export async function saveSpeakingRecording(
 /** Reading/Listening scores come from real correctness, same formula as
  * submitSkillAttempt. Writing/Speaking items are marked UNAVAILABLE (no
  * fake score) — overallScore only ever averages skills that were
- * actually auto-scored, via computeDiagnosticOverallScore. */
-export async function submitDiagnosticAttempt(attemptId: string, userId: string) {
+ * actually auto-scored, via computeDiagnosticOverallScore. Contains no
+ * kind-specific logic, so it's shared by both Diagnostic and Mock Exam
+ * (Step 10) — it just scores whatever Reading/Listening items exist. */
+export async function submitExamAttempt(attemptId: string, userId: string) {
   await assertOwnedInProgressToeflAttempt(attemptId, userId);
 
   const items = await prisma.toeflAttemptItem.findMany({ where: { attemptId }, include: { content: true } });

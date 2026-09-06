@@ -70,7 +70,9 @@ export default function ToeflLandingPage() {
             <ComingSoon label="Focused practice for each of the four skills" />
           </Card>
           <Card title="Mock Exam">
-            <ComingSoon label="A full-length timed practice exam" />
+            <Link href="/international-exams/toefl/mock-exam" className="text-sm text-brand-text hover:underline">
+              Take a full-length timed practice exam →
+            </Link>
           </Card>
           <Card title="Progress">
             <Link href="/international-exams/toefl/dashboard" className="text-sm text-brand-text hover:underline">

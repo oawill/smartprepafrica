@@ -15,8 +15,13 @@ export const TOEFL_CONFIG = {
   scoreScale: { min: 0, max: 6 },
   skills: ["READING", "LISTENING", "SPEAKING", "WRITING"] as const,
   sections: {
-    READING: { defaultTimeSec: null as number | null, defaultQuestionCount: null as number | null },
-    LISTENING: { defaultTimeSec: null as number | null, defaultQuestionCount: null as number | null },
+    // SmartPrepAfrica's own pacing guideline for Mock Exam's Reading/
+    // Listening sections, sized to today's practice-set length — NOT an
+    // official ETS section timing (the real exam's section length varies
+    // with how many passages/question sets it includes, so no single
+    // "real" figure would correspond to our fixed 5-item sets).
+    READING: { defaultTimeSec: 600 as number | null, defaultQuestionCount: null as number | null },
+    LISTENING: { defaultTimeSec: 600 as number | null, defaultQuestionCount: null as number | null },
     // Real TOEFL independent-speaking-task timing — a factual exam-format
     // parameter, same footing as WRITING's timing below.
     SPEAKING: { prepTimeSec: 15 as number | null, recordTimeSec: 45 as number | null },

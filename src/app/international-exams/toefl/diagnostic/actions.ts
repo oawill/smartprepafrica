@@ -7,7 +7,7 @@ import {
   createDiagnosticAttempt,
   recordMcqAnswer,
   saveSpeakingRecording,
-  submitDiagnosticAttempt,
+  submitExamAttempt,
 } from "@/lib/toefl/attempt-service";
 import { prisma } from "@/lib/prisma";
 
@@ -43,7 +43,7 @@ export async function submitDiagnosticSpeakingRecording(itemId: string, formData
 
   const item = await prisma.toeflAttemptItem.findUniqueOrThrow({ where: { id: itemId }, select: { attemptId: true } });
   await saveSpeakingRecording(itemId, session.user.id, { data, contentType: audio.type || "audio/webm", durationSec });
-  await submitDiagnosticAttempt(item.attemptId, session.user.id);
+  await submitExamAttempt(item.attemptId, session.user.id);
   redirect(`/international-exams/toefl/diagnostic/results/${item.attemptId}`);
 }
 
@@ -56,6 +56,6 @@ export async function finalizeDiagnosticAttempt(attemptId: string) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  await submitDiagnosticAttempt(attemptId, session.user.id);
+  await submitExamAttempt(attemptId, session.user.id);
   redirect(`/international-exams/toefl/diagnostic/results/${attemptId}`);
 }
