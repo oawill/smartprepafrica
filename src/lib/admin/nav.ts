@@ -66,7 +66,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   },
   {
     label: "International Exams",
-    items: [{ label: "TOEFL", href: "/dashboard/admin/toefl", permission: "toefl.view" }],
+    items: [
+      { label: "Overview", href: "/dashboard/admin/toefl", permission: "toefl.view" },
+      { label: "Content", href: "/dashboard/admin/toefl/content", permission: "toefl.view" },
+    ],
   },
   {
     label: "Users",

@@ -44,7 +44,8 @@ export type Permission =
   | "toefl.view"
   | "toefl.create"
   | "toefl.review"
-  | "toefl.publish";
+  | "toefl.publish"
+  | "toefl.archive";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -91,6 +92,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "toefl.create",
   "toefl.review",
   "toefl.publish",
+  "toefl.archive",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -118,6 +120,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "toefl.create",
     "toefl.review",
     "toefl.publish",
+    "toefl.archive",
   ],
   CONTENT_REVIEWER: [
     "questions.view",
@@ -133,6 +136,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "video_studio.review",
     "toefl.view",
     "toefl.review",
+    "toefl.archive",
   ],
   SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "users.view", "courses.view", "courses.approve"],
   USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke"],
