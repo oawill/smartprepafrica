@@ -69,6 +69,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { label: "Overview", href: "/dashboard/admin/toefl", permission: "toefl.view" },
       { label: "Content", href: "/dashboard/admin/toefl/content", permission: "toefl.view" },
+      { label: "Analytics", href: "/dashboard/admin/toefl/analytics", permission: "analytics.view" },
     ],
   },
   {
