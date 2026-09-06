@@ -3,7 +3,7 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { isToeflEnabled } from "@/lib/toefl/config";
-import { createSingleItemAttempt, saveWritingDraft, submitWritingAttempt } from "@/lib/toefl/attempt-service";
+import { createSingleItemAttempt, saveWritingDraft, submitFreeformAttempt } from "@/lib/toefl/attempt-service";
 
 export async function startWritingPractice(contentId: string) {
   if (!isToeflEnabled()) notFound();
@@ -27,6 +27,6 @@ export async function submitWritingAttemptAction(attemptId: string) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  await submitWritingAttempt(attemptId, session.user.id);
+  await submitFreeformAttempt(attemptId, session.user.id);
   redirect(`/international-exams/toefl/writing/results/${attemptId}`);
 }

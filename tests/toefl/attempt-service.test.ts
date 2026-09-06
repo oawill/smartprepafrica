@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { SKILL_SCORE_FIELD } from "../../src/lib/toefl/attempt-service";
+import { SKILL_SCORE_FIELD, submitFreeformAttempt } from "../../src/lib/toefl/attempt-service";
 import { TOEFL_SKILLS } from "../../src/lib/toefl/types";
 
 describe("SKILL_SCORE_FIELD", () => {
@@ -17,5 +17,15 @@ describe("SKILL_SCORE_FIELD", () => {
 
   test("READING maps to readingScore", () => {
     assert.equal(SKILL_SCORE_FIELD.READING, "readingScore");
+  });
+
+  test("covers SPEAKING (used by the speaking module, Step 8)", () => {
+    assert.equal(SKILL_SCORE_FIELD.SPEAKING, "speakingScore");
+  });
+});
+
+describe("submitFreeformAttempt", () => {
+  test("is exported as a shared function (post-rename from submitWritingAttempt)", () => {
+    assert.equal(typeof submitFreeformAttempt, "function");
   });
 });

@@ -121,11 +121,14 @@ export async function saveWritingDraft(itemId: string, userId: string, text: str
   });
 }
 
-/** No score is computed here — there's no writing evaluator yet (Step 13).
- * Marking the item UNAVAILABLE rather than leaving evalStatus at its
- * NOT_EVALUATED default makes the "no automated feedback yet" state
- * explicit and queryable, not just an absence of data. */
-export async function submitWritingAttempt(attemptId: string, userId: string) {
+/** No score is computed here — Writing and Speaking both have no
+ * automated evaluator yet (Step 13). Marking every item UNAVAILABLE
+ * rather than leaving evalStatus at its NOT_EVALUATED default makes the
+ * "no automated feedback yet" state explicit and queryable, not just an
+ * absence of data. Named generically since this has no writing-specific
+ * logic — Speaking's submission (after its own audio upload step) calls
+ * this too. */
+export async function submitFreeformAttempt(attemptId: string, userId: string) {
   await assertOwnedInProgressToeflAttempt(attemptId, userId);
 
   await prisma.toeflAttemptItem.updateMany({

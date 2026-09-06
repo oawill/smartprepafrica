@@ -17,7 +17,9 @@ export const TOEFL_CONFIG = {
   sections: {
     READING: { defaultTimeSec: null as number | null, defaultQuestionCount: null as number | null },
     LISTENING: { defaultTimeSec: null as number | null, defaultQuestionCount: null as number | null },
-    SPEAKING: { prepTimeSec: null as number | null, recordTimeSec: null as number | null },
+    // Real TOEFL independent-speaking-task timing — a factual exam-format
+    // parameter, same footing as WRITING's timing below.
+    SPEAKING: { prepTimeSec: 15 as number | null, recordTimeSec: 45 as number | null },
     // Real TOEFL independent-writing-task timing/word-count minimum — a
     // factual exam-format parameter, not ETS's copyrighted question
     // content, so stating it directly is fine (same footing as the
