@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { computeSectionScore } from "../../src/lib/sat/scoring";
+import { computeSectionScore, computeCompositeScore } from "../../src/lib/sat/scoring";
 
 describe("computeSectionScore", () => {
   test("0 correct out of N returns the section minimum (200)", () => {
@@ -18,5 +18,23 @@ describe("computeSectionScore", () => {
   test("0 total items returns the section minimum, not NaN", () => {
     assert.equal(computeSectionScore(0, 0), 200);
     assert.equal(Number.isNaN(computeSectionScore(0, 0)), false);
+  });
+});
+
+describe("computeCompositeScore", () => {
+  test("both sections scored sums to the composite", () => {
+    assert.equal(computeCompositeScore(680, 600), 1280);
+  });
+
+  test("missing Reading and Writing score returns null, never a fabricated total", () => {
+    assert.equal(computeCompositeScore(null, 600), null);
+  });
+
+  test("missing Math score returns null, never a fabricated total", () => {
+    assert.equal(computeCompositeScore(680, null), null);
+  });
+
+  test("both missing returns null", () => {
+    assert.equal(computeCompositeScore(null, null), null);
   });
 });

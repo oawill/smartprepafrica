@@ -44,9 +44,11 @@ export default function SatLandingPage() {
               <p className="text-sm text-brand-text">Start Math practice →</p>
             </Card>
           </Link>
-          <Card title="Diagnostic Test">
-            <ComingSoon label="A shortened diagnostic to estimate your starting readiness" />
-          </Card>
+          <Link href="/international-exams/sat/diagnostic">
+            <Card title="Diagnostic Test" className="transition hover:border-border-strong">
+              <p className="text-sm text-brand-text">Estimate your starting SAT readiness →</p>
+            </Card>
+          </Link>
           <Card title="Full-Length Mock Exams">
             <ComingSoon label="Timed, module-based full-length practice exams" />
           </Card>

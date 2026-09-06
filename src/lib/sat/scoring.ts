@@ -17,3 +17,17 @@ export function computeSectionScore(correctCount: number, totalItems: number): n
   // cosmetically, not a claim about precision.
   return Math.round(raw / 10) * 10;
 }
+
+/** The real SAT composite is a direct sum of its two 200-800 section
+ * scores (400-1600) — unlike TOEFL's computeDiagnosticOverallScore,
+ * which averages whichever skills happen to be scored, a composite is
+ * only ever meaningful once BOTH sections have been assessed together
+ * in the same diagnostic/mock attempt. Returns null otherwise, never a
+ * partial or fabricated total. */
+export function computeCompositeScore(
+  readingWritingScore: number | null,
+  mathScore: number | null
+): number | null {
+  if (readingWritingScore === null || mathScore === null) return null;
+  return readingWritingScore + mathScore;
+}

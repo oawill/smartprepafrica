@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { computeSectionScore } from "@/lib/sat/scoring";
+import { computeSectionScore, computeCompositeScore } from "@/lib/sat/scoring";
+import { SAT_CONFIG } from "@/lib/sat/config";
 import type { SatSection } from "@prisma/client";
 
 /** Every section's practice attempt writes its score into a different
@@ -97,5 +98,71 @@ export async function submitSkillAttempt(attemptId: string, userId: string, sect
   await prisma.satAttempt.update({
     where: { id: attemptId },
     data: { submittedAt: new Date(), [SECTION_SCORE_FIELD[section]]: score },
+  });
+}
+
+/** Bundles a capped, shuffled-by-insertion-order sample of PUBLISHED
+ * content from BOTH sections into one cross-section attempt — a
+ * diagnostic assesses R&W and Math together, unlike a skill-practice
+ * attempt which is single-section. section stays null on the attempt
+ * itself (SatAttempt.section is reserved for single-section rows). */
+export async function createDiagnosticAttempt(userId: string): Promise<string> {
+  const [readingWriting, math] = await Promise.all([
+    prisma.satContent.findMany({
+      where: { section: "READING_WRITING", status: "PUBLISHED" },
+      orderBy: { createdAt: "asc" },
+      take: SAT_CONFIG.diagnosticItemsPerSection,
+    }),
+    prisma.satContent.findMany({
+      where: { section: "MATH", status: "PUBLISHED" },
+      orderBy: { createdAt: "asc" },
+      take: SAT_CONFIG.diagnosticItemsPerSection,
+    }),
+  ]);
+  const content = [...readingWriting, ...math];
+  if (content.length === 0) {
+    throw new Error("Diagnostic content isn't available yet.");
+  }
+
+  const attempt = await prisma.satAttempt.create({
+    data: {
+      userId,
+      kind: "DIAGNOSTIC",
+      items: {
+        create: content.map((c, i) => ({ contentId: c.id, order: i })),
+      },
+    },
+  });
+
+  return attempt.id;
+}
+
+/** Scores a diagnostic's two sections independently (same per-item
+ * correctness already recorded by recordAnswer) and derives the
+ * composite from both — never fabricated, null unless both sections
+ * were actually assessed in this attempt. */
+export async function submitDiagnosticAttempt(attemptId: string, userId: string) {
+  await assertOwnedInProgressSatAttempt(attemptId, userId);
+
+  const items = await prisma.satAttemptItem.findMany({
+    where: { attemptId },
+    include: { content: { select: { section: true } } },
+  });
+
+  const bySection = (section: SatSection) => items.filter((i) => i.content.section === section);
+  const scoreFor = (section: SatSection) => {
+    const sectionItems = bySection(section);
+    if (sectionItems.length === 0) return null;
+    const correctCount = sectionItems.filter((i) => i.isCorrect).length;
+    return computeSectionScore(correctCount, sectionItems.length);
+  };
+
+  const readingWritingScore = scoreFor("READING_WRITING");
+  const mathScore = scoreFor("MATH");
+  const overallScore = computeCompositeScore(readingWritingScore, mathScore);
+
+  await prisma.satAttempt.update({
+    where: { id: attemptId },
+    data: { submittedAt: new Date(), readingWritingScore, mathScore, overallScore },
   });
 }

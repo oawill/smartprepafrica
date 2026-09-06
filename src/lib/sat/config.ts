@@ -18,4 +18,8 @@ export const SAT_CONFIG = {
     sectionMax: 800,
   },
   sections: ["READING_WRITING", "MATH"] as const,
+  // A diagnostic is meant to be short (spec: "shortened diagnostic"), not
+  // the full published bank — caps each section independently so the
+  // diagnostic stays quick even as the content library grows.
+  diagnosticItemsPerSection: 8,
 } as const;
