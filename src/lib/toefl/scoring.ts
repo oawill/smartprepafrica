@@ -9,3 +9,12 @@ export function computeSkillScore(correctCount: number, totalItems: number): num
   const { max } = TOEFL_CONFIG.scoreScale;
   return (correctCount / totalItems) * max;
 }
+
+/** Overall diagnostic score only ever reflects skills with a real
+ * automated score today (Reading, Listening) — never fabricates a value
+ * for Speaking/Writing, which have no evaluator yet. */
+export function computeDiagnosticOverallScore(scores: (number | null)[]): number | null {
+  const known = scores.filter((s): s is number => s !== null);
+  if (known.length === 0) return null;
+  return known.reduce((a, b) => a + b, 0) / known.length;
+}

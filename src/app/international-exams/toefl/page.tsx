@@ -62,7 +62,9 @@ export default function ToeflLandingPage() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card title="Diagnostic Test">
-            <ComingSoon label="Estimate your starting TOEFL readiness score" />
+            <Link href="/international-exams/toefl/diagnostic" className="text-sm text-brand-text hover:underline">
+              Estimate your starting TOEFL readiness score →
+            </Link>
           </Card>
           <Card title="Practice by Skill">
             <ComingSoon label="Focused practice for each of the four skills" />

@@ -19,6 +19,7 @@ export function WritingEditor({
   timeSec,
   minWords,
   initialText,
+  onSubmit,
 }: {
   attemptId: string;
   itemId: string;
@@ -27,6 +28,11 @@ export function WritingEditor({
   timeSec: number;
   minWords: number;
   initialText: string;
+  /** Defaults to the standalone Writing flow's own submit+redirect.
+   * Diagnostic passes its own callback to advance to the next section
+   * instead, since the draft is already autosaved and nothing here
+   * should redirect away from the diagnostic session. */
+  onSubmit?: () => void | Promise<void>;
 }) {
   const deadline = new Date(startedAt).getTime() + timeSec * 1000;
   const [text, setText] = useState(initialText);
@@ -40,7 +46,11 @@ export function WritingEditor({
 
   function submit() {
     startTransition(async () => {
-      await submitWritingAttemptAction(attemptId);
+      if (onSubmit) {
+        await onSubmit();
+      } else {
+        await submitWritingAttemptAction(attemptId);
+      }
     });
   }
 

@@ -1,6 +1,11 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { SKILL_SCORE_FIELD, submitFreeformAttempt } from "../../src/lib/toefl/attempt-service";
+import {
+  SKILL_SCORE_FIELD,
+  submitFreeformAttempt,
+  submitDiagnosticAttempt,
+  saveSpeakingRecording,
+} from "../../src/lib/toefl/attempt-service";
 import { TOEFL_SKILLS } from "../../src/lib/toefl/types";
 
 describe("SKILL_SCORE_FIELD", () => {
@@ -27,5 +32,15 @@ describe("SKILL_SCORE_FIELD", () => {
 describe("submitFreeformAttempt", () => {
   test("is exported as a shared function (post-rename from submitWritingAttempt)", () => {
     assert.equal(typeof submitFreeformAttempt, "function");
+  });
+});
+
+describe("Step 9 exports", () => {
+  test("submitDiagnosticAttempt is exported as a function", () => {
+    assert.equal(typeof submitDiagnosticAttempt, "function");
+  });
+
+  test("saveSpeakingRecording is exported as a function (shared by Speaking and Diagnostic)", () => {
+    assert.equal(typeof saveSpeakingRecording, "function");
   });
 });

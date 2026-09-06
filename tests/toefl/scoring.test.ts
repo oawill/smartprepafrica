@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { computeSkillScore } from "../../src/lib/toefl/scoring";
+import { computeSkillScore, computeDiagnosticOverallScore } from "../../src/lib/toefl/scoring";
 
 describe("computeSkillScore", () => {
   test("0 correct out of N is 0", () => {
@@ -18,5 +18,19 @@ describe("computeSkillScore", () => {
   test("0 total items returns 0, not NaN", () => {
     assert.equal(computeSkillScore(0, 0), 0);
     assert.equal(Number.isNaN(computeSkillScore(0, 0)), false);
+  });
+});
+
+describe("computeDiagnosticOverallScore", () => {
+  test("no scored skills returns null, never a fabricated number", () => {
+    assert.equal(computeDiagnosticOverallScore([null, null]), null);
+  });
+
+  test("one scored skill returns that skill's score directly", () => {
+    assert.equal(computeDiagnosticOverallScore([4.2, null]), 4.2);
+  });
+
+  test("two scored skills average together", () => {
+    assert.equal(computeDiagnosticOverallScore([3, 5]), 4);
   });
 });

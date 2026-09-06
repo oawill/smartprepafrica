@@ -10,11 +10,16 @@ export function SpeakingRecorder({
   prompt,
   prepTimeSec,
   recordTimeSec,
+  onSubmit,
 }: {
   itemId: string;
   prompt: string;
   prepTimeSec: number;
   recordTimeSec: number;
+  /** Defaults to the standalone Speaking flow's own submit+redirect.
+   * Diagnostic passes its own action instead, since Speaking there is
+   * one section of a larger multi-skill attempt. */
+  onSubmit?: (itemId: string, formData: FormData) => Promise<void>;
 }) {
   const [phase, setPhase] = useState<Phase>("prompt");
   const [remaining, setRemaining] = useState(prepTimeSec);
@@ -53,7 +58,7 @@ export function SpeakingRecorder({
     formData.set("durationSec", String(Math.round(durationSec)));
 
     startTransition(async () => {
-      await submitSpeakingRecording(itemId, formData);
+      await (onSubmit ?? submitSpeakingRecording)(itemId, formData);
     });
   }
 
