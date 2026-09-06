@@ -31,12 +31,18 @@ export default async function AdminSatPage() {
         ))}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 flex gap-3">
         <Link
           href="/dashboard/admin/sat/content"
           className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           Manage Content →
+        </Link>
+        <Link
+          href="/dashboard/admin/sat/analytics"
+          className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted"
+        >
+          View Analytics →
         </Link>
       </div>
     </div>
