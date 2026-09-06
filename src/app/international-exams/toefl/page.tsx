@@ -35,19 +35,25 @@ export default function ToeflLandingPage() {
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {TOEFL_SKILLS.map((skill) =>
-            skill === "READING" ? (
-              <Link key={skill} href="/international-exams/toefl/reading">
+          {TOEFL_SKILLS.map((skill) => {
+            const href =
+              skill === "READING"
+                ? "/international-exams/toefl/reading"
+                : skill === "LISTENING"
+                  ? "/international-exams/toefl/listening"
+                  : null;
+            return href ? (
+              <Link key={skill} href={href}>
                 <Card title={TOEFL_SKILL_LABELS[skill]} className="transition hover:border-border-strong">
-                  <p className="text-sm text-brand-text">Start Reading practice →</p>
+                  <p className="text-sm text-brand-text">Start {TOEFL_SKILL_LABELS[skill]} practice →</p>
                 </Card>
               </Link>
             ) : (
               <Card key={skill} title={TOEFL_SKILL_LABELS[skill]}>
                 <p className="text-sm text-text-secondary">Practice tasks for {TOEFL_SKILL_LABELS[skill].toLowerCase()}.</p>
               </Card>
-            )
-          )}
+            );
+          })}
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
