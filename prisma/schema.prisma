@@ -2560,6 +2560,12 @@ model SatAttempt {
   readingWritingScore Int? // 200-800
   mathScore           Int? // 200-800
 
+  // Which Module 2 difficulty tier the adaptive router selected, per
+  // section — "EASIER" | "HARDER" — set only for MOCK_EXAM attempts,
+  // once that section's Module 1 has been scored. Null until then.
+  readingWritingModule2Tier String?
+  mathModule2Tier            String?
+
   items SatAttemptItem[]
 
   @@index([userId, kind])

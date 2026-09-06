@@ -1,0 +1,178 @@
+"use client";
+
+import { useEffect, useRef, useState, useTransition } from "react";
+import { AnswerOption } from "@/components/exam/answer-option";
+import { MessageContent } from "@/components/ai-coach/message-content";
+import { MathText } from "@/components/sat/math-text";
+import { asOptions, type QuestionOption } from "@/lib/practice-types";
+import type { SatSessionItem } from "@/components/sat/sat-session-runner";
+
+function useCountdown(limitSec: number, onExpire: () => void) {
+  const [remaining, setRemaining] = useState(limitSec);
+  const expiredRef = useRef(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemaining((s) => {
+        if (s <= 1) {
+          clearInterval(interval);
+          if (!expiredRef.current) {
+            expiredRef.current = true;
+            onExpire();
+          }
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [limitSec]);
+
+  const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const ss = String(remaining % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+/** Timed variant of the session runner, used only by the Mock Exam —
+ * skill practice and the Diagnostic stay on SatSessionRunner's open
+ * stopwatch. Submits one module at a time (not the whole attempt) and
+ * auto-submits whatever is answered so far when the module's countdown
+ * expires, same "never leave the student stuck" principle as TOEFL's
+ * Mock Exam runner. */
+export function SatMockExamRunner({
+  attemptId,
+  moduleLabel,
+  timeLimitSec,
+  items,
+  onSaveAnswer,
+  onSubmitModule,
+}: {
+  attemptId: string;
+  moduleLabel: string;
+  timeLimitSec: number;
+  items: SatSessionItem[];
+  onSaveAnswer: (itemId: string, answer: { selectedOption?: string; numericAnswer?: string }) => Promise<void>;
+  onSubmitModule: (attemptId: string) => Promise<void>;
+}) {
+  const [index, setIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string | null>>(
+    Object.fromEntries(items.map((i) => [i.itemId, i.selectedOption ?? i.numericAnswer]))
+  );
+  const [isPending, startTransition] = useTransition();
+
+  function submitModule() {
+    startTransition(async () => {
+      await onSubmitModule(attemptId);
+    });
+  }
+
+  const remaining = useCountdown(timeLimitSec, submitModule);
+
+  const current = items[index];
+  const isNumeric = current.questionType === "STUDENT_PRODUCED_RESPONSE";
+  const options: QuestionOption[] = isNumeric ? [] : asOptions(current.options);
+  const answeredCount = Object.values(answers).filter(Boolean).length;
+  const isLast = index === items.length - 1;
+
+  function selectOption(optionKey: string) {
+    setAnswers((prev) => ({ ...prev, [current.itemId]: optionKey }));
+    startTransition(async () => {
+      await onSaveAnswer(current.itemId, { selectedOption: optionKey });
+    });
+  }
+
+  function saveNumericAnswer() {
+    const value = (answers[current.itemId] ?? "").trim();
+    if (!value) return;
+    startTransition(async () => {
+      await onSaveAnswer(current.itemId, { numericAnswer: value });
+    });
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-3xl px-6 py-8">
+      <div className="flex items-center justify-between text-xs text-text-muted">
+        <span>
+          {moduleLabel} · Question {index + 1} of {items.length}
+        </span>
+        <span>
+          {answeredCount} / {items.length} answered · {remaining} remaining
+        </span>
+      </div>
+
+      {current.passage && (
+        <div className="mt-4 rounded-xl border border-border bg-surface-raised p-6">
+          <div className="prose-passage text-sm leading-7 text-text-secondary">{current.passage}</div>
+        </div>
+      )}
+
+      <div className="mt-6 text-lg font-medium text-text-primary">
+        <MessageContent content={current.prompt} />
+      </div>
+
+      {isNumeric ? (
+        <div className="mt-4 flex items-center gap-2">
+          <input
+            type="text"
+            value={answers[current.itemId] ?? ""}
+            onChange={(e) => setAnswers((prev) => ({ ...prev, [current.itemId]: e.target.value }))}
+            placeholder="Enter your answer"
+            className="w-40 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
+          />
+          <button
+            type="button"
+            onClick={saveNumericAnswer}
+            disabled={isPending}
+            className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted disabled:opacity-50"
+          >
+            Save answer
+          </button>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-2" role="list">
+          {options.map((opt) => (
+            <AnswerOption
+              key={opt.key}
+              optionKey={opt.key}
+              state={answers[current.itemId] === opt.key ? "selected" : "default"}
+              onClick={() => selectOption(opt.key)}
+              disabled={isPending}
+            >
+              <MathText text={opt.text} />
+            </AnswerOption>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-6 flex items-center justify-between">
+        <button
+          type="button"
+          disabled={index === 0}
+          onClick={() => setIndex((i) => Math.max(0, i - 1))}
+          className="rounded-lg border border-border-strong px-4 py-2 text-sm text-text-secondary hover:border-text-muted disabled:opacity-50"
+        >
+          Previous
+        </button>
+        {isLast ? (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={submitModule}
+            className="rounded-lg bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover disabled:opacity-50"
+          >
+            Submit Module
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}
+            className="rounded-lg bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+          >
+            Next
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

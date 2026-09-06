@@ -49,9 +49,11 @@ export default function SatLandingPage() {
               <p className="text-sm text-brand-text">Estimate your starting SAT readiness →</p>
             </Card>
           </Link>
-          <Card title="Full-Length Mock Exams">
-            <ComingSoon label="Timed, module-based full-length practice exams" />
-          </Card>
+          <Link href="/international-exams/sat/mock-exam">
+            <Card title="Full-Length Mock Exams" className="transition hover:border-border-strong">
+              <p className="text-sm text-brand-text">Start a timed, module-based mock exam →</p>
+            </Card>
+          </Link>
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
