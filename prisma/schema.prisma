@@ -144,6 +144,7 @@ model User {
   videoRenderJobs    VideoRenderJob[]
   youtubeConnections YouTubeConnection[]
   toeflAttempts      ToeflAttempt[]
+  satAttempts        SatAttempt[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -2497,6 +2498,86 @@ model ToeflAttemptItem {
   evalOrganization   Float?
   evalClarity        Float?
   evalFeedback       String?
+
+  @@unique([attemptId, contentId])
+}
+
+// ---------- Digital SAT (additive module, mirrors the Toefl* models
+// above — its own bespoke content/attempt models rather than reusing
+// Question/ExamAttempt, which are hard-typed to the closed ExamType
+// enum and have no room for SAT's two-section/module shape). ----------
+
+enum SatSection {
+  READING_WRITING
+  MATH
+}
+
+enum SatAttemptKind {
+  SKILL_PRACTICE
+  DIAGNOSTIC
+  MOCK_EXAM
+}
+
+model SatContent {
+  id           String         @id @default(cuid())
+  section      SatSection
+  domain       String // e.g. "Algebra", "Information and Ideas" — free text, not an enum, so new domains never need a migration
+  skill        String?
+  questionType String         @default("MULTIPLE_CHOICE") // "MULTIPLE_CHOICE" | "STUDENT_PRODUCED_RESPONSE"
+  difficulty   Difficulty     @default(MEDIUM) // reuses the existing Question enum
+  status       QuestionStatus @default(DRAFT) // reuses the existing Question workflow
+
+  passage          String? // short Reading & Writing passage/text
+  prompt           String
+  options          Json? // MCQ options; null for numeric-response items
+  correctOption    String?
+  correctValue     String? // numeric/grid-in expected answer
+  explanation      String?
+  estimatedTimeSec Int?
+  tags             String[] @default([])
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attemptItems SatAttemptItem[]
+
+  @@index([section, status])
+}
+
+model SatAttempt {
+  id     String         @id @default(cuid())
+  user   User           @relation(fields: [userId], references: [id])
+  userId String
+  kind   SatAttemptKind
+  section SatSection? // null reserved for a future cross-section Diagnostic/Mock; set for skill practice
+
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+
+  overallScore        Int? // 400-1600 composite — future Diagnostic/Mock use
+  readingWritingScore Int? // 200-800
+  mathScore           Int? // 200-800
+
+  items SatAttemptItem[]
+
+  @@index([userId, kind])
+}
+
+model SatAttemptItem {
+  id        String     @id @default(cuid())
+  attempt   SatAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptId String
+  content   SatContent @relation(fields: [contentId], references: [id])
+  contentId String
+  order     Int        @default(0)
+  module    Int? // 1 or 2, null for skill practice — added now, unused until the Module step, so that step needs no migration
+
+  selectedOption String?
+  numericAnswer  String?
+  isCorrect      Boolean?
+  timeSpentSecs  Int?
+  flagged        Boolean @default(false)
 
   @@unique([attemptId, contentId])
 }
