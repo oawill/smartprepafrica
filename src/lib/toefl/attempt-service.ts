@@ -3,6 +3,9 @@ import { computeSkillScore, computeDiagnosticOverallScore } from "@/lib/toefl/sc
 import { countWords } from "@/lib/toefl/text";
 import { uploadAudio } from "@/lib/storage/blob-storage";
 import { isSpeakingEvaluationConfigured } from "@/lib/toefl/speaking-evaluator";
+import { openAiSpeakingEvaluator } from "@/lib/toefl/openai-speaking-evaluator";
+import { isWritingEvaluationConfigured } from "@/lib/toefl/writing-evaluator";
+import { claudeWritingEvaluator } from "@/lib/toefl/claude-writing-evaluator";
 import type { ToeflSkill } from "@prisma/client";
 
 /** Every skill's practice attempt writes its score into a different
@@ -185,31 +188,79 @@ export async function saveWritingDraft(itemId: string, userId: string, text: str
   });
 }
 
-/** No score is computed here — Writing and Speaking both have no
- * automated evaluator yet (Step 13). Marking every item UNAVAILABLE
- * rather than leaving evalStatus at its NOT_EVALUATED default makes the
- * "no automated feedback yet" state explicit and queryable, not just an
- * absence of data. Named generically since this has no writing-specific
- * logic — Speaking's submission (after its own audio upload step) calls
- * this too. */
+/** Real Claude-graded evaluation when configured; otherwise honestly
+ * marks UNAVAILABLE — never a fabricated score. Shared by
+ * submitFreeformAttempt (standalone Writing) and submitExamAttempt
+ * (Diagnostic/Mock Exam finalize) so the same try/catch/persist logic
+ * isn't duplicated in both places. Any evaluator error (network, bad
+ * API key, malformed model output) is caught and persisted as FAILED
+ * rather than blocking the student's submission. */
+async function evaluateAndPersistWritingItem(item: {
+  id: string;
+  writingText: string | null;
+  writingWordCount: number | null;
+  content: { prompt: string };
+}) {
+  if (!isWritingEvaluationConfigured()) {
+    await prisma.toeflAttemptItem.update({ where: { id: item.id }, data: { evalStatus: "UNAVAILABLE" } });
+    return;
+  }
+
+  try {
+    const result = await claudeWritingEvaluator.evaluateWritingResponse({
+      promptText: item.content.prompt,
+      responseText: item.writingText ?? "",
+      wordCount: item.writingWordCount ?? 0,
+    });
+    await prisma.toeflAttemptItem.update({
+      where: { id: item.id },
+      data: {
+        evalStatus: "EVALUATED",
+        evalScore: result.estimatedScore,
+        evalOrganization: result.organization,
+        evalGrammar: result.grammar,
+        evalVocabulary: result.vocabulary,
+        evalClarity: result.clarity,
+        evalTaskCompletion: result.taskCompletion,
+        evalFeedback: result.feedback,
+      },
+    });
+  } catch (err) {
+    console.error(`Writing evaluation failed for item ${item.id}`, err);
+    await prisma.toeflAttemptItem.update({ where: { id: item.id }, data: { evalStatus: "FAILED" } });
+  }
+}
+
+/** Named generically (not "submitWritingAttempt") since it has no
+ * writing-specific logic of its own — it just evaluates whatever items
+ * exist on the attempt. Only ever called with Writing items today (its
+ * one call site is Writing's standalone submit action; Speaking moved
+ * to its own upload-time evaluation path in saveSpeakingRecording,
+ * Step 9). */
 export async function submitFreeformAttempt(attemptId: string, userId: string) {
   await assertOwnedInProgressToeflAttempt(attemptId, userId);
 
-  await prisma.toeflAttemptItem.updateMany({
-    where: { attemptId },
-    data: { evalStatus: "UNAVAILABLE" },
-  });
+  const items = await prisma.toeflAttemptItem.findMany({ where: { attemptId }, include: { content: true } });
+  await Promise.all(items.map((item) => evaluateAndPersistWritingItem(item)));
+
   await prisma.toeflAttempt.update({
     where: { id: attemptId },
     data: { submittedAt: new Date() },
   });
 }
 
-/** Shared by Speaking's own submit action and Diagnostic's — uploads the
- * recording and updates the item. Deliberately does NOT touch
- * attempt.submittedAt: Speaking's standalone flow finalizes right after
- * calling this, but Diagnostic's multi-skill attempt isn't done yet when
- * its Speaking section finishes uploading. */
+/** Shared by Speaking's own submit action and Diagnostic's/Mock Exam's —
+ * uploads the recording and updates the item. Deliberately does NOT
+ * touch attempt.submittedAt: Speaking's standalone flow finalizes right
+ * after calling this, but Diagnostic's/Mock's multi-skill attempt isn't
+ * done yet when its Speaking section finishes uploading.
+ *
+ * When configured, runs the real transcription+grading evaluation
+ * synchronously right here (before returning) rather than leaving the
+ * item at NOT_EVALUATED indefinitely — there's no background job
+ * infrastructure in this app to pick that state up later, so "configured"
+ * means "evaluate now." Any evaluator error is caught and persisted as
+ * FAILED rather than blocking the recording upload itself. */
 export async function saveSpeakingRecording(
   itemId: string,
   userId: string,
@@ -217,7 +268,7 @@ export async function saveSpeakingRecording(
 ) {
   const item = await prisma.toeflAttemptItem.findUniqueOrThrow({
     where: { id: itemId },
-    include: { attempt: { select: { userId: true, submittedAt: true } } },
+    include: { attempt: { select: { userId: true, submittedAt: true } }, content: { select: { prompt: true } } },
   });
   if (item.attempt.userId !== userId) throw new Error("Attempt not found.");
   if (item.attempt.submittedAt) throw new Error("This attempt has already been submitted.");
@@ -228,31 +279,64 @@ export async function saveSpeakingRecording(
     contentType: opts.contentType,
   });
 
+  if (!isSpeakingEvaluationConfigured()) {
+    await prisma.toeflAttemptItem.update({
+      where: { id: itemId },
+      data: { speakingAudioUrl: url, speakingDurationSec: opts.durationSec, evalStatus: "UNAVAILABLE" },
+    });
+    return;
+  }
+
   await prisma.toeflAttemptItem.update({
     where: { id: itemId },
-    data: {
-      speakingAudioUrl: url,
-      speakingDurationSec: opts.durationSec,
-      evalStatus: isSpeakingEvaluationConfigured() ? "NOT_EVALUATED" : "UNAVAILABLE",
-    },
+    data: { speakingAudioUrl: url, speakingDurationSec: opts.durationSec, evalStatus: "EVALUATING" },
   });
+
+  try {
+    const result = await openAiSpeakingEvaluator.evaluateSpeakingResponse({
+      audioUrl: url,
+      promptText: item.content.prompt,
+      durationSec: opts.durationSec,
+    });
+    await prisma.toeflAttemptItem.update({
+      where: { id: itemId },
+      data: {
+        evalStatus: "EVALUATED",
+        evalScore: result.estimatedScore,
+        evalFluency: result.fluency,
+        evalPronunciation: result.pronunciation,
+        evalGrammar: result.grammar,
+        evalVocabulary: result.vocabulary,
+        evalTaskCompletion: result.taskCompletion,
+        evalFeedback: result.feedback,
+      },
+    });
+  } catch (err) {
+    console.error(`Speaking evaluation failed for item ${itemId}`, err);
+    await prisma.toeflAttemptItem.update({ where: { id: itemId }, data: { evalStatus: "FAILED" } });
+  }
 }
 
 /** Reading/Listening scores come from real correctness, same formula as
- * submitSkillAttempt. Writing/Speaking items are marked UNAVAILABLE (no
- * fake score) — overallScore only ever averages skills that were
- * actually auto-scored, via computeDiagnosticOverallScore. Contains no
- * kind-specific logic, so it's shared by both Diagnostic and Mock Exam
- * (Step 10) — it just scores whatever Reading/Listening items exist. */
+ * submitSkillAttempt. overallScore only ever averages skills that were
+ * actually auto-scored (Reading/Listening), via
+ * computeDiagnosticOverallScore — Writing/Speaking having real scores
+ * now doesn't change that formula; whether they should count toward the
+ * headline number is a deliberate product decision for later, not an
+ * oversight. Contains no kind-specific logic, so it's shared by both
+ * Diagnostic and Mock Exam (Step 10).
+ *
+ * Speaking items are NOT touched here — saveSpeakingRecording already
+ * evaluated (or marked UNAVAILABLE for) each one at upload time, which
+ * always runs before this finalize step. Only Writing items are
+ * evaluated here, since Writing has no earlier per-item hook. */
 export async function submitExamAttempt(attemptId: string, userId: string) {
   await assertOwnedInProgressToeflAttempt(attemptId, userId);
 
   const items = await prisma.toeflAttemptItem.findMany({ where: { attemptId }, include: { content: true } });
   const readingItems = items.filter((i) => i.content.skill === "READING");
   const listeningItems = items.filter((i) => i.content.skill === "LISTENING");
-  const freeformIds = items
-    .filter((i) => i.content.skill === "WRITING" || i.content.skill === "SPEAKING")
-    .map((i) => i.id);
+  const writingItems = items.filter((i) => i.content.skill === "WRITING");
 
   const readingScore = readingItems.length
     ? computeSkillScore(readingItems.filter((i) => i.isCorrect).length, readingItems.length)
@@ -262,12 +346,7 @@ export async function submitExamAttempt(attemptId: string, userId: string) {
     : null;
   const overallScore = computeDiagnosticOverallScore([readingScore, listeningScore]);
 
-  if (freeformIds.length) {
-    await prisma.toeflAttemptItem.updateMany({
-      where: { id: { in: freeformIds } },
-      data: { evalStatus: "UNAVAILABLE" },
-    });
-  }
+  await Promise.all(writingItems.map((item) => evaluateAndPersistWritingItem(item)));
 
   await prisma.toeflAttempt.update({
     where: { id: attemptId },

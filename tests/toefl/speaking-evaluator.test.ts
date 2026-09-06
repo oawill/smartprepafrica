@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 import { isSpeakingEvaluationConfigured } from "../../src/lib/toefl/speaking-evaluator";
 
 describe("isSpeakingEvaluationConfigured", () => {
-  // No real provider is implemented yet (Step 13) — this test should be
-  // the one that forces a deliberate look at speaking/actions.ts's
-  // evalStatus branching once a provider is finally wired in.
-  test("is false — no speaking evaluator is implemented yet", () => {
+  // A real evaluator exists (Step 13), gated on both OPENAI_API_KEY and
+  // ANTHROPIC_API_KEY being set. This bare test process never loads
+  // .env (nothing here imports the Prisma client, which is what
+  // triggers dotenv as a side effect elsewhere in this repo), so both
+  // are genuinely unset here — asserting the honest "not configured"
+  // default, not that no evaluator exists.
+  test("is false when neither provider's API key is set in the environment", () => {
     assert.equal(isSpeakingEvaluationConfigured(), false);
   });
 });

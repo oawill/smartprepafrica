@@ -77,6 +77,10 @@ export default async function ToeflSpeakingResultsPage({ params }: { params: Pro
             </dl>
             {item.evalFeedback && <p className="mt-3 text-sm text-text-secondary">{item.evalFeedback}</p>}
           </Card>
+        ) : item.evalStatus === "FAILED" ? (
+          <Card title="AI Evaluation">
+            <p className="text-sm text-text-secondary">AI evaluation failed for this response. No score was recorded.</p>
+          </Card>
         ) : (
           <Card title="AI Evaluation">
             <p className="text-sm text-text-secondary">Evaluation is still in progress.</p>

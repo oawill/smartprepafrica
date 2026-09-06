@@ -9,14 +9,70 @@ import { SkillReadinessCard } from "@/components/toefl/skill-readiness-card";
 import { asOptions } from "@/lib/practice-types";
 import { isToeflEnabled, TOEFL_CONFIG } from "@/lib/toefl/config";
 
-function EvalPanel({ evalStatus }: { evalStatus: string }) {
-  if (evalStatus === "EVALUATED") {
-    // Not reached today — no evaluator exists yet (Step 13). Kept as an
-    // honest fallback label instead of silently showing nothing.
-    return <p className="text-sm text-text-secondary">Evaluation is available above.</p>;
+type EvalItem = {
+  evalStatus: string;
+  evalScore: number | null;
+  evalOrganization: number | null;
+  evalClarity: number | null;
+  evalFluency: number | null;
+  evalPronunciation: number | null;
+  evalGrammar: number | null;
+  evalVocabulary: number | null;
+  evalTaskCompletion: number | null;
+  evalFeedback: string | null;
+};
+
+function EvalPanel({ item, skill }: { item: EvalItem; skill: "WRITING" | "SPEAKING" }) {
+  if (item.evalStatus === "EVALUATED") {
+    return (
+      <>
+        <div className="text-2xl font-semibold text-text-primary">{item.evalScore?.toFixed(1) ?? "--"} / 6</div>
+        <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+          {skill === "WRITING" ? (
+            <>
+              <div>
+                <dt className="text-text-muted">Organization</dt>
+                <dd className="text-text-primary">{item.evalOrganization ?? "--"}</dd>
+              </div>
+              <div>
+                <dt className="text-text-muted">Clarity</dt>
+                <dd className="text-text-primary">{item.evalClarity ?? "--"}</dd>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <dt className="text-text-muted">Fluency</dt>
+                <dd className="text-text-primary">{item.evalFluency ?? "--"}</dd>
+              </div>
+              <div>
+                <dt className="text-text-muted">Pronunciation</dt>
+                <dd className="text-text-primary">{item.evalPronunciation ?? "--"}</dd>
+              </div>
+            </>
+          )}
+          <div>
+            <dt className="text-text-muted">Grammar</dt>
+            <dd className="text-text-primary">{item.evalGrammar ?? "--"}</dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">Vocabulary</dt>
+            <dd className="text-text-primary">{item.evalVocabulary ?? "--"}</dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">Task completion</dt>
+            <dd className="text-text-primary">{item.evalTaskCompletion ?? "--"}</dd>
+          </div>
+        </dl>
+        {item.evalFeedback && <p className="mt-3 text-sm text-text-secondary">{item.evalFeedback}</p>}
+      </>
+    );
   }
-  if (evalStatus === "UNAVAILABLE") {
+  if (item.evalStatus === "UNAVAILABLE") {
     return <p className="text-sm text-text-secondary">AI evaluation is not currently available.</p>;
+  }
+  if (item.evalStatus === "FAILED") {
+    return <p className="text-sm text-text-secondary">AI evaluation failed for this response. No score was recorded.</p>;
   }
   return <p className="text-sm text-text-secondary">Evaluation is still in progress.</p>;
 }
@@ -115,7 +171,7 @@ export default async function ToeflMockExamResultsPage({ params }: { params: Pro
                 </p>
               </Card>
               <Card title="AI Evaluation">
-                <EvalPanel evalStatus={item.evalStatus} />
+                <EvalPanel item={item} skill="WRITING" />
               </Card>
             </div>
           ))}
@@ -138,7 +194,7 @@ export default async function ToeflMockExamResultsPage({ params }: { params: Pro
                 )}
               </Card>
               <Card title="AI Evaluation">
-                <EvalPanel evalStatus={item.evalStatus} />
+                <EvalPanel item={item} skill="SPEAKING" />
               </Card>
             </div>
           ))}
