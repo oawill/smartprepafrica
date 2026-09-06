@@ -145,6 +145,11 @@ export function buildSystemPrompt(context: CoachContext): string {
         q.topic ? `\nTopic: ${q.topic}` : ""
       }\nExplain (1) why their answer was wrong, (2) what concept was misunderstood, (3) how to solve it correctly, then (4) offer a similar practice question.`
     );
+    if (q.progressiveHints) {
+      parts.push(
+        `If the student instead asks for a hint (rather than the full explanation above), do NOT give the answer immediately. Stage it across up to three escalating hints, one per response: Hint 1 names the relevant concept or formula only; Hint 2 describes how to set the problem up using that concept; Hint 3 gives the next concrete calculation step. Only reveal the full solution if the student explicitly asks for it, or after they've received all three hints.`
+      );
+    }
   }
 
   if (context.recentAttempts.length) {

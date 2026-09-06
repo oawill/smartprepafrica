@@ -7,6 +7,7 @@ import { AnswerOption } from "@/components/exam/answer-option";
 import { MessageContent } from "@/components/ai-coach/message-content";
 import { asOptions } from "@/lib/practice-types";
 import { isSatEnabled, SAT_CONFIG } from "@/lib/sat/config";
+import { SatAskAi } from "@/components/sat/sat-ask-ai";
 
 export default async function SatReadingWritingResultsPage({
   params,
@@ -77,6 +78,22 @@ export default async function SatReadingWritingResultsPage({
               </div>
               {item.content.explanation && (
                 <p className="mt-3 text-xs text-text-secondary">{item.content.explanation}</p>
+              )}
+              {item.isCorrect === false && (
+                <div className="mt-3">
+                  <SatAskAi
+                    section={item.content.section}
+                    domain={item.content.domain}
+                    passage={item.content.passage}
+                    prompt={item.content.prompt}
+                    options={item.content.options}
+                    correctOption={item.content.correctOption}
+                    correctValue={item.content.correctValue}
+                    selectedOption={item.selectedOption}
+                    numericAnswer={item.numericAnswer}
+                    explanation={item.content.explanation}
+                  />
+                </div>
               )}
             </Card>
           );

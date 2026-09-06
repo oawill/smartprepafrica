@@ -13,4 +13,10 @@ export type CoachFocusQuestion = {
     bodyText: string;
     lineRef: string | null;
   } | null;
+  /** Set for SAT Math questions — tells buildSystemPrompt to stage a
+   * "Give me a hint" request across three escalating hints (concept,
+   * setup, next step) rather than explaining the full solution
+   * immediately, per the spec's explicit "never reveal the answer
+   * right away" requirement. Left unset everywhere else. */
+  progressiveHints?: boolean;
 };

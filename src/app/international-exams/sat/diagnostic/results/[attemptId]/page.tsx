@@ -10,6 +10,7 @@ import { SatSectionScoreCard } from "@/components/sat/sat-section-score-card";
 import { asOptions } from "@/lib/practice-types";
 import { isSatEnabled, SAT_CONFIG } from "@/lib/sat/config";
 import { SAT_SECTION_LABELS } from "@/lib/sat/types";
+import { SatAskAi } from "@/components/sat/sat-ask-ai";
 
 export default async function SatDiagnosticResultsPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
@@ -86,6 +87,22 @@ export default async function SatDiagnosticResultsPage({ params }: { params: Pro
         {item.content.explanation && (
           <div className="mt-3 text-xs">
             <MessageContent content={item.content.explanation} />
+          </div>
+        )}
+        {item.isCorrect === false && (
+          <div className="mt-3">
+            <SatAskAi
+              section={item.content.section}
+              domain={item.content.domain}
+              passage={item.content.passage}
+              prompt={item.content.prompt}
+              options={item.content.options}
+              correctOption={item.content.correctOption}
+              correctValue={item.content.correctValue}
+              selectedOption={item.selectedOption}
+              numericAnswer={item.numericAnswer}
+              explanation={item.content.explanation}
+            />
           </div>
         )}
       </Card>
