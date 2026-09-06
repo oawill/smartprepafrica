@@ -30,9 +30,9 @@ export default async function ToeflDiagnosticPage() {
       </p>
       <p className="mt-4 text-xs text-text-muted">
         Your Estimated SmartPrepAfrica Readiness Score is calculated from your Reading and Listening
-        performance, which SmartPrepAfrica can score automatically today. Your Writing and Speaking
-        responses are recorded for practice and review, but AI evaluation for those two skills is not
-        currently available — they are not included in the estimated score.
+        performance. Your Writing and Speaking responses are recorded for practice and review, with
+        AI feedback shown on their own results when available, but they are not included in the
+        estimated score.
       </p>
 
       <div className="mt-8">

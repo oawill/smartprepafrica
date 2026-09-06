@@ -109,8 +109,8 @@ export default async function ToeflDiagnosticResultsPage({ params }: { params: P
           </div>
           <p className="mt-1 text-xs text-text-muted">
             Based on your Reading and Listening performance. Writing and Speaking are shown below for
-            review but aren&apos;t included in this estimate — AI evaluation for those two skills isn&apos;t
-            available yet.
+            review — see each one&apos;s own AI Evaluation panel for its result — but they aren&apos;t
+            included in this overall estimate.
           </p>
         </Card>
       </div>
