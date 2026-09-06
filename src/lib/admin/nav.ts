@@ -1,11 +1,13 @@
 import type { AdminRole } from "@prisma/client";
 import { hasPermission, type Permission } from "@/lib/admin/permissions";
 import { isToeflEnabled } from "@/lib/toefl/config";
+import { isSatEnabled } from "@/lib/sat/config";
 
 export type AdminNavItem = {
   label: string;
   href: string;
   permission?: Permission;
+  requiresFlag?: "toefl" | "sat";
 };
 
 export type AdminNavGroup = {
@@ -67,9 +69,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: "International Exams",
     items: [
-      { label: "Overview", href: "/dashboard/admin/toefl", permission: "toefl.view" },
-      { label: "Content", href: "/dashboard/admin/toefl/content", permission: "toefl.view" },
-      { label: "Analytics", href: "/dashboard/admin/toefl/analytics", permission: "analytics.view" },
+      { label: "Overview", href: "/dashboard/admin/toefl", permission: "toefl.view", requiresFlag: "toefl" },
+      { label: "Content", href: "/dashboard/admin/toefl/content", permission: "toefl.view", requiresFlag: "toefl" },
+      { label: "Analytics", href: "/dashboard/admin/toefl/analytics", permission: "analytics.view", requiresFlag: "toefl" },
+      { label: "SAT Overview", href: "/dashboard/admin/sat", permission: "sat.view", requiresFlag: "sat" },
+      { label: "SAT Content", href: "/dashboard/admin/sat/content", permission: "sat.view", requiresFlag: "sat" },
     ],
   },
   {
@@ -125,10 +129,14 @@ export const ADMIN_NAV: AdminNavGroup[] = [
 ];
 
 export function navForAdminRole(adminRole: AdminRole | null | undefined): AdminNavGroup[] {
-  return ADMIN_NAV.filter((group) => group.label !== "International Exams" || isToeflEnabled())
+  return ADMIN_NAV.filter((group) => group.label !== "International Exams" || isToeflEnabled() || isSatEnabled())
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.permission || hasPermission(adminRole, item.permission)),
+      items: group.items.filter((item) => {
+        if (item.requiresFlag === "toefl" && !isToeflEnabled()) return false;
+        if (item.requiresFlag === "sat" && !isSatEnabled()) return false;
+        return !item.permission || hasPermission(adminRole, item.permission);
+      }),
     }))
     .filter((group) => group.items.length > 0);
 }

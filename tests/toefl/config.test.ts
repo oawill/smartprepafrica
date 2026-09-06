@@ -57,6 +57,9 @@ describe("toefl.* permissions", () => {
 describe("International Exams nav group respects the feature flag", () => {
   test("hidden entirely when ENABLE_TOEFL is not 'true', even for SUPER_ADMIN", () => {
     delete process.env.ENABLE_TOEFL;
+    // The group is also shown when ENABLE_SAT=true (see tests/sat/admin.test.ts)
+    // — isolate this TOEFL-only check from that flag too.
+    delete process.env.ENABLE_SAT;
     const groups = navForAdminRole("SUPER_ADMIN");
     assert.ok(!groups.some((g) => g.label === "International Exams"));
   });
