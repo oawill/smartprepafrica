@@ -1,5 +1,6 @@
 import type { AdminRole } from "@prisma/client";
 import { hasPermission, type Permission } from "@/lib/admin/permissions";
+import { isToeflEnabled } from "@/lib/toefl/config";
 
 export type AdminNavItem = {
   label: string;
@@ -64,6 +65,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    label: "International Exams",
+    items: [{ label: "TOEFL", href: "/dashboard/admin/toefl", permission: "toefl.view" }],
+  },
+  {
     label: "Users",
     items: [
       { label: "Students", href: "/dashboard/admin/users/students", permission: "users.view" },
@@ -116,8 +121,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
 ];
 
 export function navForAdminRole(adminRole: AdminRole | null | undefined): AdminNavGroup[] {
-  return ADMIN_NAV.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => !item.permission || hasPermission(adminRole, item.permission)),
-  })).filter((group) => group.items.length > 0);
+  return ADMIN_NAV.filter((group) => group.label !== "International Exams" || isToeflEnabled())
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.permission || hasPermission(adminRole, item.permission)),
+    }))
+    .filter((group) => group.items.length > 0);
 }

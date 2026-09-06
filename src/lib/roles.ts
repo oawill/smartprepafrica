@@ -1,4 +1,5 @@
 import type { Role } from "@prisma/client";
+import { isToeflEnabled } from "@/lib/toefl/config";
 
 export const roleDashboardPath: Record<Role, string> = {
   STUDENT: "/dashboard/student",
@@ -51,7 +52,11 @@ const partnerNav: NavItem[] = [
 ];
 
 export function navForRole(role: Role): NavItem[] {
-  const items = role === "STUDENT" ? studentNav : role === "PARTNER" ? partnerNav : defaultNav;
+  const base = role === "STUDENT" ? studentNav : role === "PARTNER" ? partnerNav : defaultNav;
+  const items =
+    role === "STUDENT" && isToeflEnabled()
+      ? [...base, { label: "TOEFL", href: "/international-exams/toefl" }]
+      : base;
   return items.map((item) =>
     item.href === "" ? { ...item, href: roleDashboardPath[role] } : item
   );

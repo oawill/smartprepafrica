@@ -40,7 +40,11 @@ export type Permission =
   | "countries.manage"
   | "video_studio.view"
   | "video_studio.create"
-  | "video_studio.review";
+  | "video_studio.review"
+  | "toefl.view"
+  | "toefl.create"
+  | "toefl.review"
+  | "toefl.publish";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -83,6 +87,10 @@ const ALL_PERMISSIONS: Permission[] = [
   "video_studio.view",
   "video_studio.create",
   "video_studio.review",
+  "toefl.view",
+  "toefl.create",
+  "toefl.review",
+  "toefl.publish",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -106,6 +114,10 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "lessons.publish",
     "video_studio.view",
     "video_studio.create",
+    "toefl.view",
+    "toefl.create",
+    "toefl.review",
+    "toefl.publish",
   ],
   CONTENT_REVIEWER: [
     "questions.view",
@@ -119,13 +131,15 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "lessons.publish",
     "video_studio.view",
     "video_studio.review",
+    "toefl.view",
+    "toefl.review",
   ],
   SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "users.view", "courses.view", "courses.approve"],
   USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke"],
   FINANCE_ADMIN: ["payments.view", "payments.refund", "partners.payout", "analytics.view"],
   PARTNER_ADMIN: ["partners.view", "partners.approve", "partners.payout", "analytics.view"],
   SECURITY_ADMIN: ["security.view", "sessions.revoke", "audit.view", "audit.export", "users.view", "users.suspend"],
-  ANALYST: ["analytics.view", "questions.view", "courses.view", "schools.view", "users.view"],
+  ANALYST: ["analytics.view", "questions.view", "courses.view", "schools.view", "users.view", "toefl.view"],
 };
 
 export function permissionsFor(adminRole: AdminRole | null | undefined): Permission[] {

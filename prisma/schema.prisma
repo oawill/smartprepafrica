@@ -143,6 +143,7 @@ model User {
   videoProjects      VideoProject[]
   videoRenderJobs    VideoRenderJob[]
   youtubeConnections YouTubeConnection[]
+  toeflAttempts      ToeflAttempt[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -2379,4 +2380,123 @@ model ContactSubmission {
 
   @@index([status, createdAt])
   @@index([ipHash, createdAt])
+}
+
+// ---------- International Exams: TOEFL ----------
+// Phase 1 (foundation only): flag + config + landing/dashboard. TOEFL is
+// intentionally NOT modeled as an ExamType/Question/ExamAttempt — those
+// are MCQ-only and scoped to Nigerian exam bodies. TOEFL needs skills,
+// task types, audio, and free-text answers, so it gets its own additive
+// namespace instead of distorting the existing exam schema. No existing
+// model, enum, or field is touched by this section.
+
+enum ToeflSkill {
+  READING
+  LISTENING
+  SPEAKING
+  WRITING
+}
+
+enum ToeflAttemptKind {
+  DIAGNOSTIC
+  SKILL_PRACTICE
+  MOCK_EXAM
+}
+
+enum ToeflEvalStatus {
+  NOT_APPLICABLE // reading/listening MCQ items — no evaluation ever applies
+  NOT_EVALUATED
+  EVALUATING
+  EVALUATED
+  FAILED
+  UNAVAILABLE // AI scoring not configured yet
+}
+
+// No rows are created by Phase 1 — this model exists now so later
+// phases (Reading/Listening/Writing/Speaking) extend rather than
+// redesign it, and so the dashboard's real (empty) queries compile today.
+model ToeflContent {
+  id         String         @id @default(cuid())
+  skill      ToeflSkill
+  // Free text like Question.topic/subtopic, not an enum — new task types
+  // (e.g. "READING_MCQ", "SPEAKING_INDEPENDENT") never need a migration.
+  taskType   String
+  difficulty Difficulty     @default(MEDIUM) // reuses the existing Question enum
+  status     QuestionStatus @default(DRAFT) // reuses the existing Question workflow
+
+  passage          String?
+  audioUrl         String?
+  audioDurationSec Float?
+  transcript       String?
+  prompt           String
+  options          Json?
+  correctOption    String?
+  explanation      String?
+  estimatedTimeSec Int?
+  tags             String[] @default([])
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attemptItems ToeflAttemptItem[]
+
+  @@index([skill, status])
+}
+
+model ToeflAttempt {
+  id     String           @id @default(cuid())
+  user   User             @relation(fields: [userId], references: [id])
+  userId String
+  kind   ToeflAttemptKind
+  skill  ToeflSkill? // null for a full mock covering all 4 skills
+
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+
+  overallScore   Float? // 0-6 scale estimate
+  readingScore   Float?
+  listeningScore Float?
+  speakingScore  Float?
+  writingScore   Float?
+
+  items ToeflAttemptItem[]
+
+  @@index([userId, kind])
+}
+
+model ToeflAttemptItem {
+  id        String       @id @default(cuid())
+  attempt   ToeflAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptId String
+  content   ToeflContent @relation(fields: [contentId], references: [id])
+  contentId String
+  order     Int          @default(0)
+
+  // Reading/Listening (MCQ)
+  selectedOption String?
+  isCorrect      Boolean?
+  timeSpentSecs  Int?
+
+  // Speaking
+  speakingAudioUrl    String?
+  speakingDurationSec Float?
+
+  // Writing
+  writingText      String?
+  writingWordCount Int?
+
+  // Shared AI-evaluation result (speaking + writing)
+  evalStatus         ToeflEvalStatus @default(NOT_APPLICABLE)
+  evalScore          Float?
+  evalFluency        Float?
+  evalPronunciation  Float?
+  evalGrammar        Float?
+  evalVocabulary     Float?
+  evalTaskCompletion Float?
+  evalOrganization   Float?
+  evalClarity        Float?
+  evalFeedback       String?
+
+  @@unique([attemptId, contentId])
 }
