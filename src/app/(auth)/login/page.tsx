@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Label, Input, FieldError } from "@/components/ui/form";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,13 +41,24 @@ export default function LoginPage() {
         <h1 className="text-h2 font-semibold text-text-primary">Welcome back</h1>
         <p className="mt-1 text-sm text-text-secondary">Log in to continue your prep.</p>
 
+        {resetSuccess && (
+          <p className="mt-4 rounded-lg border border-success/40 bg-success-surface px-3 py-2 text-sm text-success">
+            Password reset successful. You can now sign in with your new password.
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <Label htmlFor="email">Email</Label>
             <Input id="email" name="email" type="email" required />
           </div>
           <div>
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link href="/forgot-password" className="text-xs text-brand-text hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             <Input id="password" name="password" type="password" required />
           </div>
 
@@ -68,5 +81,13 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

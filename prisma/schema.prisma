@@ -148,6 +148,7 @@ model User {
   satScoreGoal       SatScoreGoal?
   satSkillMastery    SatSkillMastery[]
   internationalExamPurchases InternationalExamPurchase[]
+  passwordResetTokens PasswordResetToken[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -2183,6 +2184,33 @@ model LoginActivity {
   @@index([userId])
   @@index([email])
   @@index([createdAt])
+}
+
+/** A single-use, short-lived OTP for the Forgot Password flow. Only the
+ * SHA-256 hash of the 6-digit code is stored, never the raw code — OTP
+ * hashing is deliberately NOT bcrypt (unlike User.passwordHash): a 6-digit,
+ * 10-minute-lived, 5-attempt-capped code's safety comes from expiry and
+ * attempt-capping, not hash slowness, so a fast hash is correct here.
+ * invalidatedAt is kept distinct from usedAt so "why is this token dead"
+ * (superseded by a new OTP request, or attempts exhausted) is always
+ * unambiguous from usedAt (password was actually changed with it). */
+model PasswordResetToken {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  otpHash       String
+  expiresAt     DateTime
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(5)
+  verifiedAt    DateTime?
+  usedAt        DateTime?
+  invalidatedAt DateTime?
+  ipHash        String?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model PartnerAuditLog {
