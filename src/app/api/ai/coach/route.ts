@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       outputTokens: 0,
     });
     return new Response(
-      `You've reached today's AI Coach limit (${usage.limit} messages on the ${usage.plan} plan). It resets tomorrow, or upgrade for more.`,
+      `You've reached this month's AI Tutor limit (${usage.limit} messages on the ${usage.plan} plan). It resets next month, or upgrade for more.`,
       { status: 429 }
     );
   }

@@ -9,15 +9,17 @@ export async function updatePlanLimit(formData: FormData) {
   await requireActionPermission("settings.update");
 
   const plan = formData.get("plan") as SubscriptionPlan;
-  const dailyMessageLimit = Number(formData.get("dailyMessageLimit"));
-  if (!dailyMessageLimit || dailyMessageLimit < 0) {
-    throw new Error("Enter a valid daily message limit.");
+  const monthlyMessageLimit = Number(formData.get("monthlyMessageLimit"));
+  if (!monthlyMessageLimit || monthlyMessageLimit < 0) {
+    throw new Error("Enter a valid monthly message limit.");
   }
 
   await prisma.aiPlanLimit.upsert({
     where: { plan },
-    update: { dailyMessageLimit },
-    create: { plan, dailyMessageLimit },
+    update: { monthlyMessageLimit },
+    // dailyMessageLimit is a legacy required column no longer read by usage
+    // checks; kept populated with a proportional value so it stays a valid row.
+    create: { plan, dailyMessageLimit: Math.ceil(monthlyMessageLimit / 30), monthlyMessageLimit },
   });
 
   revalidatePath("/dashboard/admin/ai");

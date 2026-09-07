@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
+import type { BillingInterval, SubscriptionPlan } from "@prisma/client";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PLAN_FEATURES, PLAN_LABELS, resolvePlanPrice, formatMoney } from "@/lib/plans";
+import {
+  PLAN_FEATURES,
+  PLAN_LABELS,
+  PLAN_MOST_POPULAR,
+  PLAN_PRICING_KOBO,
+  PRO_UNLIMITED_FOOTNOTE,
+  annualSavingsKobo,
+  resolvePlanPrice,
+  formatMoney,
+} from "@/lib/plans";
 import { checkout } from "@/app/pricing/actions";
 import { checkoutInternationalExam } from "@/app/international-exams/checkout-actions";
 import { PublicHeader } from "@/components/brand/public-header";
@@ -18,7 +28,7 @@ export const metadata: Metadata = {
     "Choose a SmartPrepAfrica.com plan and unlock the full question bank and course library. Also offering TOEFL and SAT preparation for students planning to study abroad.",
 };
 
-const orderedPlans = ["FREE", "BASIC", "PREMIUM", "SCHOOL"] as const;
+const orderedPlans = ["FREE", "BASIC", "PREMIUM", "PRO", "SCHOOL"] as const;
 
 const statusMessages: Record<string, string> = {
   failed: "Your payment didn't go through. Please try again.",
@@ -28,8 +38,10 @@ const statusMessages: Record<string, string> = {
 export default async function PricingPage({
   searchParams,
 }: PageProps<"/pricing">) {
-  const { status } = await searchParams;
+  const { status, billing } = await searchParams;
   const session = await auth();
+
+  const selectedInterval: BillingInterval = billing === "annual" ? "ANNUAL" : "MONTHLY";
 
   const [activeSubscription, viewer, ownedProducts] = await Promise.all([
     session
@@ -54,9 +66,17 @@ export default async function PricingPage({
   const showSat = isSatEnabled();
   const showInternationalExams = showToefl || showSat;
 
+  // Only Premium/Pro offer annual billing; every other plan always resolves
+  // at its monthly price regardless of the page-level toggle.
+  const intervalForPlan = (plan: SubscriptionPlan): BillingInterval =>
+    PLAN_PRICING_KOBO[plan]?.annual ? selectedInterval : "MONTHLY";
+
   const prices = Object.fromEntries(
     await Promise.all(
-      orderedPlans.map(async (plan) => [plan, await resolvePlanPrice(plan, viewer?.countryId)] as const)
+      orderedPlans.map(
+        async (plan) =>
+          [plan, await resolvePlanPrice(plan, viewer?.countryId, intervalForPlan(plan))] as const
+      )
     )
   ) as Record<(typeof orderedPlans)[number], { amountMinor: number; currency: string } | null>;
 
@@ -84,36 +104,76 @@ export default async function PricingPage({
       <h2 className="mt-10 text-lg font-semibold text-text-primary">Nigerian Exam Preparation</h2>
       <p className="mt-1 text-sm text-text-secondary">WAEC, NECO, UTME, and Post-UTME practice and courses.</p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 inline-flex rounded-full border border-border-strong p-1 text-sm">
+        <Link
+          href="/pricing?billing=monthly#nigerian-exam-prep"
+          className={`rounded-full px-4 py-1.5 ${
+            selectedInterval === "MONTHLY"
+              ? "bg-brand text-brand-foreground"
+              : "text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          Monthly
+        </Link>
+        <Link
+          href="/pricing?billing=annual#nigerian-exam-prep"
+          className={`rounded-full px-4 py-1.5 ${
+            selectedInterval === "ANNUAL"
+              ? "bg-brand text-brand-foreground"
+              : "text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          Annual
+        </Link>
+      </div>
+
+      <div id="nigerian-exam-prep" className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {orderedPlans.map((plan) => {
           const price = prices[plan];
+          const interval = intervalForPlan(plan);
           const isCurrent = activeSubscription?.plan === plan;
           const isFree = plan === "FREE";
           const isSchool = plan === "SCHOOL";
+          const savings = interval === "ANNUAL" ? annualSavingsKobo(plan) : null;
 
           return (
             <div
               key={plan}
-              className="flex flex-col rounded-xl border border-border bg-surface-raised p-5"
+              className={`flex flex-col rounded-xl border p-5 ${
+                plan === PLAN_MOST_POPULAR
+                  ? "border-brand bg-surface-raised ring-1 ring-brand"
+                  : "border-border bg-surface-raised"
+              }`}
             >
-              <p className="font-semibold text-brand-text">
-                {PLAN_LABELS[plan]}
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-semibold text-brand-text">
+                  {PLAN_LABELS[plan]}
+                </p>
+                {plan === PLAN_MOST_POPULAR && <Badge tone="brand">Most Popular</Badge>}
+              </div>
               <p className="mt-2 text-2xl font-semibold">
                 {price ? formatMoney(price.amountMinor, price.currency) : isFree ? "₦0" : "Custom"}
                 {price && (
                   <span className="text-sm font-normal text-text-muted">
                     {" "}
-                    / month
+                    / {interval === "ANNUAL" ? "year" : "month"}
                   </span>
                 )}
               </p>
+              {savings !== null && savings > 0 && (
+                <p className="mt-1 text-xs font-medium text-success">
+                  Save {formatMoney(savings, "NGN")}/year
+                </p>
+              )}
 
               <ul className="mt-4 flex-1 space-y-1.5 text-sm text-text-secondary">
                 {PLAN_FEATURES[plan].map((feature) => (
                   <li key={feature}>· {feature}</li>
                 ))}
               </ul>
+              {plan === "PRO" && (
+                <p className="mt-2 text-xs text-text-muted">*{PRO_UNLIMITED_FOOTNOTE}</p>
+              )}
 
               <div className="mt-5">
                 {isCurrent ? (
@@ -134,11 +194,12 @@ export default async function PricingPage({
                 ) : (
                   <form action={checkout}>
                     <input type="hidden" name="plan" value={plan} />
+                    <input type="hidden" name="interval" value={interval} />
                     <button
                       type="submit"
                       className="w-full rounded-full bg-brand py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                     >
-                      Subscribe
+                      Choose {PLAN_LABELS[plan]}
                     </button>
                   </form>
                 )}

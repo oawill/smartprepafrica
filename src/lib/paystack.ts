@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { SubscriptionPlan } from "@prisma/client";
+import type { SubscriptionPlan, BillingInterval } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { resolvePlanPrice } from "@/lib/plans";
 import { handlePartnerCommissionsForPayment } from "@/lib/partners/payment-hooks";
@@ -106,20 +106,27 @@ export async function activateSubscriptionForReference(reference: string) {
     (result.metadata?.plan as SubscriptionPlan | undefined) ?? "BASIC";
   const beneficiaryUserId =
     (result.metadata?.beneficiaryUserId as string | undefined) ?? payment.userId;
+  // Old in-flight transactions initialized before `interval` existed have no
+  // such metadata key — default to MONTHLY, matching their original behavior.
+  const interval: BillingInterval =
+    (result.metadata?.interval as BillingInterval | undefined) ?? "MONTHLY";
+  const durationMs =
+    interval === "ANNUAL" ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
 
   const subscription = await prisma.subscription.create({
     data: {
       userId: beneficiaryUserId,
       purchasedByUserId: payment.userId,
       plan,
+      interval,
       status: "ACTIVE",
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + durationMs),
     },
   });
 
   await prisma.payment.update({
     where: { reference },
-    data: { status: "SUCCESS", subscriptionId: subscription.id },
+    data: { status: "SUCCESS", subscriptionId: subscription.id, interval },
   });
 
   await handlePartnerCommissionsForPayment({
@@ -165,13 +172,15 @@ export async function initiateSubscriptionCheckout(opts: {
   payerId: string;
   payerEmail: string;
   plan: SubscriptionPlan;
+  interval?: BillingInterval;
   beneficiaryUserId?: string;
 }): Promise<string> {
+  const interval: BillingInterval = opts.interval ?? "MONTHLY";
   const payer = await prisma.user.findUnique({
     where: { id: opts.payerId },
     select: { countryId: true },
   });
-  const price = await resolvePlanPrice(opts.plan, payer?.countryId);
+  const price = await resolvePlanPrice(opts.plan, payer?.countryId, interval);
   if (!price) {
     throw new Error("That plan isn't available for direct checkout.");
   }
@@ -183,6 +192,7 @@ export async function initiateSubscriptionCheckout(opts: {
       userId: opts.payerId,
       amountKobo: price.amountMinor,
       currency: price.currency,
+      interval,
       provider: "paystack",
       reference,
       status: "PENDING",
@@ -201,6 +211,7 @@ export async function initiateSubscriptionCheckout(opts: {
       metadata: {
         userId: opts.payerId,
         plan: opts.plan,
+        interval,
         ...(opts.beneficiaryUserId
           ? { beneficiaryUserId: opts.beneficiaryUserId }
           : {}),

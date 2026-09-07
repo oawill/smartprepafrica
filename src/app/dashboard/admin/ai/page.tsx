@@ -14,7 +14,7 @@ function formatNairaFromKobo(kobo: number) {
   }).format(kobo / 100);
 }
 
-const ALL_PLANS: SubscriptionPlan[] = ["FREE", "BASIC", "PREMIUM", "SCHOOL"];
+const ALL_PLANS: SubscriptionPlan[] = ["FREE", "BASIC", "PREMIUM", "PRO", "SCHOOL"];
 
 export default async function AdminAiDashboard() {
   await requireAdminPagePermission("settings.update");
@@ -223,10 +223,10 @@ export default async function AdminAiDashboard() {
       </div>
 
       <div className="mt-6">
-        <Card title="Daily message limits by plan">
+        <Card title="Monthly AI Tutor limits by plan">
           <div className="space-y-3">
             {ALL_PLANS.map((plan) => {
-              const current = planLimits.find((l) => l.plan === plan)?.dailyMessageLimit;
+              const current = planLimits.find((l) => l.plan === plan)?.monthlyMessageLimit;
               return (
                 <form
                   key={plan}
@@ -237,13 +237,15 @@ export default async function AdminAiDashboard() {
                   <span className="w-20 text-sm text-text-secondary">{PLAN_LABELS[plan]}</span>
                   <input
                     type="number"
-                    name="dailyMessageLimit"
+                    name="monthlyMessageLimit"
                     min={0}
                     defaultValue={current ?? ""}
                     placeholder="not set"
                     className="w-28 rounded-lg border border-border-strong bg-surface-raised px-2 py-1 text-sm text-text-primary outline-none focus:border-brand"
                   />
-                  <span className="text-xs text-text-muted">messages / day</span>
+                  <span className="text-xs text-text-muted">
+                    messages / month{plan === "PRO" ? " (unlimited, fair-use cap)" : ""}
+                  </span>
                   <button
                     type="submit"
                     className="ml-auto rounded-lg border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-text-muted"

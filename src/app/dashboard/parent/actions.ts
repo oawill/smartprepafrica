@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import type { SubscriptionPlan } from "@prisma/client";
+import type { SubscriptionPlan, BillingInterval } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { initiateSubscriptionCheckout } from "@/lib/paystack";
@@ -75,6 +75,7 @@ export async function checkoutForChild(formData: FormData) {
 
   const studentProfileId = formData.get("studentProfileId") as string;
   const plan = formData.get("plan") as SubscriptionPlan;
+  const interval = (formData.get("interval") as BillingInterval | null) ?? "MONTHLY";
 
   await assertLinkedChild(session.user.id, studentProfileId);
 
@@ -89,6 +90,7 @@ export async function checkoutForChild(formData: FormData) {
       payerId: session.user.id,
       payerEmail: session.user.email!,
       plan,
+      interval,
       beneficiaryUserId: studentProfile.userId,
     });
   } catch {

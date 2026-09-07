@@ -1413,6 +1413,7 @@ enum SubscriptionPlan {
   FREE
   BASIC
   PREMIUM
+  PRO
   SCHOOL
 }
 
@@ -1420,6 +1421,14 @@ enum SubscriptionStatus {
   ACTIVE
   EXPIRED
   CANCELLED
+}
+
+// MONTHLY is the default for every existing row and every code path that
+// doesn't yet pass an interval, so this is purely additive: nothing that
+// already worked changes behavior.
+enum BillingInterval {
+  MONTHLY
+  ANNUAL
 }
 
 model Subscription {
@@ -1435,6 +1444,7 @@ model Subscription {
   purchasedByUserId String?
 
   plan      SubscriptionPlan
+  interval  BillingInterval    @default(MONTHLY)
   status    SubscriptionStatus @default(ACTIVE)
   startedAt DateTime           @default(now())
   expiresAt DateTime?
@@ -1456,6 +1466,7 @@ model Payment {
   subscriptionId String?
   amountKobo     Int
   currency       String        @default("NGN")
+  interval       BillingInterval @default(MONTHLY)
   provider       String
   reference      String        @unique
   status         PaymentStatus @default(PENDING)
@@ -1675,6 +1686,9 @@ model AiUsageLog {
 model AiPlanLimit {
   plan              SubscriptionPlan @id
   dailyMessageLimit Int
+  // Additive: the daily column is kept in place (no destructive migration)
+  // but is no longer read once usage checks moved to a monthly window.
+  monthlyMessageLimit Int?
   updatedAt         DateTime         @updatedAt
 }
 
