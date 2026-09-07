@@ -2,14 +2,14 @@
 
 import { redirect, notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { isSatEnabled } from "@/lib/sat/config";
 import { saveScoreGoal } from "@/lib/sat/score-goal-service";
 
 export async function saveSatScoreGoal(formData: FormData) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const targetScore = Number(formData.get("targetScore"));
   const testDateRaw = formData.get("testDate");

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { examLabels, examSlugs } from "@/lib/exam-slugs";
 import { startAttempt } from "@/app/practice/actions";
+import { requireStudentSession } from "@/lib/exam-access";
 
 const modes = [
   {
@@ -31,6 +32,7 @@ export default async function ExamSetupPage({
   const { exam: examSlug } = await params;
   const exam = examSlugs[examSlug];
   if (!exam) notFound();
+  await requireStudentSession(`/practice/${examSlug}`);
 
   const subjects = await prisma.subject.findMany({
     where: { questions: { some: { exam } } },

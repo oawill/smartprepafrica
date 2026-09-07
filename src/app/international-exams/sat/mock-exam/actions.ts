@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { isSatEnabled } from "@/lib/sat/config";
 import { recordAnswer } from "@/lib/sat/attempt-service";
 import { createMockExamAttempt, startMockExamMathModule1, submitMockExamModule } from "@/lib/sat/mock-exam-service";
@@ -9,8 +9,8 @@ import type { SatSection } from "@prisma/client";
 
 export async function startSatMockExam() {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const attemptId = await createMockExamAttempt(session.user.id);
   redirect(`/international-exams/sat/mock-exam/session/${attemptId}`);
@@ -18,8 +18,8 @@ export async function startSatMockExam() {
 
 export async function saveMockExamAnswer(itemId: string, answer: { selectedOption?: string; numericAnswer?: string }) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   await recordAnswer(itemId, session.user.id, answer);
 }
@@ -31,8 +31,8 @@ export async function saveMockExamAnswer(itemId: string, answer: { selectedOptio
  * re-derives what to show next from the attempt's current state. */
 export async function submitMockExamAttemptModule(attemptId: string, section: SatSection, module: 1 | 2) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   await submitMockExamModule(attemptId, session.user.id, section, module);
 
@@ -44,8 +44,8 @@ export async function submitMockExamAttemptModule(attemptId: string, section: Sa
 
 export async function startMockExamMathSection(attemptId: string) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   await startMockExamMathModule1(attemptId, session.user.id);
   redirect(`/international-exams/sat/mock-exam/session/${attemptId}`);

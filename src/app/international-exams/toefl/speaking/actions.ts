@@ -1,15 +1,15 @@
 "use server";
 
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { isToeflEnabled } from "@/lib/toefl/config";
 import { createSingleItemAttempt, saveSpeakingRecording } from "@/lib/toefl/attempt-service";
 
 export async function startSpeakingPractice(contentId: string) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const attemptId = await createSingleItemAttempt(session.user.id, "SPEAKING", contentId);
   redirect(`/international-exams/toefl/speaking/session/${attemptId}`);
@@ -17,8 +17,8 @@ export async function startSpeakingPractice(contentId: string) {
 
 export async function submitSpeakingRecording(itemId: string, formData: FormData) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const audio = formData.get("audio");
   if (!(audio instanceof File)) throw new Error("No recording was received.");

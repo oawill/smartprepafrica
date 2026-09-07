@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { isSatEnabled } from "@/lib/sat/config";
 import { SatDrillRunner, type SatDrillItem } from "@/components/sat/sat-drill-runner";
@@ -15,9 +15,9 @@ export default async function SatDrillSessionPage({
   searchParams: Promise<{ timer?: string }>;
 }) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
   const { attemptId } = await params;
+  const session = await requireStudentSession(`/international-exams/sat/drill/session/${attemptId}`);
+  await requireExamProductEntitlement(session.user.id, "SAT");
   const { timer } = await searchParams;
 
   const attempt = await prisma.satAttempt.findUnique({

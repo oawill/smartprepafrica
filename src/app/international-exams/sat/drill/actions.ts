@@ -2,9 +2,9 @@
 
 import { redirect, notFound } from "next/navigation";
 import type { SatSection, Difficulty } from "@prisma/client";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isSatEnabled, SAT_CONFIG } from "@/lib/sat/config";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { recordAnswer } from "@/lib/sat/attempt-service";
 import { recordSkillAttempt } from "@/lib/sat/mastery-service";
 import {
@@ -17,8 +17,8 @@ import type { SatDrillItem } from "@/components/sat/sat-drill-runner";
 
 export async function startDrill(formData: FormData) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const section = formData.get("section") as SatSection;
   const domain = (formData.get("domain") as string) || undefined;
@@ -32,8 +32,8 @@ export async function startDrill(formData: FormData) {
 
 export async function startAdaptiveDrill(formData: FormData) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const timer = formData.get("timer") === "on" ? "on" : "off";
   const attemptId = await createAdaptiveDrillAttempt(session.user.id, SAT_CONFIG.drill.adaptiveDefaultSize);
@@ -42,8 +42,8 @@ export async function startAdaptiveDrill(formData: FormData) {
 
 export async function startTodaysDrill(formData: FormData) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const timer = formData.get("timer") === "on" ? "on" : "off";
   const attemptId = await createAdaptiveDrillAttempt(session.user.id, SAT_CONFIG.drill.dailyDrillSize);
@@ -59,8 +59,8 @@ export async function saveDrillAnswer(
   answer: { selectedOption?: string; numericAnswer?: string }
 ): Promise<{ isCorrect: boolean | null }> {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const { isCorrect } = await recordAnswer(itemId, session.user.id, answer);
 
@@ -83,8 +83,8 @@ export async function saveDrillAnswer(
 
 export async function submitDrill(attemptId: string) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   await submitDrillAttempt(attemptId, session.user.id);
   redirect(`/international-exams/sat/drill/results/${attemptId}`);
@@ -95,8 +95,8 @@ export async function submitDrill(attemptId: string) {
  * Skills" on the Drill Complete screen. */
 export async function retryWeakSkills(formData: FormData) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const attemptId = formData.get("attemptId") as string;
   const attempt = await prisma.satAttempt.findUnique({
@@ -135,8 +135,8 @@ export async function retryWeakSkills(formData: FormData) {
 
 export async function practiceAnother(itemId: string): Promise<SatDrillItem | null> {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const item = await prisma.satAttemptItem.findUnique({
     where: { id: itemId },

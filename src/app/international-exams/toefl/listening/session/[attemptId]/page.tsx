@@ -1,14 +1,14 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { isToeflEnabled } from "@/lib/toefl/config";
 import { ListeningSessionRunner } from "@/components/toefl/listening-session-runner";
 
 export default async function ToeflListeningSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
   const { attemptId } = await params;
+  const session = await requireStudentSession(`/international-exams/toefl/listening/session/${attemptId}`);
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const attempt = await prisma.toeflAttempt.findUnique({
     where: { id: attemptId },

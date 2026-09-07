@@ -1,18 +1,18 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { SatSection } from "@prisma/client";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { isSatEnabled, SAT_CONFIG } from "@/lib/sat/config";
 import { SatDrillPicker, type DrillDomainOption } from "@/components/sat/sat-drill-picker";
 import { computeAdaptiveDrillPlan } from "@/lib/sat/drill-service";
 import { startDrill, startAdaptiveDrill, startTodaysDrill } from "@/app/international-exams/sat/drill/actions";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 
 export default async function SatDrillHubPage() {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession("/international-exams/sat/drill");
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const [publishedContent, todaysPlan] = await Promise.all([
     prisma.satContent.findMany({

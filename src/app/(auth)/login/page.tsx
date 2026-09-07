@@ -32,7 +32,12 @@ function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    // Only ever follow a same-origin relative path (starts with "/", not
+    // "//") — a callbackUrl is an untrusted query param, so anything else
+    // would be an open-redirect vector.
+    const callbackUrl = searchParams.get("callbackUrl");
+    const isSafeRelativePath = !!callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//");
+    router.push(isSafeRelativePath ? (callbackUrl as string) : "/dashboard");
   }
 
   return (

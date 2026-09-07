@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { SkillReadinessCard } from "@/components/toefl/skill-readiness-card";
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 export default async function ToeflDashboardPage() {
   if (!isToeflEnabled()) notFound();
 
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession("/international-exams/toefl/dashboard");
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
   const userId = session.user.id;
 
   const attempts = await prisma.toeflAttempt.findMany({

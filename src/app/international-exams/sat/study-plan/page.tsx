@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { Card } from "@/components/dashboard/card";
 import { SatEmptyState } from "@/components/sat/sat-empty-state";
 import { isSatEnabled } from "@/lib/sat/config";
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 export default async function SatStudyPlanPage() {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession("/international-exams/sat/study-plan");
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const plan = await computeStudyPlan(session.user.id);
 

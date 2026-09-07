@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { AnswerOption } from "@/components/exam/answer-option";
@@ -10,9 +10,9 @@ import { TOEFL_CONFIG } from "@/lib/toefl/config";
 
 export default async function ToeflReadingResultsPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
   const { attemptId } = await params;
+  const session = await requireStudentSession(`/international-exams/toefl/reading/results/${attemptId}`);
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const attempt = await prisma.toeflAttempt.findUnique({
     where: { id: attemptId },

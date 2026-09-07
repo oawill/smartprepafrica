@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { isSatEnabled, SAT_CONFIG } from "@/lib/sat/config";
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 export default async function SatScoreGoalPage() {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession("/international-exams/sat/score-goal");
+  await requireExamProductEntitlement(session.user.id, "SAT");
   const userId = session.user.id;
 
   const [goal, latestScored] = await Promise.all([

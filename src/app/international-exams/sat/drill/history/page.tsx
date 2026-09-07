@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { isSatEnabled } from "@/lib/sat/config";
@@ -9,8 +9,8 @@ const SECTION_LABEL: Record<string, string> = { READING_WRITING: "Reading & Writ
 
 export default async function SatDrillHistoryPage() {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession("/international-exams/sat/drill/history");
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const drills = await prisma.satAttempt.findMany({
     where: { userId: session.user.id, kind: "DRILL", submittedAt: { not: null } },

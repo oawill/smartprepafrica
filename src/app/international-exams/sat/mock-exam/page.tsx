@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { SatEmptyState } from "@/components/sat/sat-empty-state";
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 export default async function SatMockExamPage() {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession("/international-exams/sat/mock-exam");
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const [readingWritingCount, mathCount] = await Promise.all([
     prisma.satContent.count({ where: { section: "READING_WRITING", status: "PUBLISHED" } }),

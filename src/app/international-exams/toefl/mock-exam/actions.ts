@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { isToeflEnabled } from "@/lib/toefl/config";
 import {
   createMockExamAttempt,
@@ -13,8 +13,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function startMockExam() {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const attemptId = await createMockExamAttempt(session.user.id);
   redirect(`/international-exams/toefl/mock-exam/session/${attemptId}`);
@@ -22,8 +22,8 @@ export async function startMockExam() {
 
 export async function saveMockExamAnswer(itemId: string, selectedOption: string) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   await recordMcqAnswer(itemId, session.user.id, selectedOption);
 }
@@ -33,8 +33,8 @@ export async function saveMockExamAnswer(itemId: string, selectedOption: string)
  * just one, so only the LAST one triggers finalization. */
 export async function saveMockExamSpeakingRecording(itemId: string, formData: FormData) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const audio = formData.get("audio");
   if (!(audio instanceof File)) throw new Error("No recording was received.");
@@ -48,8 +48,8 @@ export async function saveMockExamSpeakingRecording(itemId: string, formData: Fo
  * the whole mock exam is done. */
 export async function submitMockExamSpeakingRecording(itemId: string, formData: FormData) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const audio = formData.get("audio");
   if (!(audio instanceof File)) throw new Error("No recording was received.");
@@ -68,8 +68,8 @@ export async function submitMockExamSpeakingRecording(itemId: string, formData: 
  * so the flow can still finish instead of dead-ending. */
 export async function finalizeMockExam(attemptId: string) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   await submitExamAttempt(attemptId, session.user.id);
   redirect(`/international-exams/toefl/mock-exam/results/${attemptId}`);

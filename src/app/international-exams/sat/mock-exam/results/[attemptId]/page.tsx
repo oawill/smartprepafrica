@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { AnswerOption } from "@/components/exam/answer-option";
@@ -19,9 +19,9 @@ const TIER_LABEL: Record<string, string> = {
 
 export default async function SatMockExamResultsPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
   const { attemptId } = await params;
+  const session = await requireStudentSession(`/international-exams/sat/mock-exam/results/${attemptId}`);
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const attempt = await prisma.satAttempt.findUnique({
     where: { id: attemptId },

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { AnswerOption } from "@/components/exam/answer-option";
@@ -33,8 +33,8 @@ export default async function SatReviewPage({
   searchParams: Promise<{ status?: string; section?: string; domain?: string; difficulty?: string }>;
 }) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession("/international-exams/sat/review");
+  await requireExamProductEntitlement(session.user.id, "SAT");
   const userId = session.user.id;
 
   const params = await searchParams;

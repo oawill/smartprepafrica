@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { isToeflEnabled } from "@/lib/toefl/config";
 import {
   createDiagnosticAttempt,
@@ -13,8 +13,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function startDiagnosticTest() {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const attemptId = await createDiagnosticAttempt(session.user.id);
   redirect(`/international-exams/toefl/diagnostic/session/${attemptId}`);
@@ -22,8 +22,8 @@ export async function startDiagnosticTest() {
 
 export async function saveDiagnosticAnswer(itemId: string, selectedOption: string) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   await recordMcqAnswer(itemId, session.user.id, selectedOption);
 }
@@ -33,8 +33,8 @@ export async function saveDiagnosticAnswer(itemId: string, selectedOption: strin
  * diagnostic attempt is done. */
 export async function submitDiagnosticSpeakingRecording(itemId: string, formData: FormData) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const audio = formData.get("audio");
   if (!(audio instanceof File)) throw new Error("No recording was received.");
@@ -53,8 +53,8 @@ export async function submitDiagnosticSpeakingRecording(itemId: string, formData
  * existed. */
 export async function finalizeDiagnosticAttempt(attemptId: string) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requireStudentSession();
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   await submitExamAttempt(attemptId, session.user.id);
   redirect(`/international-exams/toefl/diagnostic/results/${attemptId}`);

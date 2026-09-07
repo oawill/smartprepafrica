@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { isSatEnabled } from "@/lib/sat/config";
 import { SatSessionRunner } from "@/components/sat/sat-session-runner";
@@ -13,9 +13,9 @@ export default async function SatReadingWritingSessionPage({
   params: Promise<{ attemptId: string }>;
 }) {
   if (!isSatEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
   const { attemptId } = await params;
+  const session = await requireStudentSession(`/international-exams/sat/reading-writing/session/${attemptId}`);
+  await requireExamProductEntitlement(session.user.id, "SAT");
 
   const attempt = await prisma.satAttempt.findUnique({
     where: { id: attemptId },

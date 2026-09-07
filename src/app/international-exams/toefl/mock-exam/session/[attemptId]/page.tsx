@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { requireStudentSession, requireExamProductEntitlement } from "@/lib/exam-access";
 import { prisma } from "@/lib/prisma";
 import { isToeflEnabled, TOEFL_CONFIG } from "@/lib/toefl/config";
 import { ExamRunner, type ExamMcqItem, type ExamWritingItem, type ExamSpeakingItem } from "@/components/toefl/diagnostic-runner";
@@ -12,9 +12,9 @@ import {
 
 export default async function ToeflMockExamSessionPage({ params }: { params: Promise<{ attemptId: string }> }) {
   if (!isToeflEnabled()) notFound();
-  const session = await auth();
-  if (!session) redirect("/login");
   const { attemptId } = await params;
+  const session = await requireStudentSession(`/international-exams/toefl/mock-exam/session/${attemptId}`);
+  await requireExamProductEntitlement(session.user.id, "TOEFL");
 
   const attempt = await prisma.toeflAttempt.findUnique({
     where: { id: attemptId },

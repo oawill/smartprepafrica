@@ -63,10 +63,15 @@ const statusMessages: Record<string, string> = {
   error: "Something went wrong verifying your payment. Please try again.",
 };
 
+const reasonMessages: Record<string, string> = {
+  sat_required: "You need SAT Prep to access that page — purchase it below to continue.",
+  toefl_required: "You need TOEFL Prep to access that page — purchase it below to continue.",
+};
+
 export default async function PricingPage({
   searchParams,
 }: PageProps<"/pricing">) {
-  const { status, billing } = await searchParams;
+  const { status, billing, reason } = await searchParams;
   const session = await auth();
 
   const selectedInterval: BillingInterval = billing === "annual" ? "ANNUAL" : "MONTHLY";
@@ -110,6 +115,8 @@ export default async function PricingPage({
 
   const statusMessage =
     typeof status === "string" ? statusMessages[status] : undefined;
+  const reasonMessage =
+    typeof reason === "string" ? reasonMessages[reason] : undefined;
 
   function renderPlanCard(plan: (typeof orderedPlans)[number]) {
     const price = prices[plan];
@@ -205,6 +212,11 @@ export default async function PricingPage({
       {statusMessage && (
         <p className="mt-4 rounded-lg border border-danger/40 bg-danger-surface px-4 py-2 text-sm text-danger">
           {statusMessage}
+        </p>
+      )}
+      {reasonMessage && (
+        <p className="mt-4 rounded-lg border border-brand/40 bg-brand/5 px-4 py-2 text-sm text-brand-text">
+          {reasonMessage}
         </p>
       )}
 
