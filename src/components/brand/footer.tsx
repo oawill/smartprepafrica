@@ -10,8 +10,17 @@ const columns = [
       { label: "SmartPrepAfrica Prep", href: "/practice" },
       { label: "SmartPrepAfrica Learning", href: "/educom" },
       { label: "Schools", href: "/educom/schools" },
-      { label: "AI Study Coach", href: "/register" },
+    ],
+  },
+  {
+    heading: "Learning / Resources",
+    links: [{ label: "AI Study Coach", href: "/register" }],
+  },
+  {
+    heading: "Partnerships",
+    links: [
       { label: "Become a Partner", href: "/partners" },
+      { label: "Become a Sponsor", href: "/register" },
     ],
   },
   {
@@ -45,7 +54,7 @@ export async function Footer() {
   return (
     <footer className="border-t border-border">
       <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-1">
             <Logo size="sm" />
             <p className="mt-3 max-w-xs text-sm text-text-muted">
