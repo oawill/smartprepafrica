@@ -10,6 +10,7 @@ const columns = [
       { label: "SmartPrepAfrica Prep", href: "/practice" },
       { label: "SmartPrepAfrica Learning", href: "/educom" },
       { label: "Schools", href: "/educom/schools" },
+      { label: "Pricing", href: "/pricing" },
     ],
   },
   {

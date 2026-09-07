@@ -23,12 +23,40 @@ import { isToeflEnabled } from "@/lib/toefl/config";
 import { isSatEnabled } from "@/lib/sat/config";
 
 export const metadata: Metadata = {
-  title: "Plans & Pricing",
+  title: "SmartPrepAfrica Pricing | Exam Prep & Learning Plans",
   description:
-    "Choose a SmartPrepAfrica.com plan and unlock the full question bank and course library. Also offering TOEFL and SAT preparation for students planning to study abroad.",
+    "Explore SmartPrepAfrica plans for WAEC, NECO, UTME/JAMB, SAT, TOEFL and AI-powered learning. Choose the study plan that fits your goals.",
 };
 
+const examPrepPlans = ["FREE", "BASIC"] as const;
+const premiumPlans = ["PREMIUM", "PRO"] as const;
 const orderedPlans = ["FREE", "BASIC", "PREMIUM", "PRO", "SCHOOL"] as const;
+
+const faqs = [
+  {
+    question: "How does billing work?",
+    answer:
+      "Subscription plans (Premium and Pro) renew automatically each billing period — monthly or annual, whichever you choose at checkout. TOEFL and SAT are one-time purchases, not subscriptions.",
+  },
+  {
+    question: "What payment methods are supported?",
+    answer: "Payments are processed securely by Paystack. Cards, bank transfer, and USSD are supported.",
+  },
+  {
+    question: "What's the difference between Exam Prep and International Exams?",
+    answer:
+      "Exam Prep and SmartPrepAfrica Premium/Pro are ongoing subscriptions for WAEC, NECO, and UTME/JAMB. TOEFL and SAT Prep are separate, one-time purchases for students preparing to study abroad.",
+  },
+  {
+    question: "Do you offer pricing for schools or institutions?",
+    answer:
+      "Yes. Schools and institutions get custom pricing based on cohort size — use the \"Talk to Us\" button in the Schools & Institutions section above to reach our team.",
+  },
+  {
+    question: "I have a billing question or need help with my subscription.",
+    answer: "Reach our support team directly and we'll help you sort it out.",
+  },
+];
 
 const statusMessages: Record<string, string> = {
   failed: "Your payment didn't go through. Please try again.",
@@ -83,6 +111,84 @@ export default async function PricingPage({
   const statusMessage =
     typeof status === "string" ? statusMessages[status] : undefined;
 
+  function renderPlanCard(plan: (typeof orderedPlans)[number]) {
+    const price = prices[plan];
+    const interval = intervalForPlan(plan);
+    const isCurrent = activeSubscription?.plan === plan;
+    const isFree = plan === "FREE";
+    const isSchool = plan === "SCHOOL";
+    const savings = interval === "ANNUAL" ? annualSavingsKobo(plan) : null;
+
+    return (
+      <div
+        key={plan}
+        className={`flex flex-col rounded-xl border p-5 ${
+          plan === PLAN_MOST_POPULAR
+            ? "border-brand bg-surface-raised ring-1 ring-brand"
+            : "border-border bg-surface-raised"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold text-brand-text">{PLAN_LABELS[plan]}</p>
+          {plan === PLAN_MOST_POPULAR && <Badge tone="brand">Most Popular</Badge>}
+        </div>
+        <p className="mt-2 text-2xl font-semibold">
+          {price ? formatMoney(price.amountMinor, price.currency) : isFree ? "₦0" : "Custom"}
+          {price && (
+            <span className="text-sm font-normal text-text-muted">
+              {" "}
+              / {interval === "ANNUAL" ? "year" : "month"}
+            </span>
+          )}
+        </p>
+        {savings !== null && savings > 0 && (
+          <p className="mt-1 text-xs font-medium text-success">
+            Save {formatMoney(savings, "NGN")}/year
+          </p>
+        )}
+
+        <ul className="mt-4 flex-1 space-y-1.5 text-sm text-text-secondary">
+          {PLAN_FEATURES[plan].map((feature) => (
+            <li key={feature}>· {feature}</li>
+          ))}
+        </ul>
+        {plan === "PRO" && (
+          <p className="mt-2 text-xs text-text-muted">*{PRO_UNLIMITED_FOOTNOTE}</p>
+        )}
+
+        <div className="mt-5">
+          {isCurrent ? (
+            <div className="flex justify-center">
+              <Badge tone="success">Current plan</Badge>
+            </div>
+          ) : isFree ? (
+            <span className="block rounded-full border border-border-strong px-4 py-2 text-center text-sm text-text-secondary">
+              Default plan
+            </span>
+          ) : isSchool ? (
+            <Link
+              href="/contact?topic=SCHOOL_REGISTRATION"
+              className="block rounded-full border border-border-strong px-4 py-2 text-center text-sm text-text-primary hover:border-text-muted"
+            >
+              Talk to Us
+            </Link>
+          ) : (
+            <form action={checkout}>
+              <input type="hidden" name="plan" value={plan} />
+              <input type="hidden" name="interval" value={interval} />
+              <button
+                type="submit"
+                className="w-full rounded-full bg-brand py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                Choose {PLAN_LABELS[plan]}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       <PublicHeader />
@@ -90,9 +196,10 @@ export default async function PricingPage({
       <Link href="/" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back home
       </Link>
-      <h1 className="mt-4 text-3xl font-semibold">Plans & pricing</h1>
+      <h1 className="mt-4 text-3xl font-semibold">Plans &amp; pricing</h1>
       <p className="mt-2 max-w-2xl text-text-secondary">
-        Start free. Upgrade for the full question bank and course library.
+        Start free. Upgrade for the full question bank and course library. Every price below is
+        billed and charged exactly as shown — no hidden fees.
       </p>
 
       {statusMessage && (
@@ -101,120 +208,22 @@ export default async function PricingPage({
         </p>
       )}
 
-      <h2 className="mt-10 text-lg font-semibold text-text-primary">Nigerian Exam Preparation</h2>
-      <p className="mt-1 text-sm text-text-secondary">WAEC, NECO, UTME, and Post-UTME practice and courses.</p>
+      {/* Category 1: Exam Prep */}
+      <section id="exam-prep" className="mt-10">
+        <h2 className="text-lg font-semibold text-text-primary">Exam Prep</h2>
+        <p className="mt-1 text-sm text-text-secondary">WAEC · NECO · UTME/JAMB practice and courses.</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {examPrepPlans.map((plan) => renderPlanCard(plan))}
+        </div>
+      </section>
 
-      <div className="mt-4 inline-flex rounded-full border border-border-strong p-1 text-sm">
-        <Link
-          href="/pricing?billing=monthly#nigerian-exam-prep"
-          className={`rounded-full px-4 py-1.5 ${
-            selectedInterval === "MONTHLY"
-              ? "bg-brand text-brand-foreground"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          Monthly
-        </Link>
-        <Link
-          href="/pricing?billing=annual#nigerian-exam-prep"
-          className={`rounded-full px-4 py-1.5 ${
-            selectedInterval === "ANNUAL"
-              ? "bg-brand text-brand-foreground"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          Annual
-        </Link>
-      </div>
-
-      <div id="nigerian-exam-prep" className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {orderedPlans.map((plan) => {
-          const price = prices[plan];
-          const interval = intervalForPlan(plan);
-          const isCurrent = activeSubscription?.plan === plan;
-          const isFree = plan === "FREE";
-          const isSchool = plan === "SCHOOL";
-          const savings = interval === "ANNUAL" ? annualSavingsKobo(plan) : null;
-
-          return (
-            <div
-              key={plan}
-              className={`flex flex-col rounded-xl border p-5 ${
-                plan === PLAN_MOST_POPULAR
-                  ? "border-brand bg-surface-raised ring-1 ring-brand"
-                  : "border-border bg-surface-raised"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold text-brand-text">
-                  {PLAN_LABELS[plan]}
-                </p>
-                {plan === PLAN_MOST_POPULAR && <Badge tone="brand">Most Popular</Badge>}
-              </div>
-              <p className="mt-2 text-2xl font-semibold">
-                {price ? formatMoney(price.amountMinor, price.currency) : isFree ? "₦0" : "Custom"}
-                {price && (
-                  <span className="text-sm font-normal text-text-muted">
-                    {" "}
-                    / {interval === "ANNUAL" ? "year" : "month"}
-                  </span>
-                )}
-              </p>
-              {savings !== null && savings > 0 && (
-                <p className="mt-1 text-xs font-medium text-success">
-                  Save {formatMoney(savings, "NGN")}/year
-                </p>
-              )}
-
-              <ul className="mt-4 flex-1 space-y-1.5 text-sm text-text-secondary">
-                {PLAN_FEATURES[plan].map((feature) => (
-                  <li key={feature}>· {feature}</li>
-                ))}
-              </ul>
-              {plan === "PRO" && (
-                <p className="mt-2 text-xs text-text-muted">*{PRO_UNLIMITED_FOOTNOTE}</p>
-              )}
-
-              <div className="mt-5">
-                {isCurrent ? (
-                  <div className="flex justify-center">
-                    <Badge tone="success">Current plan</Badge>
-                  </div>
-                ) : isFree ? (
-                  <span className="block rounded-full border border-border-strong px-4 py-2 text-center text-sm text-text-secondary">
-                    Default plan
-                  </span>
-                ) : isSchool ? (
-                  <Link
-                    href="/contact?topic=SCHOOL_REGISTRATION"
-                    className="block rounded-full border border-border-strong px-4 py-2 text-center text-sm text-text-primary hover:border-text-muted"
-                  >
-                    Contact us
-                  </Link>
-                ) : (
-                  <form action={checkout}>
-                    <input type="hidden" name="plan" value={plan} />
-                    <input type="hidden" name="interval" value={interval} />
-                    <button
-                      type="submit"
-                      className="w-full rounded-full bg-brand py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-                    >
-                      Choose {PLAN_LABELS[plan]}
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
+      {/* Category 2: International Exams */}
       {showInternationalExams && (
-        <div id="international-exam-prep">
-          <h2 className="mt-14 text-lg font-semibold text-text-primary">International Exam Preparation</h2>
+        <section id="international-exam-prep" className="mt-14">
+          <h2 className="text-lg font-semibold text-text-primary">International Exams</h2>
           <p className="mt-1 text-sm text-text-secondary">
-            Choose the exam you&apos;re preparing for. TOEFL and SAT are separate one-time products, not
-            included in the plans above.
+            Separate, one-time products for students preparing to study abroad — not included in
+            the plans above or below.
           </p>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -244,13 +253,76 @@ export default async function PricingPage({
               />
             ))}
           </div>
-        </div>
+        </section>
       )}
+
+      {/* Category 3: SmartPrepAfrica Premium */}
+      <section id="premium" className="mt-14">
+        <h2 className="text-lg font-semibold text-text-primary">SmartPrepAfrica Premium</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          AI-powered study support on top of your exam prep — billed monthly or annually.
+        </p>
+
+        <div className="mt-4 inline-flex rounded-full border border-border-strong p-1 text-sm">
+          <Link
+            href="/pricing?billing=monthly#premium"
+            className={`rounded-full px-4 py-1.5 ${
+              selectedInterval === "MONTHLY"
+                ? "bg-brand text-brand-foreground"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Monthly
+          </Link>
+          <Link
+            href="/pricing?billing=annual#premium"
+            className={`rounded-full px-4 py-1.5 ${
+              selectedInterval === "ANNUAL"
+                ? "bg-brand text-brand-foreground"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Annual
+          </Link>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {premiumPlans.map((plan) => renderPlanCard(plan))}
+        </div>
+      </section>
+
+      {/* Category 4: Schools & Institutions */}
+      <section id="schools" className="mt-14">
+        <h2 className="text-lg font-semibold text-text-primary">Schools &amp; Institutions</h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          Custom pricing for cohorts and bulk student licenses — talk to our team.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">{renderPlanCard("SCHOOL")}</div>
+      </section>
 
       <p className="mt-6 text-xs text-text-muted">
         Payments are processed securely by Paystack. Cards, bank transfer,
         and USSD are supported.
       </p>
+
+      {/* FAQ */}
+      <section className="mt-16 border-t border-border pt-10">
+        <h2 className="text-lg font-semibold text-text-primary">Frequently asked questions</h2>
+        <div className="mt-4 space-y-6">
+          {faqs.map((faq) => (
+            <div key={faq.question}>
+              <p className="font-medium text-text-primary">{faq.question}</p>
+              <p className="mt-1 text-sm text-text-secondary">{faq.answer}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-6 text-sm text-text-secondary">
+          Still have questions?{" "}
+          <Link href="/contact?topic=BILLING" className="font-medium text-brand-text hover:underline">
+            Contact our team →
+          </Link>
+        </p>
+      </section>
     </div>
     </div>
   );

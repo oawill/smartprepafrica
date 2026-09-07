@@ -3,7 +3,6 @@ import Link from "next/link";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
 import { HeroCarousel } from "@/components/home/hero-carousel";
-import { InternationalExamProductCard } from "@/components/international-exams/product-card";
 import { INTERNATIONAL_EXAM_LANDING_PATH } from "@/lib/international-exams/pricing";
 import { isToeflEnabled } from "@/lib/toefl/config";
 import { isSatEnabled } from "@/lib/sat/config";
@@ -18,6 +17,25 @@ const exams = [
 
 const discoveryStates = ["Lagos", "Rivers", "Kano", "FCT", "Oyo", "Enugu"];
 const discoverySubjects = ["Mathematics", "English Language", "Physics", "Chemistry", "Biology"];
+
+const whySmartPrep = [
+  {
+    title: "Local + International Exams",
+    body: "Prepare for WAEC, NECO, UTME/JAMB, SAT and TOEFL from one platform.",
+  },
+  {
+    title: "Practice That Builds Confidence",
+    body: "Use focused drills, mock exams, explanations and performance tracking to identify areas that need improvement.",
+  },
+  {
+    title: "AI-Powered Learning",
+    body: "Get additional study support through SmartPrepAfrica's AI learning tools.",
+  },
+  {
+    title: "Learn Anywhere",
+    body: "A mobile-friendly learning experience designed for students studying at home, school or on the go.",
+  },
+];
 
 export const metadata: Metadata = {
   description:
@@ -47,10 +65,7 @@ export default async function Home() {
 
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <span className="rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary">
-            180,000+ students preparing with SmartPrepAfrica.com
-          </span>
-          <h1 className="mx-auto mt-6 max-w-3xl text-display font-semibold leading-tight text-text-primary">
+          <h1 className="mx-auto max-w-3xl text-display font-semibold leading-tight text-text-primary">
             Prepare smarter. Pass better.{" "}
             <span className="text-success">Achieve more.</span>
           </h1>
@@ -90,56 +105,12 @@ export default async function Home() {
               <span className="text-sm text-text-secondary">
                 Prepare for international opportunities with SmartPrepAfrica.
               </span>
-              <Link href="#international-exam-prep" className="text-sm font-medium text-brand-text hover:underline">
+              <Link href="#go-beyond-borders" className="text-sm font-medium text-brand-text hover:underline">
                 Explore International Exams →
               </Link>
             </div>
           )}
         </section>
-
-        {showInternationalExams && (
-          <section id="international-exam-prep" className="mx-auto max-w-6xl px-6 py-16">
-            <div className="text-center">
-              <span className="text-xs font-medium text-brand-text">International Exam Prep</span>
-              <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
-                Preparing to Study Abroad? Start Here.
-              </h2>
-              <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-                Prepare for TOEFL and SAT with structured practice, realistic mock exams, performance
-                insights, and AI-powered study support.
-              </p>
-            </div>
-
-            <div className="mx-auto mt-8 grid max-w-3xl gap-6 sm:grid-cols-2">
-              {showToefl && (
-                <InternationalExamProductCard
-                  product="TOEFL"
-                  cta={
-                    <Link
-                      href={INTERNATIONAL_EXAM_LANDING_PATH.TOEFL}
-                      className="block rounded-full bg-brand px-4 py-2.5 text-center text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-                    >
-                      Start TOEFL Prep
-                    </Link>
-                  }
-                />
-              )}
-              {showSat && (
-                <InternationalExamProductCard
-                  product="SAT"
-                  cta={
-                    <Link
-                      href={INTERNATIONAL_EXAM_LANDING_PATH.SAT}
-                      className="block rounded-full bg-brand px-4 py-2.5 text-center text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-                    >
-                      Start SAT Prep
-                    </Link>
-                  }
-                />
-              )}
-            </div>
-          </section>
-        )}
 
         <section className="mx-auto max-w-6xl px-6 pb-16">
           <HeroCarousel />
@@ -161,6 +132,39 @@ export default async function Home() {
             ))}
           </div>
         </section>
+
+        {showInternationalExams && (
+          <section id="go-beyond-borders" className="mx-auto max-w-6xl px-6 py-16">
+            <div className="rounded-2xl border border-brand/30 bg-brand/5 p-8 text-center">
+              <span className="text-xs font-medium text-brand-text">International Exams</span>
+              <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
+                Go Beyond Borders
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
+                Preparing for university or opportunities abroad? Build your SAT and TOEFL skills
+                with structured practice, targeted drills, mock exams and performance insights.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                {showSat && (
+                  <Link
+                    href={INTERNATIONAL_EXAM_LANDING_PATH.SAT}
+                    className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+                  >
+                    Explore SAT Prep
+                  </Link>
+                )}
+                {showToefl && (
+                  <Link
+                    href={INTERNATIONAL_EXAM_LANDING_PATH.TOEFL}
+                    className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
+                  >
+                    Explore TOEFL Prep
+                  </Link>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
@@ -273,15 +277,52 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        <section className="mx-auto max-w-6xl px-6 py-16">
+          <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
+            <span className="text-xs font-medium text-brand-text">AI Study Support</span>
+            <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
+              Never Get Stuck on a Question
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
+              SmartPrepAfrica&apos;s AI Study Coach gives instant explanations and personalized help
+              whenever you&apos;re practicing — so you understand your mistakes, not just move past them.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/register"
+                className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                Try AI Study Coach
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 py-16">
+          <h2 className="text-center text-h2 font-semibold text-text-primary">Why SmartPrepAfrica?</h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-text-secondary">
+            Built for African Students
+          </p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {whySmartPrep.map((item) => (
+              <div key={item.title} className="rounded-xl border border-border bg-surface-raised p-5">
+                <p className="font-semibold text-text-primary">{item.title}</p>
+                <p className="mt-2 text-sm text-text-secondary">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
             <span className="text-xs font-medium text-brand-text">SmartPrepAfrica.com Partners</span>
             <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
-              Become a SmartPrepAfrica.com Partner
+              Schools &amp; Institutions, Partner With Us
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-              Earn while helping students learn. Refer students and schools to SmartPrepAfrica.com
-              and get rewarded for the ones who stick around.
+              Bring SmartPrepAfrica to your students. Refer students and schools to
+              SmartPrepAfrica.com and get rewarded for the ones who stick around.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
@@ -289,6 +330,31 @@ export default async function Home() {
                 className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Become a Partner
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 py-16">
+          <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
+            <h2 className="mx-auto max-w-2xl text-h1 font-semibold text-text-primary">
+              Find the Right Plan for You
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
+              Choose exam preparation and learning options designed for your goals.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/pricing"
+                className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                View Plans &amp; Pricing
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
+              >
+                Start Learning
               </Link>
             </div>
           </div>
