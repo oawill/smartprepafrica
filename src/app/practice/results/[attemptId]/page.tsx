@@ -7,6 +7,8 @@ import { examLabels, examSlugFor } from "@/lib/exam-slugs";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { AnswerOption, type AnswerOptionState } from "@/components/exam/answer-option";
 import { Badge } from "@/components/ui/badge";
+import { DrillResults, type TopicBucket } from "@/components/readiness/drill-results";
+import { getRecommendedDrillAfterAttempt } from "@/lib/practice/readiness-service";
 
 export default async function ResultsPage({
   params,
@@ -50,6 +52,23 @@ export default async function ResultsPage({
       })
     : [];
 
+  // Drill Complete analysis — additive, only for Quick Drill (STUDY_DRILL)
+  // attempts. Free-practice/CBT/mock attempts render exactly as before.
+  let drillTopicBuckets: TopicBucket[] = [];
+  let recommendedDrill = null;
+  if (attempt.mode === "STUDY_DRILL") {
+    const bucketMap = new Map<string, TopicBucket>();
+    for (const r of attempt.responses) {
+      if (!r.question.topic || r.isCorrect === null) continue;
+      const bucket = bucketMap.get(r.question.topic) ?? { topic: r.question.topic, correct: 0, total: 0 };
+      bucket.total += 1;
+      if (r.isCorrect) bucket.correct += 1;
+      bucketMap.set(r.question.topic, bucket);
+    }
+    drillTopicBuckets = [...bucketMap.values()];
+    recommendedDrill = await getRecommendedDrillAfterAttempt(attemptId);
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <div className="flex items-center justify-between gap-4">
@@ -85,6 +104,19 @@ export default async function ResultsPage({
           Retest
         </Link>
       </div>
+
+      {attempt.mode === "STUDY_DRILL" && (
+        <div className="mt-6">
+          <DrillResults
+            exam={attempt.exam}
+            score={attempt.score ?? 0}
+            correctCount={correctCount}
+            totalItems={attempt.totalItems}
+            topicBuckets={drillTopicBuckets}
+            recommendation={recommendedDrill}
+          />
+        </div>
+      )}
 
       {weakTopics.length > 0 && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">

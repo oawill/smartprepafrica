@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { QuestionOption } from "@/lib/practice-types";
 import { saveAnswer, submitAttempt, toggleFlag } from "@/app/practice/actions";
 import { PassageQuestionView, type PassageData } from "@/components/practice/passage-question-view";
@@ -28,6 +28,40 @@ function useElapsedTime() {
   }, []);
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+/** Optional soft countdown for a Full Mock's configured time limit — a
+ * visible timer that calls onExpire once when it reaches zero, not a
+ * server-enforced lock (ExamAttempt has no duration field; this is purely
+ * a client nudge). undefined `initialSeconds` renders nothing and never
+ * fires, so every existing free-practice/CBT/drill caller is unaffected. */
+function useCountdown(initialSeconds: number | undefined, onExpire: () => void) {
+  const [remaining, setRemaining] = useState(initialSeconds ?? 0);
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (initialSeconds === undefined) return;
+    const interval = setInterval(() => {
+      setRemaining((s) => {
+        if (s <= 1) {
+          clearInterval(interval);
+          if (!firedRef.current) {
+            firedRef.current = true;
+            onExpire();
+          }
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onExpire is stable in practice (closes over attemptId, which doesn't change); re-subscribing on every render would restart the interval and lose elapsed time.
+  }, [initialSeconds]);
+
+  if (initialSeconds === undefined) return null;
+  const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const ss = String(remaining % 60).padStart(2, "0");
   return `${mm}:${ss}`;
 }
 
@@ -133,11 +167,15 @@ export function SessionRunner({
   examLabel,
   questions,
   passages,
+  timeLimitSeconds,
 }: {
   attemptId: string;
   examLabel: string;
   questions: SessionQuestion[];
   passages: Record<string, PassageData>;
+  /** Full Mock only — every other caller omits this and gets the existing
+   * count-up elapsed timer unchanged. */
+  timeLimitSeconds?: number;
 }) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | null>>(
@@ -148,6 +186,7 @@ export function SessionRunner({
   );
   const [isPending, startTransition] = useTransition();
   const elapsed = useElapsedTime();
+  const countdown = useCountdown(timeLimitSeconds, () => handleSubmit());
 
   const current = questions[index];
   const answeredCount = Object.values(answers).filter(Boolean).length;
@@ -195,7 +234,8 @@ export function SessionRunner({
       mobileFooter={
         <div className="mt-4 sm:hidden">
           <p className="text-xs text-text-secondary">
-            {answeredCount} / {questions.length} answered · {elapsed}
+            {answeredCount} / {questions.length} answered ·{" "}
+            {countdown !== null ? `Time left: ${countdown}` : elapsed}
           </p>
         </div>
       }
@@ -206,7 +246,9 @@ export function SessionRunner({
     <div className="mx-auto flex max-w-5xl gap-6 px-6 py-8">
       <aside className="hidden w-48 shrink-0 sm:block">
         <p className="text-xs uppercase tracking-wide text-text-muted">{examLabel}</p>
-        <p className="mt-1 text-sm text-text-secondary">Elapsed: {elapsed}</p>
+        <p className={`mt-1 text-sm ${countdown !== null ? "font-medium text-brand-text" : "text-text-secondary"}`}>
+          {countdown !== null ? `Time left: ${countdown}` : `Elapsed: ${elapsed}`}
+        </p>
         <p className="mt-1 text-sm text-text-secondary">
           {answeredCount} / {questions.length} answered
         </p>

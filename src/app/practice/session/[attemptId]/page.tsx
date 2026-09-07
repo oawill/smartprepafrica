@@ -7,8 +7,10 @@ import { examLabels } from "@/lib/exam-slugs";
 
 export default async function SessionPage({
   params,
+  searchParams,
 }: PageProps<"/practice/session/[attemptId]">) {
   const { attemptId } = await params;
+  const { timeLimitMinutes } = await searchParams;
   const session = await auth();
   if (!session) redirect("/login");
 
@@ -65,12 +67,19 @@ export default async function SessionPage({
     }
   }
 
+  const parsedMinutes = typeof timeLimitMinutes === "string" ? Number(timeLimitMinutes) : NaN;
+  const timeLimitSeconds =
+    attempt.mode === "MOCK_EXAM" && Number.isFinite(parsedMinutes) && parsedMinutes > 0
+      ? parsedMinutes * 60
+      : undefined;
+
   return (
     <SessionRunner
       attemptId={attempt.id}
       examLabel={examLabels[attempt.exam]}
       questions={questions}
       passages={passages}
+      timeLimitSeconds={timeLimitSeconds}
     />
   );
 }

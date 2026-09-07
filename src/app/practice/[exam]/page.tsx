@@ -54,6 +54,21 @@ export default async function ExamSetupPage({
         Choose your subjects and a practice mode to get started.
       </p>
 
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href={`/practice/${examSlug}/readiness`}
+          className="rounded-full border border-border-strong px-4 py-2 text-sm font-medium text-text-primary hover:border-brand hover:text-brand-text"
+        >
+          My {examLabels[exam]} Readiness →
+        </Link>
+        <Link
+          href={`/practice/${examSlug}/drills`}
+          className="rounded-full border border-border-strong px-4 py-2 text-sm font-medium text-text-primary hover:border-brand hover:text-brand-text"
+        >
+          Quick Drills →
+        </Link>
+      </div>
+
       {subjects.length === 0 ? (
         <p className="mt-8 rounded-xl border border-border bg-surface-raised p-5 text-sm text-text-secondary">
           No questions are available for {examLabels[exam]} yet. Check back

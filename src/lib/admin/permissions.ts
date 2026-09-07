@@ -52,7 +52,9 @@ export type Permission =
   | "sat.review"
   | "sat.publish"
   | "sat.archive"
-  | "sat.bulk_import";
+  | "sat.bulk_import"
+  | "readiness.view"
+  | "readiness.manage";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -107,6 +109,8 @@ const ALL_PERMISSIONS: Permission[] = [
   "sat.publish",
   "sat.archive",
   "sat.bulk_import",
+  "readiness.view",
+  "readiness.manage",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -123,6 +127,8 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "questions.bulk_upload",
     "exams.manage",
     "subjects.manage",
+    "readiness.view",
+    "readiness.manage",
     "courses.view",
     "curriculum.manage",
     "lessons.view",
@@ -175,6 +181,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "users.view",
     "toefl.view",
     "sat.view",
+    "readiness.view",
   ],
 };
 

@@ -8,6 +8,8 @@ import { approveParentLink, rejectParentLink } from "@/app/dashboard/student/par
 import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-service";
+import { getExamReadiness as getExamScopedReadiness } from "@/lib/practice/readiness-service";
+import { DashboardReadinessCard } from "@/components/readiness/dashboard-readiness-card";
 import { getOrCreateLinkCode } from "@/lib/parent-links";
 
 export default async function StudentDashboard({
@@ -37,8 +39,26 @@ export default async function StudentDashboard({
       }),
       getTodaysRecommendation(userId),
       getExamReadiness(userId),
-      prisma.studentProfile.findUnique({ where: { userId }, select: { id: true } }),
+      prisma.studentProfile.findUnique({ where: { userId }, select: { id: true, targetExams: true } }),
     ]);
+
+  // Which exams to show the compact Readiness widget for — the student's
+  // registered targetExams, falling back to exams they've actually
+  // attempted if none are registered (never an empty/unrelated guess).
+  const widgetExams =
+    studentProfile?.targetExams && studentProfile.targetExams.length > 0
+      ? studentProfile.targetExams
+      : (
+          await prisma.examAttempt.findMany({
+            where: { userId },
+            distinct: ["exam"],
+            select: { exam: true },
+            take: 4,
+          })
+        ).map((a) => a.exam);
+  const examReadinessCards = await Promise.all(
+    widgetExams.map(async (exam) => ({ exam, readiness: await getExamScopedReadiness(userId, exam) }))
+  );
 
   const [linkCode, pendingParentRequests] = studentProfile
     ? await Promise.all([
@@ -168,6 +188,14 @@ export default async function StudentDashboard({
               </Link>
             )}
           </Card>
+        </div>
+      )}
+
+      {examReadinessCards.length > 0 && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {examReadinessCards.map(({ exam, readiness: examReadiness }) => (
+            <DashboardReadinessCard key={exam} exam={exam} readiness={examReadiness} />
+          ))}
         </div>
       )}
 

@@ -98,6 +98,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [{ label: "Usage & costs", href: "/dashboard/admin/ai", permission: "analytics.view" }],
   },
   {
+    label: "Readiness & Drills",
+    items: [
+      { label: "Settings", href: "/dashboard/admin/readiness/settings", permission: "readiness.manage" },
+      { label: "Analytics", href: "/dashboard/admin/readiness/analytics", permission: "readiness.view" },
+    ],
+  },
+  {
     label: "Partners",
     items: [
       { label: "Applications & partners", href: "/dashboard/admin/partners", permission: "partners.view" },

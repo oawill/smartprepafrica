@@ -103,10 +103,12 @@ model User {
   courseReviews             CourseReview[]
   lessonCheckpointResponses LessonCheckpointResponse[]
 
-  aiConversations AiConversation[]
-  topicMastery    StudentTopicMastery[]
-  aiInsights      AiLearningInsight[]
-  aiUsageLogs     AiUsageLog[]
+  aiConversations         AiConversation[]
+  topicMastery            StudentTopicMastery[]
+  examTopicMastery        StudentExamTopicMastery[]
+  readinessTrendSnapshots ReadinessTrendSnapshot[]
+  aiInsights              AiLearningInsight[]
+  aiUsageLogs             AiUsageLog[]
 
   referralsSent    Referral[] @relation("Referrer")
   referralReceived Referral?  @relation("Referred")
@@ -138,17 +140,17 @@ model User {
   partnerCommissionsAsSource PartnerCommission[] @relation("CommissionSourceUser")
   partnerAuditActions        PartnerAuditLog[]   @relation("AuditActor")
 
-  adminAuditActions  AuditLog[]          @relation("AdminAuditActor")
-  loginActivity      LoginActivity[]     @relation("LoginActivityUser")
-  videoProjects      VideoProject[]
-  videoRenderJobs    VideoRenderJob[]
-  youtubeConnections YouTubeConnection[]
-  toeflAttempts      ToeflAttempt[]
-  satAttempts        SatAttempt[]
-  satScoreGoal       SatScoreGoal?
-  satSkillMastery    SatSkillMastery[]
+  adminAuditActions          AuditLog[]                  @relation("AdminAuditActor")
+  loginActivity              LoginActivity[]             @relation("LoginActivityUser")
+  videoProjects              VideoProject[]
+  videoRenderJobs            VideoRenderJob[]
+  youtubeConnections         YouTubeConnection[]
+  toeflAttempts              ToeflAttempt[]
+  satAttempts                SatAttempt[]
+  satScoreGoal               SatScoreGoal?
+  satSkillMastery            SatSkillMastery[]
   internationalExamPurchases InternationalExamPurchase[]
-  passwordResetTokens PasswordResetToken[]
+  passwordResetTokens        PasswordResetToken[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -848,9 +850,10 @@ model Subject {
   targetedByStudents  StudentProfile[]     @relation("StudentTargetSubjects")
   videoProjects       VideoProject[]
 
-  aiConversations AiConversation[]
-  topicMastery    StudentTopicMastery[]
-  aiInsights      AiLearningInsight[]
+  aiConversations  AiConversation[]
+  topicMastery     StudentTopicMastery[]
+  examTopicMastery StudentExamTopicMastery[]
+  aiInsights       AiLearningInsight[]
 }
 
 model Question {
@@ -1461,18 +1464,18 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String          @id @default(cuid())
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
-  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscription   Subscription?   @relation(fields: [subscriptionId], references: [id])
   subscriptionId String?
   amountKobo     Int
-  currency       String        @default("NGN")
+  currency       String          @default("NGN")
   interval       BillingInterval @default(MONTHLY)
   provider       String
-  reference      String        @unique
-  status         PaymentStatus @default(PENDING)
-  createdAt      DateTime      @default(now())
+  reference      String          @unique
+  status         PaymentStatus   @default(PENDING)
+  createdAt      DateTime        @default(now())
 
   // Permanent human-readable reference, e.g. TXN-000023456. Backfilled for
   // payments that existed before this field was added.
@@ -1643,6 +1646,69 @@ model StudentTopicMastery {
   @@index([userId, masteryScore])
 }
 
+// Exam-scoped counterpart to StudentTopicMastery above, for the Exam
+// Readiness feature (WAEC/NECO/UTME/Post-UTME). Deliberately a separate
+// model rather than adding `exam` to StudentTopicMastery's key — mirrors
+// the existing precedent of SatSkillMastery being an independent parallel
+// to StudentTopicMastery rather than a shared/rewritten model, and avoids
+// any migration risk to the existing subject-only mastery data every
+// current dashboard card and AI Coach context read already depends on.
+model StudentExamTopicMastery {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  exam      ExamType
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  subjectId String
+  // Plain string, matching the existing Question.topic convention.
+  topic     String
+
+  masteryScore    Float @default(0)
+  confidenceScore Float @default(0)
+
+  questionsAttempted Int       @default(0)
+  questionsCorrect   Int       @default(0)
+  lastPracticedAt    DateTime?
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([userId, exam, subjectId, topic])
+  @@index([userId, exam, masteryScore])
+}
+
+// One row per (student, exam, day) — captures the readiness % at most once
+// per day so ReadinessTrend can show real 7-day/30-day deltas without ever
+// recomputing from raw attempt history at read time.
+model ReadinessTrendSnapshot {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  exam         ExamType
+  readinessPct Float
+  day          DateTime
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, exam, day])
+  @@index([userId, exam, day])
+}
+
+// Admin-configurable per-exam Quick Drill sizes and Full Mock shape.
+// Upserted-on-read with in-code defaults (see src/lib/practice/exam-drill-config.ts),
+// the same pattern AiPlanLimit already uses — so every exam keeps working
+// identically until an admin explicitly changes a value.
+model ExamDrillConfig {
+  id                          String   @id @default(cuid())
+  exam                        ExamType @unique
+  quickCheckSize              Int      @default(5)
+  topicDrillSize              Int      @default(10)
+  practiceSessionSize         Int      @default(20)
+  challengeSize               Int      @default(40)
+  fullMockSubjectCount        Int      @default(4)
+  fullMockQuestionsPerSubject Int      @default(40)
+  fullMockTimeLimitMinutes    Int      @default(60)
+  minTopicsForReadiness       Int      @default(3)
+  updatedAt                   DateTime @updatedAt
+}
+
 enum AiInsightType {
   WEAK_TOPIC
   STRONG_TOPIC
@@ -1686,12 +1752,12 @@ model AiUsageLog {
 
 // Per-plan daily AI message allowance, editable by platform admins.
 model AiPlanLimit {
-  plan              SubscriptionPlan @id
-  dailyMessageLimit Int
+  plan                SubscriptionPlan @id
+  dailyMessageLimit   Int
   // Additive: the daily column is kept in place (no destructive migration)
   // but is no longer read once usage checks moved to a monthly window.
   monthlyMessageLimit Int?
-  updatedAt         DateTime         @updatedAt
+  updatedAt           DateTime         @updatedAt
 }
 
 // ---------- Partner / Affiliate Program ----------
@@ -2186,14 +2252,16 @@ model LoginActivity {
   @@index([createdAt])
 }
 
-/** A single-use, short-lived OTP for the Forgot Password flow. Only the
+/**
+ * A single-use, short-lived OTP for the Forgot Password flow. Only the
  * SHA-256 hash of the 6-digit code is stored, never the raw code — OTP
  * hashing is deliberately NOT bcrypt (unlike User.passwordHash): a 6-digit,
  * 10-minute-lived, 5-attempt-capped code's safety comes from expiry and
  * attempt-capping, not hash slowness, so a fast hash is correct here.
  * invalidatedAt is kept distinct from usedAt so "why is this token dead"
  * (superseded by a new OTP request, or attempts exhausted) is always
- * unambiguous from usedAt (password was actually changed with it). */
+ * unambiguous from usedAt (password was actually changed with it).
+ */
 model PasswordResetToken {
   id     String @id @default(cuid())
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -2466,7 +2534,7 @@ enum ToeflEvalStatus {
 // content sets are structured today (a future multi-clip listening set
 // is a deliberate out-of-scope case, not built speculatively).
 model ToeflContentSet {
-  id         String @id @default(cuid())
+  id         String     @id @default(cuid())
   skill      ToeflSkill
   externalId String? // human-readable set code from bulk import, e.g. "TOEFL-R-001"
 
@@ -2477,13 +2545,13 @@ model ToeflContentSet {
   transcript       String?
   imageUrl         String?
 
-  status     QuestionStatus     @default(DRAFT)
-  sourceType QuestionSourceType @default(ORIGINAL_SMARTPREP_QUESTION)
-  author         String?
-  license        String?
+  status          QuestionStatus     @default(DRAFT)
+  sourceType      QuestionSourceType @default(ORIGINAL_SMARTPREP_QUESTION)
+  author          String?
+  license         String?
   sourceReference String?
-  createdByAi    Boolean            @default(false)
-  reviewedById   String?
+  createdByAi     Boolean            @default(false)
+  reviewedById    String?
 
   // Set when this row was created by a bulk import batch — lets a
   // rollback remove exactly (and only) the rows that batch created.
@@ -2646,8 +2714,8 @@ model SatContentSet {
   passage      String?
   imageUrl     String?
 
-  status     QuestionStatus     @default(DRAFT)
-  sourceType QuestionSourceType @default(ORIGINAL_SMARTPREP_QUESTION)
+  status          QuestionStatus     @default(DRAFT)
+  sourceType      QuestionSourceType @default(ORIGINAL_SMARTPREP_QUESTION)
   author          String?
   license         String?
   sourceReference String?
@@ -2682,16 +2750,16 @@ model SatContent {
   contentSetId String?
   order        Int?
 
-  passage          String? // short Reading & Writing passage/text
-  imageUrl         String? // SAT Math graphics/charts/diagrams
-  prompt           String
-  options          Json? // MCQ options; null for numeric-response items
-  correctOption    String?
-  correctValue     String? // numeric/grid-in expected answer
-  explanation      String?
+  passage           String? // short Reading & Writing passage/text
+  imageUrl          String? // SAT Math graphics/charts/diagrams
+  prompt            String
+  options           Json? // MCQ options; null for numeric-response items
+  correctOption     String?
+  correctValue      String? // numeric/grid-in expected answer
+  explanation       String?
   calculatorAllowed Boolean?
-  estimatedTimeSec Int?
-  tags             String[] @default([])
+  estimatedTimeSec  Int?
+  tags              String[] @default([])
 
   // Content-safety / copyright metadata (spec section 10).
   sourceType      QuestionSourceType @default(ORIGINAL_SMARTPREP_QUESTION)
@@ -2720,10 +2788,10 @@ model SatContent {
 }
 
 model SatAttempt {
-  id     String         @id @default(cuid())
-  user   User           @relation(fields: [userId], references: [id])
-  userId String
-  kind   SatAttemptKind
+  id      String         @id @default(cuid())
+  user    User           @relation(fields: [userId], references: [id])
+  userId  String
+  kind    SatAttemptKind
   section SatSection? // null reserved for a future cross-section Diagnostic/Mock; set for skill practice
 
   startedAt   DateTime  @default(now())
@@ -2737,7 +2805,7 @@ model SatAttempt {
   // section — "EASIER" | "HARDER" — set only for MOCK_EXAM attempts,
   // once that section's Module 1 has been scored. Null until then.
   readingWritingModule2Tier String?
-  mathModule2Tier            String?
+  mathModule2Tier           String?
 
   // Set each time a new Mock Exam module begins (attempt creation, R&W
   // Module 2 routing, the Math-section break ending, Math Module 2
@@ -2766,15 +2834,17 @@ model SatAttemptItem {
   numericAnswer  String?
   isCorrect      Boolean?
   timeSpentSecs  Int?
-  flagged        Boolean @default(false)
+  flagged        Boolean  @default(false)
 
   @@unique([attemptId, contentId])
 }
 
-/** One goal per student — target composite score and, optionally, a
+/**
+ * One goal per student — target composite score and, optionally, a
  * test date. Purely informational (current vs. target, days
  * remaining): spec explicitly forbids promising a particular score
- * improvement, so no projection/trend logic lives here. */
+ * improvement, so no projection/trend logic lives here.
+ */
 model SatScoreGoal {
   id          String    @id @default(cuid())
   user        User      @relation(fields: [userId], references: [id])
@@ -2785,7 +2855,8 @@ model SatScoreGoal {
   updatedAt   DateTime  @updatedAt
 }
 
-/** Per-student SAT domain/skill mastery, updated by an EMA on every answer
+/**
+ * Per-student SAT domain/skill mastery, updated by an EMA on every answer
  * (Drill Mode, see src/lib/sat/mastery-service.ts). Mirrors
  * StudentTopicMastery's shape but is scoped to SAT's own section/domain/
  * skill model rather than the curriculum Subject FK, which can't represent
@@ -2794,14 +2865,15 @@ model SatScoreGoal {
  * findUnique/upsert can't accept null in a unique key (NULL isn't equal to
  * NULL in SQL), so a nullable skill would make this table impossible to
  * upsert into directly. mastery-service.ts normalizes SatContent.skill's
- * null to "" at the boundary. */
+ * null to "" at the boundary.
+ */
 model SatSkillMastery {
-  id     String     @id @default(cuid())
-  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  id      String     @id @default(cuid())
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
   section SatSection
-  domain String
-  skill  String     @default("")
+  domain  String
+  skill   String     @default("")
 
   masteryScore       Float     @default(0) // 0-100 EMA
   confidenceScore    Float     @default(0) // 0-1, grows with attempt volume
@@ -2819,25 +2891,27 @@ enum InternationalExamProduct {
   SAT
 }
 
-/** A one-time purchase of TOEFL or SAT prep — deliberately its own model
+/**
+ * A one-time purchase of TOEFL or SAT prep — deliberately its own model
  * rather than a SubscriptionPlan value: these are one-time products, not
  * recurring monthly plans, and must stay fully separate from the existing
  * Premium/Basic subscription pricing and payment pipeline. Mirrors
  * Payment's shape (reference/status/amountKobo) closely enough to reuse
  * the same low-level Paystack initialize/verify calls, but activation,
  * the webhook branch, and the callback route are all additive — nothing
- * about the existing Subscription/Payment flow is touched. */
+ * about the existing Subscription/Payment flow is touched.
+ */
 model InternationalExamPurchase {
-  id         String                    @id @default(cuid())
-  user       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String                   @id @default(cuid())
+  user       User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   product    InternationalExamProduct
   amountKobo Int
-  currency   String                    @default("NGN")
-  provider   String                    @default("paystack")
-  reference  String                    @unique
-  status     PaymentStatus             @default(PENDING)
-  createdAt  DateTime                  @default(now())
+  currency   String                   @default("NGN")
+  provider   String                   @default("paystack")
+  reference  String                   @unique
+  status     PaymentStatus            @default(PENDING)
+  createdAt  DateTime                 @default(now())
   paidAt     DateTime?
 
   @@index([userId, product])
@@ -2875,21 +2949,21 @@ enum ContentImportRowStatus {
 }
 
 model ContentImportBatch {
-  id       String                    @id @default(cuid())
+  id       String                   @id @default(cuid())
   exam     InternationalExamProduct
   format   ContentImportFormat
   filename String
-  status   ContentImportStatus       @default(UPLOADED)
+  status   ContentImportStatus      @default(UPLOADED)
 
-  totalRecords      Int @default(0)
-  validRecords      Int @default(0)
-  warningRecords    Int @default(0)
-  errorRecords      Int @default(0)
-  duplicateRecords  Int @default(0)
-  importedRecords   Int @default(0)
+  totalRecords     Int @default(0)
+  validRecords     Int @default(0)
+  warningRecords   Int @default(0)
+  errorRecords     Int @default(0)
+  duplicateRecords Int @default(0)
+  importedRecords  Int @default(0)
 
-  createdById String
-  createdAt   DateTime  @default(now())
+  createdById  String
+  createdAt    DateTime  @default(now())
   rolledBackAt DateTime?
 
   rows ContentImportRow[]
@@ -2903,12 +2977,12 @@ model ContentImportBatch {
 // imported becomes a real SatContent/ToeflContent row, so keeping a
 // second copy of its data here would be pure bloat at 100k+ scale.
 model ContentImportRow {
-  id        String              @id @default(cuid())
-  batch     ContentImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  id        String                 @id @default(cuid())
+  batch     ContentImportBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
   batchId   String
   rowNumber Int
   status    ContentImportRowStatus @default(PENDING)
-  messages  String[]            @default([])
+  messages  String[]               @default([])
   rawData   Json?
   // Set once this row has been imported, pointing at the real content row
   // (SatContent.id or ToeflContent.id depending on the batch's exam).

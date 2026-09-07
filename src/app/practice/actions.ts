@@ -5,6 +5,7 @@ import type { AttemptMode, ExamType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
+import { recordExamTopicAttempts, recordReadinessSnapshot } from "@/lib/practice/readiness-service";
 import { buildSelectionUnits, selectContiguousUnits } from "@/lib/practice/attempt-selection";
 import { examLabels } from "@/lib/exam-slugs";
 import { notifyUser } from "@/lib/notify";
@@ -188,6 +189,11 @@ export async function submitAttempt(attemptId: string) {
   if (topicAttempts.length > 0) {
     await recordTopicAttempts(session.user.id, topicAttempts);
     await refreshTopicInsights(session.user.id);
+    // Exam-scoped counterpart (Exam Readiness feature) — same data, also
+    // written to the per-exam mastery model so WAEC/UTME/NECO/Post-UTME
+    // readiness stays distinct even for a shared subject/topic.
+    await recordExamTopicAttempts(session.user.id, attempt.exam, topicAttempts);
+    await recordReadinessSnapshot(session.user.id, attempt.exam);
   }
 
   redirect(`/practice/results/${attemptId}`);
