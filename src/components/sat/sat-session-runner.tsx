@@ -120,7 +120,7 @@ export function SatSessionRunner({
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <div className="flex items-center justify-between text-xs text-text-muted">
+      <div className="flex flex-col gap-2 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
         <span>
           Question {index + 1} of {items.length}
         </span>
@@ -132,7 +132,7 @@ export function SatSessionRunner({
             <button
               type="button"
               onClick={toggleFlag}
-              className={`rounded-full border px-2.5 py-1 text-xs ${
+              className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${
                 flagged[current.itemId]
                   ? "border-warning/50 bg-warning-surface text-warning"
                   : "border-border-strong text-text-secondary hover:border-text-muted"
