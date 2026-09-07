@@ -46,11 +46,13 @@ export type Permission =
   | "toefl.review"
   | "toefl.publish"
   | "toefl.archive"
+  | "toefl.bulk_import"
   | "sat.view"
   | "sat.create"
   | "sat.review"
   | "sat.publish"
-  | "sat.archive";
+  | "sat.archive"
+  | "sat.bulk_import";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -98,11 +100,13 @@ const ALL_PERMISSIONS: Permission[] = [
   "toefl.review",
   "toefl.publish",
   "toefl.archive",
+  "toefl.bulk_import",
   "sat.view",
   "sat.create",
   "sat.review",
   "sat.publish",
   "sat.archive",
+  "sat.bulk_import",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -131,11 +135,13 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "toefl.review",
     "toefl.publish",
     "toefl.archive",
+    "toefl.bulk_import",
     "sat.view",
     "sat.create",
     "sat.review",
     "sat.publish",
     "sat.archive",
+    "sat.bulk_import",
   ],
   CONTENT_REVIEWER: [
     "questions.view",

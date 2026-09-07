@@ -21,3 +21,20 @@ export async function uploadAudio(opts: {
   });
   return { url: blob.url };
 }
+
+/** Same upload seam as uploadAudio, generalized for images/charts/
+ * diagrams — e.g. for an admin who wants to host a SAT graphic or TOEFL
+ * illustration and paste the resulting URL into a bulk-import file, rather
+ * than sourcing an external link. */
+export async function uploadImage(opts: {
+  pathname: string;
+  data: Uint8Array;
+  contentType: string;
+}): Promise<{ url: string }> {
+  const blob = await put(opts.pathname, Buffer.from(opts.data), {
+    access: "public",
+    contentType: opts.contentType,
+    addRandomSuffix: true,
+  });
+  return { url: blob.url };
+}

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { computeSectionScore, computeCompositeScore } from "@/lib/sat/scoring";
 import { SAT_CONFIG } from "@/lib/sat/config";
+import { selectSatContent } from "@/lib/sat/content-selection";
 import type { SatSection } from "@prisma/client";
 
 /** Every section's practice attempt writes its score into a different
@@ -27,10 +28,7 @@ export async function assertOwnedInProgressSatAttempt(attemptId: string, userId:
 /** Bundles all published content for a section into one attempt —
  * mirrors createSkillPracticeAttempt in the TOEFL attempt-service. */
 export async function createSkillPracticeAttempt(userId: string, section: SatSection): Promise<string> {
-  const content = await prisma.satContent.findMany({
-    where: { section, status: "PUBLISHED" },
-    orderBy: { createdAt: "asc" },
-  });
+  const content = await selectSatContent({ section });
   if (content.length === 0) {
     throw new Error("Practice content isn't available yet.");
   }

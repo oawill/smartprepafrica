@@ -75,6 +75,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: "SAT Overview", href: "/dashboard/admin/sat", permission: "sat.view", requiresFlag: "sat" },
       { label: "SAT Content", href: "/dashboard/admin/sat/content", permission: "sat.view", requiresFlag: "sat" },
       { label: "SAT Analytics", href: "/dashboard/admin/sat/analytics", permission: "analytics.view", requiresFlag: "sat" },
+      { label: "Question Bank — Bulk Import", href: "/dashboard/admin/content-import", permission: "sat.bulk_import" },
     ],
   },
   {

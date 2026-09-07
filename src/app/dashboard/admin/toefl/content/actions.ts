@@ -210,7 +210,7 @@ export async function approveToeflContent(formData: FormData) {
     );
   }
 
-  await prisma.toeflContent.update({ where: { id }, data: { status: "APPROVED" } });
+  await prisma.toeflContent.update({ where: { id }, data: { status: "APPROVED", reviewedById: session.user.id } });
   await logAudit({
     actorUserId: session.user.id,
     actorRole: session.user.role,

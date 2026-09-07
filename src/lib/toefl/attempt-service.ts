@@ -6,6 +6,7 @@ import { isSpeakingEvaluationConfigured } from "@/lib/toefl/speaking-evaluator";
 import { openAiSpeakingEvaluator } from "@/lib/toefl/openai-speaking-evaluator";
 import { isWritingEvaluationConfigured } from "@/lib/toefl/writing-evaluator";
 import { claudeWritingEvaluator } from "@/lib/toefl/claude-writing-evaluator";
+import { selectToeflContent } from "@/lib/toefl/content-selection";
 import type { ToeflSkill } from "@prisma/client";
 
 /** Every skill's practice attempt writes its score into a different
@@ -34,10 +35,7 @@ export async function assertOwnedInProgressToeflAttempt(attemptId: string, userI
 }
 
 export async function createSkillPracticeAttempt(userId: string, skill: ToeflSkill): Promise<string> {
-  const content = await prisma.toeflContent.findMany({
-    where: { skill, status: "PUBLISHED" },
-    orderBy: { createdAt: "asc" },
-  });
+  const content = await selectToeflContent({ skill });
   if (content.length === 0) {
     throw new Error("Practice content isn't available yet.");
   }

@@ -207,7 +207,7 @@ export async function approveSatContent(formData: FormData) {
     );
   }
 
-  await prisma.satContent.update({ where: { id }, data: { status: "APPROVED" } });
+  await prisma.satContent.update({ where: { id }, data: { status: "APPROVED", reviewedById: session.user.id } });
   await logAudit({
     actorUserId: session.user.id,
     actorRole: session.user.role,
