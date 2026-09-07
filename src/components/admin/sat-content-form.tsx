@@ -26,6 +26,7 @@ export type SatContentFormValue = {
   explanation: string | null;
   estimatedTimeSec: number | null;
   tags: string[];
+  sourceReference?: string | null;
 };
 
 const inputClass =
@@ -161,6 +162,16 @@ export function SatContentForm({
       <div>
         <label className={labelClass}>Explanation (optional, shown after the student answers)</label>
         <textarea name="explanation" rows={3} defaultValue={initial?.explanation ?? ""} className={inputClass} />
+      </div>
+
+      <div>
+        <label className={labelClass}>Source / Reference (optional)</label>
+        <input
+          name="sourceReference"
+          defaultValue={initial?.sourceReference ?? ""}
+          placeholder="e.g. SmartPrepAfrica original, or a licensed source citation"
+          className={inputClass}
+        />
       </div>
 
       <button

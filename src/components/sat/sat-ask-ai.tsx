@@ -29,6 +29,7 @@ export function SatAskAi({
   selectedOption,
   numericAnswer,
   explanation,
+  triggerLabel = "Ask SmartPrep AI",
 }: {
   section: SatSection;
   domain: string;
@@ -40,6 +41,7 @@ export function SatAskAi({
   selectedOption: string | null;
   numericAnswer: string | null;
   explanation: string | null;
+  triggerLabel?: string;
 }) {
   const isNumeric = correctOption === null;
   const fullPrompt = passage ? `Passage: ${passage}\n\nQuestion: ${prompt}` : prompt;
@@ -60,7 +62,7 @@ export function SatAskAi({
     <AiCoachPanel
       context={{}}
       defaultMode="ASK"
-      triggerLabel="Ask SmartPrep AI"
+      triggerLabel={triggerLabel}
       triggerClassName="inline-flex items-center gap-1.5 rounded-full border border-brand/50 px-3 py-1.5 text-xs font-medium text-brand-text hover:border-brand"
       suggestedPrompts={SAT_ASK_AI_PROMPTS}
       focusQuestion={{

@@ -34,7 +34,24 @@ export default function SatLandingPage() {
           simulation, not an official College Board product.
         </p>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="mt-10 text-lg font-semibold text-text-primary">Drills</h2>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Link href="/international-exams/sat/drill">
+            <Card title="Start a Drill" className="border-brand/40 bg-brand/5 transition hover:border-brand">
+              <p className="text-sm text-brand-text">
+                Short, focused question sets (5–20 questions) — build mastery without a full practice session →
+              </p>
+            </Card>
+          </Link>
+          <Link href="/international-exams/sat/drill/history">
+            <Card title="Drill History" className="transition hover:border-border-strong">
+              <p className="text-sm text-brand-text">Review your past drills →</p>
+            </Card>
+          </Link>
+        </div>
+
+        <h2 className="mt-10 text-lg font-semibold text-text-primary">Practice</h2>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <Link href="/international-exams/sat/reading-writing">
             <Card title="Reading and Writing" className="transition hover:border-border-strong">
               <p className="text-sm text-brand-text">Start Reading and Writing practice →</p>
@@ -45,6 +62,10 @@ export default function SatLandingPage() {
               <p className="text-sm text-brand-text">Start Math practice →</p>
             </Card>
           </Link>
+        </div>
+
+        <h2 className="mt-10 text-lg font-semibold text-text-primary">Mock Exams</h2>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <Link href="/international-exams/sat/diagnostic">
             <Card title="Diagnostic Test" className="transition hover:border-border-strong">
               <p className="text-sm text-brand-text">Estimate your starting SAT readiness →</p>
@@ -57,7 +78,8 @@ export default function SatLandingPage() {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <h2 className="mt-10 text-lg font-semibold text-text-primary">Performance / Progress</h2>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card title="Progress">
             <Link href="/international-exams/sat/dashboard" className="text-sm text-brand-text hover:underline">
               View your SAT dashboard →

@@ -39,8 +39,17 @@ export default async function SatDashboardPage() {
   const readingWritingScore = submitted.find((a) => a.readingWritingScore !== null)?.readingWritingScore ?? null;
   const mathScore = submitted.find((a) => a.mathScore !== null)?.mathScore ?? null;
 
+  // Strongest/Weakest Domain deliberately excludes DRILL attempts: an
+  // Adaptive Drill intentionally oversamples the student's own weak
+  // domains with harder-for-them content, so folding it in here would
+  // create a feedback loop that drags "weakest domain" down further by
+  // the very feature meant to remediate it. Other metrics below (Questions
+  // Completed, Practice Streak, section accuracy) intentionally DO include
+  // drills — more practice should count, and a quick drill is exactly the
+  // kind of low-friction habit a streak should reward.
+  const nonDrillSubmitted = submitted.filter((a) => a.kind !== "DRILL");
   const domainStats = new Map<string, { correct: number; total: number }>();
-  for (const attempt of submitted) {
+  for (const attempt of nonDrillSubmitted) {
     for (const item of attempt.items) {
       if (item.isCorrect === null) continue;
       const stat = domainStats.get(item.content.domain) ?? { correct: 0, total: 0 };
@@ -57,6 +66,25 @@ export default async function SatDashboardPage() {
     ? domainRates.reduce((a, b) => (b.rate < a.rate ? b : a)).domain
     : null;
 
+  const sectionStats: Record<"READING_WRITING" | "MATH", { correct: number; total: number }> = {
+    READING_WRITING: { correct: 0, total: 0 },
+    MATH: { correct: 0, total: 0 },
+  };
+  for (const attempt of submitted) {
+    for (const item of attempt.items) {
+      if (item.isCorrect === null) continue;
+      sectionStats[item.content.section].total += 1;
+      if (item.isCorrect) sectionStats[item.content.section].correct += 1;
+    }
+  }
+  const readingWritingAccuracy =
+    sectionStats.READING_WRITING.total > 0
+      ? Math.round((sectionStats.READING_WRITING.correct / sectionStats.READING_WRITING.total) * 100)
+      : null;
+  const mathAccuracy =
+    sectionStats.MATH.total > 0 ? Math.round((sectionStats.MATH.correct / sectionStats.MATH.total) * 100) : null;
+
+  const drillsCompleted = submitted.filter((a) => a.kind === "DRILL").length;
   const questionsCompleted = submitted.reduce((sum, a) => sum + a.items.length, 0);
   const practiceTimeMinutes = Math.round(
     submitted.reduce((sum, a) => sum + a.items.reduce((s, i) => s + (i.timeSpentSecs ?? 0), 0), 0) / 60
@@ -123,6 +151,15 @@ export default async function SatDashboardPage() {
         </Card>
       </div>
 
+      <div className="mt-6">
+        <Link
+          href="/international-exams/sat/drill"
+          className="inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+        >
+          Start a Drill →
+        </Link>
+      </div>
+
       {!hasData ? (
         <div className="mt-8">
           <SatEmptyState message="Complete Reading and Writing or Math practice to see your SAT readiness." />
@@ -135,10 +172,21 @@ export default async function SatDashboardPage() {
           <Card title="Questions Completed">
             <p className="text-2xl font-semibold text-text-primary">{questionsCompleted}</p>
           </Card>
+          <Card title="Drills Completed">
+            <p className="text-2xl font-semibold text-text-primary">{drillsCompleted}</p>
+          </Card>
           <Card title="Practice Time">
             <p className="text-2xl font-semibold text-text-primary">{practiceTimeMinutes}m</p>
           </Card>
-          <Card title="Strongest / Weakest Skill">
+          <Card title="Reading & Writing Accuracy">
+            <p className="text-2xl font-semibold text-text-primary">
+              {readingWritingAccuracy !== null ? `${readingWritingAccuracy}%` : "--"}
+            </p>
+          </Card>
+          <Card title="Math Accuracy">
+            <p className="text-2xl font-semibold text-text-primary">{mathAccuracy !== null ? `${mathAccuracy}%` : "--"}</p>
+          </Card>
+          <Card title="Strongest / Weakest Domain">
             <p className="text-sm text-text-secondary">
               {strongestDomain ?? "--"} / {weakestDomain ?? "--"}
             </p>

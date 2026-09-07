@@ -58,7 +58,7 @@ export async function recordAnswer(
   itemId: string,
   userId: string,
   answer: { selectedOption?: string; numericAnswer?: string }
-) {
+): Promise<{ isCorrect: boolean | null }> {
   const item = await prisma.satAttemptItem.findUniqueOrThrow({
     where: { id: itemId },
     include: {
@@ -84,6 +84,8 @@ export async function recordAnswer(
       isCorrect,
     },
   });
+
+  return { isCorrect };
 }
 
 /** Toggles flagged on/off — allowed both mid-attempt and after

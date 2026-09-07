@@ -13,6 +13,7 @@ const KIND_LABELS: Record<SatAttemptKind, string> = {
   DIAGNOSTIC: "Diagnostic",
   SKILL_PRACTICE: "Skill Practice",
   MOCK_EXAM: "Mock Exam",
+  DRILL: "Drill",
 };
 
 /** Aggregate rollups over existing SatAttempt/SatAttemptItem rows only —

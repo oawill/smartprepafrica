@@ -32,4 +32,16 @@ export const SAT_CONFIG = {
     module2Size: 2,
     moduleTimeLimitSec: 20 * 60,
   },
+  // Drill Mode sizes, shown to the student before starting (spec: "The
+  // student should always see the number of questions before starting").
+  drill: {
+    sizes: {
+      QUICK: 5,
+      FOCUS: 10,
+      PRACTICE_SET: 15,
+      CHALLENGE: 20,
+    },
+    adaptiveDefaultSize: 10,
+    dailyDrillSize: 10,
+  },
 } as const;

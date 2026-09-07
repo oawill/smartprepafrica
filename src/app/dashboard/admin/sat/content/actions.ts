@@ -22,6 +22,7 @@ const contentFieldsSchema = z.object({
   explanation: z.string().trim().optional(),
   estimatedTimeSec: z.coerce.number().int().optional(),
   tags: z.string().trim().optional(),
+  sourceReference: z.string().trim().optional(),
 });
 
 function parseOptionsFromForm(formData: FormData) {
@@ -48,6 +49,7 @@ function parseFields(formData: FormData) {
     explanation: (formData.get("explanation") as string) || undefined,
     estimatedTimeSec: (formData.get("estimatedTimeSec") as string) || undefined,
     tags: (formData.get("tags") as string) || undefined,
+    sourceReference: (formData.get("sourceReference") as string) || undefined,
   });
 }
 
@@ -88,6 +90,7 @@ export async function createSatContent(formData: FormData) {
       explanation: fields.explanation ?? null,
       estimatedTimeSec: fields.estimatedTimeSec ?? null,
       tags: parseTags(fields.tags),
+      sourceReference: fields.sourceReference ?? null,
       createdById: session.user.id,
     },
   });
@@ -138,6 +141,7 @@ export async function updateSatContent(formData: FormData) {
       explanation: fields.explanation ?? null,
       estimatedTimeSec: fields.estimatedTimeSec ?? null,
       tags: parseTags(fields.tags),
+      sourceReference: fields.sourceReference ?? null,
     },
   });
 

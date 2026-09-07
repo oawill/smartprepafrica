@@ -135,6 +135,7 @@ export default async function SatContentDetailPage({
                 explanation: content.explanation,
                 estimatedTimeSec: content.estimatedTimeSec,
                 tags: content.tags,
+                sourceReference: content.sourceReference,
               }}
             />
           ) : (

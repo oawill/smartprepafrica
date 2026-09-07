@@ -146,6 +146,7 @@ model User {
   toeflAttempts      ToeflAttempt[]
   satAttempts        SatAttempt[]
   satScoreGoal       SatScoreGoal?
+  satSkillMastery    SatSkillMastery[]
   internationalExamPurchases InternationalExamPurchase[]
 
   // The user's country preference, set at registration. Nullable/backfilled
@@ -2600,6 +2601,7 @@ enum SatAttemptKind {
   SKILL_PRACTICE
   DIAGNOSTIC
   MOCK_EXAM
+  DRILL
 }
 
 // A shared Reading & Writing passage that multiple SatContent questions
@@ -2753,6 +2755,35 @@ model SatScoreGoal {
   testDate    DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+/** Per-student SAT domain/skill mastery, updated by an EMA on every answer
+ * (Drill Mode, see src/lib/sat/mastery-service.ts). Mirrors
+ * StudentTopicMastery's shape but is scoped to SAT's own section/domain/
+ * skill model rather than the curriculum Subject FK, which can't represent
+ * SAT's free-string domain/skill taxonomy. skill uses "" (not null) to
+ * mean "domain-level only, no finer skill tag" — Prisma's compound-unique
+ * findUnique/upsert can't accept null in a unique key (NULL isn't equal to
+ * NULL in SQL), so a nullable skill would make this table impossible to
+ * upsert into directly. mastery-service.ts normalizes SatContent.skill's
+ * null to "" at the boundary. */
+model SatSkillMastery {
+  id     String     @id @default(cuid())
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  section SatSection
+  domain String
+  skill  String     @default("")
+
+  masteryScore       Float     @default(0) // 0-100 EMA
+  confidenceScore    Float     @default(0) // 0-1, grows with attempt volume
+  questionsAttempted Int       @default(0)
+  questionsCorrect   Int       @default(0)
+  lastPracticedAt    DateTime?
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([userId, section, domain, skill])
+  @@index([userId, section])
 }
 
 enum InternationalExamProduct {
