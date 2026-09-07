@@ -6,10 +6,12 @@ import { Card } from "@/components/dashboard/card";
 import { ComingSoon } from "@/components/toefl/coming-soon";
 import { TOEFL_SKILL_LABELS, TOEFL_SKILLS } from "@/lib/toefl/types";
 import { isToeflEnabled } from "@/lib/toefl/config";
+import { formatInternationalExamPrice } from "@/lib/international-exams/pricing";
 
 export const metadata: Metadata = {
-  title: "TOEFL Preparation",
-  description: "Prepare for the TOEFL iBT with SmartPrepAfrica — Reading, Listening, Speaking, and Writing practice.",
+  title: "TOEFL Preparation Nigeria — TOEFL Practice & Mock Test",
+  description:
+    "Prepare for the TOEFL iBT with SmartPrepAfrica — Reading, Listening, Speaking, and Writing practice, full-length TOEFL mock tests, and AI-powered study support for students in Nigeria preparing to study abroad.",
 };
 
 export default function ToeflLandingPage() {
@@ -82,6 +84,18 @@ export default function ToeflLandingPage() {
           <Card title="Score Goal">
             <ComingSoon label="Set and track a target TOEFL score" />
           </Card>
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-brand/30 bg-brand/5 p-6 text-center">
+          <p className="text-xs font-medium uppercase tracking-wide text-brand-text">TOEFL Prep</p>
+          <p className="mt-1 text-2xl font-semibold text-text-primary">{formatInternationalExamPrice("TOEFL")}</p>
+          <p className="mt-1 text-sm text-text-secondary">One-time access to the full TOEFL prep product.</p>
+          <Link
+            href="/pricing#international-exam-prep"
+            className="mt-4 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+          >
+            View Pricing
+          </Link>
         </div>
       </div>
     </div>

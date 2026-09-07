@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Card } from "@/components/dashboard/card";
 import { isSatEnabled } from "@/lib/sat/config";
+import { formatInternationalExamPrice } from "@/lib/international-exams/pricing";
 
 export const metadata: Metadata = {
-  title: "Digital SAT Preparation",
-  description: "Prepare for the Digital SAT with SmartPrepAfrica — Reading and Writing, and Math practice.",
+  title: "Digital SAT Preparation Nigeria — SAT Practice & Mock Test",
+  description:
+    "Prepare for the Digital SAT with SmartPrepAfrica — Reading and Writing, and Math practice, full-length SAT mock exams with adaptive modules, and AI-powered study support for students in Nigeria preparing to study abroad.",
 };
 
 export default function SatLandingPage() {
@@ -80,6 +82,18 @@ export default function SatLandingPage() {
         <p className="mt-4 text-xs text-text-muted">
           Ask SmartPrep AI is available directly on any question you get wrong in your results and review pages.
         </p>
+
+        <div className="mt-10 rounded-2xl border border-brand/30 bg-brand/5 p-6 text-center">
+          <p className="text-xs font-medium uppercase tracking-wide text-brand-text">SAT Prep</p>
+          <p className="mt-1 text-2xl font-semibold text-text-primary">{formatInternationalExamPrice("SAT")}</p>
+          <p className="mt-1 text-sm text-text-secondary">One-time access to the full Digital SAT prep product.</p>
+          <Link
+            href="/pricing#international-exam-prep"
+            className="mt-4 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+          >
+            View Pricing
+          </Link>
+        </div>
       </div>
     </div>
   );

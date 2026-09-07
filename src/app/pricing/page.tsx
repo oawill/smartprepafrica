@@ -4,12 +4,18 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PLAN_FEATURES, PLAN_LABELS, resolvePlanPrice, formatMoney } from "@/lib/plans";
 import { checkout } from "@/app/pricing/actions";
+import { checkoutInternationalExam } from "@/app/international-exams/checkout-actions";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Badge } from "@/components/ui/badge";
+import { InternationalExamProductCard } from "@/components/international-exams/product-card";
+import { INTERNATIONAL_EXAM_PRODUCTS } from "@/lib/international-exams/pricing";
+import { isToeflEnabled } from "@/lib/toefl/config";
+import { isSatEnabled } from "@/lib/sat/config";
 
 export const metadata: Metadata = {
   title: "Plans & Pricing",
-  description: "Choose a SmartPrepAfrica.com plan and unlock the full question bank and course library.",
+  description:
+    "Choose a SmartPrepAfrica.com plan and unlock the full question bank and course library. Also offering TOEFL and SAT preparation for students planning to study abroad.",
 };
 
 const orderedPlans = ["FREE", "BASIC", "PREMIUM", "SCHOOL"] as const;
@@ -25,7 +31,7 @@ export default async function PricingPage({
   const { status } = await searchParams;
   const session = await auth();
 
-  const [activeSubscription, viewer] = await Promise.all([
+  const [activeSubscription, viewer, ownedProducts] = await Promise.all([
     session
       ? prisma.subscription.findFirst({
           where: { userId: session.user.id, status: "ACTIVE" },
@@ -35,7 +41,18 @@ export default async function PricingPage({
     session
       ? prisma.user.findUnique({ where: { id: session.user.id }, select: { countryId: true } })
       : null,
+    session
+      ? prisma.internationalExamPurchase.findMany({
+          where: { userId: session.user.id, status: "SUCCESS" },
+          select: { product: true },
+        })
+      : [],
   ]);
+  const ownedProductSet = new Set(ownedProducts.map((p) => p.product));
+
+  const showToefl = isToeflEnabled();
+  const showSat = isSatEnabled();
+  const showInternationalExams = showToefl || showSat;
 
   const prices = Object.fromEntries(
     await Promise.all(
@@ -64,7 +81,10 @@ export default async function PricingPage({
         </p>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <h2 className="mt-10 text-lg font-semibold text-text-primary">Nigerian Exam Preparation</h2>
+      <p className="mt-1 text-sm text-text-secondary">WAEC, NECO, UTME, and Post-UTME practice and courses.</p>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {orderedPlans.map((plan) => {
           const price = prices[plan];
           const isCurrent = activeSubscription?.plan === plan;
@@ -127,6 +147,44 @@ export default async function PricingPage({
           );
         })}
       </div>
+
+      {showInternationalExams && (
+        <div id="international-exam-prep">
+          <h2 className="mt-14 text-lg font-semibold text-text-primary">International Exam Preparation</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            Choose the exam you&apos;re preparing for. TOEFL and SAT are separate one-time products, not
+            included in the plans above.
+          </p>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {INTERNATIONAL_EXAM_PRODUCTS.filter(
+              (product) => (product === "TOEFL" && showToefl) || (product === "SAT" && showSat)
+            ).map((product) => (
+              <InternationalExamProductCard
+                key={product}
+                product={product}
+                cta={
+                  ownedProductSet.has(product) ? (
+                    <div className="flex justify-center">
+                      <Badge tone="success">Purchased</Badge>
+                    </div>
+                  ) : (
+                    <form action={checkoutInternationalExam}>
+                      <input type="hidden" name="product" value={product} />
+                      <button
+                        type="submit"
+                        className="w-full rounded-full bg-brand py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+                      >
+                        {product === "TOEFL" ? "Start TOEFL Prep" : "Start SAT Prep"}
+                      </button>
+                    </form>
+                  )
+                }
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="mt-6 text-xs text-text-muted">
         Payments are processed securely by Paystack. Cards, bank transfer,

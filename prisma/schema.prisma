@@ -146,6 +146,7 @@ model User {
   toeflAttempts      ToeflAttempt[]
   satAttempts        SatAttempt[]
   satScoreGoal       SatScoreGoal?
+  internationalExamPurchases InternationalExamPurchase[]
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -2610,4 +2611,33 @@ model SatScoreGoal {
   testDate    DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+enum InternationalExamProduct {
+  TOEFL
+  SAT
+}
+
+/** A one-time purchase of TOEFL or SAT prep — deliberately its own model
+ * rather than a SubscriptionPlan value: these are one-time products, not
+ * recurring monthly plans, and must stay fully separate from the existing
+ * Premium/Basic subscription pricing and payment pipeline. Mirrors
+ * Payment's shape (reference/status/amountKobo) closely enough to reuse
+ * the same low-level Paystack initialize/verify calls, but activation,
+ * the webhook branch, and the callback route are all additive — nothing
+ * about the existing Subscription/Payment flow is touched. */
+model InternationalExamPurchase {
+  id         String                    @id @default(cuid())
+  user       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  product    InternationalExamProduct
+  amountKobo Int
+  currency   String                    @default("NGN")
+  provider   String                    @default("paystack")
+  reference  String                    @unique
+  status     PaymentStatus             @default(PENDING)
+  createdAt  DateTime                  @default(now())
+  paidAt     DateTime?
+
+  @@index([userId, product])
 }

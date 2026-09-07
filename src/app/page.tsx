@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
 import { HeroCarousel } from "@/components/home/hero-carousel";
+import { InternationalExamProductCard } from "@/components/international-exams/product-card";
+import { INTERNATIONAL_EXAM_LANDING_PATH } from "@/lib/international-exams/pricing";
+import { isToeflEnabled } from "@/lib/toefl/config";
+import { isSatEnabled } from "@/lib/sat/config";
 import { prisma } from "@/lib/prisma";
 
 const exams = [
@@ -14,7 +19,16 @@ const exams = [
 const discoveryStates = ["Lagos", "Rivers", "Kano", "FCT", "Oyo", "Enugu"];
 const discoverySubjects = ["Mathematics", "English Language", "Physics", "Chemistry", "Biology"];
 
+export const metadata: Metadata = {
+  description:
+    "Prepare for WAEC, NECO, UTME, and Post-UTME with SmartPrepAfrica's AI study coach — now also offering TOEFL and SAT preparation for students planning to study abroad.",
+};
+
 export default async function Home() {
+  const showToefl = isToeflEnabled();
+  const showSat = isSatEnabled();
+  const showInternationalExams = showToefl || showSat;
+
   // Real counts only — never fabricated. Used for the Learning section below.
   const [schoolsWithCourses, publishedCourseCount, upcomingLiveClasses] = await Promise.all([
     prisma.school.count({ where: { courses: { some: { published: true } } } }),
@@ -63,7 +77,69 @@ export default async function Home() {
               Explore Learning
             </Link>
           </div>
+
+          {showInternationalExams && (
+            <div className="mx-auto mt-10 flex max-w-2xl flex-col items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-5 py-3 text-center sm:flex-row sm:justify-center sm:gap-3">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-primary">
+                <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase text-brand-foreground">
+                  New
+                </span>
+                TOEFL &amp; SAT Prep
+              </span>
+              <span className="hidden text-text-muted sm:inline">·</span>
+              <span className="text-sm text-text-secondary">
+                Prepare for international opportunities with SmartPrepAfrica.
+              </span>
+              <Link href="#international-exam-prep" className="text-sm font-medium text-brand-text hover:underline">
+                Explore International Exams →
+              </Link>
+            </div>
+          )}
         </section>
+
+        {showInternationalExams && (
+          <section id="international-exam-prep" className="mx-auto max-w-6xl px-6 py-16">
+            <div className="text-center">
+              <span className="text-xs font-medium text-brand-text">International Exam Prep</span>
+              <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
+                Preparing to Study Abroad? Start Here.
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
+                Prepare for TOEFL and SAT with structured practice, realistic mock exams, performance
+                insights, and AI-powered study support.
+              </p>
+            </div>
+
+            <div className="mx-auto mt-8 grid max-w-3xl gap-6 sm:grid-cols-2">
+              {showToefl && (
+                <InternationalExamProductCard
+                  product="TOEFL"
+                  cta={
+                    <Link
+                      href={INTERNATIONAL_EXAM_LANDING_PATH.TOEFL}
+                      className="block rounded-full bg-brand px-4 py-2.5 text-center text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+                    >
+                      Start TOEFL Prep
+                    </Link>
+                  }
+                />
+              )}
+              {showSat && (
+                <InternationalExamProductCard
+                  product="SAT"
+                  cta={
+                    <Link
+                      href={INTERNATIONAL_EXAM_LANDING_PATH.SAT}
+                      className="block rounded-full bg-brand px-4 py-2.5 text-center text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+                    >
+                      Start SAT Prep
+                    </Link>
+                  }
+                />
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="mx-auto max-w-6xl px-6 pb-16">
           <HeroCarousel />
