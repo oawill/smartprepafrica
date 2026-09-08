@@ -86,6 +86,14 @@ export default async function TeacherDashboard() {
         )}
       </div>
 
+      {teacher.applicationStatus !== "APPROVED" && (
+        <div className="mt-4 rounded-lg border border-warning/40 bg-warning-surface px-4 py-3 text-sm text-warning">
+          {teacher.applicationStatus === "PENDING"
+            ? "Your teacher application is still under review. You'll be able to create courses once it's approved."
+            : "Your teacher application wasn't approved. Contact support if you think this is a mistake."}
+        </div>
+      )}
+
       <NotificationsCard notifications={notifications} path="/dashboard/teacher" />
 
       {pendingSchoolInvitations.length > 0 && (
@@ -184,12 +192,14 @@ export default async function TeacherDashboard() {
               ))}
             </ul>
           )}
-          <Link
-            href="/dashboard/teacher/courses/new"
-            className="mt-3 inline-block rounded-full bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-          >
-            Create a course
-          </Link>
+          {teacher.applicationStatus === "APPROVED" && (
+            <Link
+              href="/dashboard/teacher/courses/new"
+              className="mt-3 inline-block rounded-full bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+            >
+              Create a course
+            </Link>
+          )}
         </Card>
       </div>
 

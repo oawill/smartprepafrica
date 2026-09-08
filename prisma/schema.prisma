@@ -331,10 +331,21 @@ model TeacherProfile {
   photoUrl        String?
   qualifications  String?
   yearsExperience Int?
+  // Self-registered teachers start PENDING and must be approved before
+  // they can create/edit any content (enforced in requireTeacherProfile,
+  // src/lib/authz.ts). School-invited teachers are created APPROVED
+  // directly (the inviting school admin already vetted them).
+  applicationStatus TeacherApplicationStatus @default(PENDING)
 
   classes   Class[]         @relation("TeacherClasses")
   courses   Course[]
   followers TeacherFollow[]
+}
+
+enum TeacherApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model TeacherFollow {
@@ -1285,6 +1296,11 @@ model Lesson {
   moderationReason String?
   moderatedById    String?
   moderatedAt      DateTime?
+
+  // Drip content: a PUBLISHED lesson with a future publishAt stays hidden
+  // from students until that time passes. Null means "visible as soon as
+  // published" — every existing lesson's behavior is unchanged.
+  publishAt DateTime?
 
   progress      LessonProgress[]
   quizQuestions QuizQuestion[]

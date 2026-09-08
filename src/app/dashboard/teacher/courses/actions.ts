@@ -6,6 +6,8 @@ import type { CourseCategory, Difficulty, LessonType } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireTeacherProfile as assertTeacher } from "@/lib/authz";
+import { parseSimpleCsv } from "@/lib/csv";
+import { parseQuizCsvRow } from "@/lib/learning/quiz-csv";
 
 async function assertOwnsCourse(teacherId: string, courseId: string) {
   const course = await prisma.course.findUnique({ where: { id: courseId } });
@@ -145,6 +147,7 @@ export async function createLesson(formData: FormData) {
       transcriptFull: (formData.get("transcriptFull") as string)?.trim() || null,
       notesMarkdown: (formData.get("notesMarkdown") as string)?.trim() || null,
       learningObjectives,
+      publishAt: formData.get("publishAt") ? new Date(formData.get("publishAt") as string) : null,
       // New lessons always start as a real draft, unlike the schema's
       // legacy-safe PUBLISHED default (same precedent as createQuestion
       // explicitly setting status: DRAFT).
@@ -279,6 +282,68 @@ export async function addQuizQuestion(formData: FormData) {
   revalidatePath(
     `/dashboard/teacher/courses/${lesson.module.course.id}/lessons/${lessonId}`
   );
+}
+
+export type QuizCsvImportResult = {
+  imported: number;
+  skipped: { row: number; reason: string }[];
+};
+
+/** Bulk-adds QuizQuestion rows to an existing lesson from a CSV of shape
+ * prompt,optionA,optionB,optionC,optionD,correctOption — the brief's "CSV
+ * question import," scoped to quiz questions specifically (a teacher can
+ * already build the course/module/lesson structure itself in the UI).
+ * Reuses parseSimpleCsv (src/lib/csv.ts), the same utility
+ * bulkUploadStudents already uses, not a new parser. Skips malformed rows
+ * and reports why rather than failing the whole batch on one bad row. */
+export async function importQuizQuestionsCsv(
+  _prevState: QuizCsvImportResult | null,
+  formData: FormData
+): Promise<QuizCsvImportResult> {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const teacher = await assertTeacher(session.user.id);
+
+  const lessonId = formData.get("lessonId") as string;
+  const lesson = await assertOwnsLesson(teacher.id, lessonId);
+
+  const file = formData.get("csvFile") as File | null;
+  if (!file || file.size === 0) {
+    return { imported: 0, skipped: [{ row: 0, reason: "No file selected." }] };
+  }
+
+  const text = await file.text();
+  const rows = parseSimpleCsv(text);
+  const dataRows =
+    rows[0]?.[0]?.toLowerCase() === "prompt" ? rows.slice(1) : rows;
+
+  const skipped: QuizCsvImportResult["skipped"] = [];
+  let count = await prisma.quizQuestion.count({ where: { lessonId } });
+  let imported = 0;
+
+  for (const [i, row] of dataRows.entries()) {
+    const rowNum = i + 1;
+    const parsed = parseQuizCsvRow(row);
+    if (!parsed.ok) {
+      skipped.push({ row: rowNum, reason: parsed.reason });
+      continue;
+    }
+
+    await prisma.quizQuestion.create({
+      data: {
+        lessonId,
+        order: count,
+        prompt: parsed.prompt,
+        options: parsed.options,
+        correctOption: parsed.correctOption,
+      },
+    });
+    count += 1;
+    imported += 1;
+  }
+
+  revalidatePath(`/dashboard/teacher/courses/${lesson.module.course.id}/lessons/${lessonId}`);
+  return { imported, skipped };
 }
 
 export async function createAssignment(formData: FormData) {

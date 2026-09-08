@@ -20,7 +20,15 @@ export default async function CourseDetailPage({
     include: {
       modules: {
         orderBy: { order: "asc" },
-        include: { lessons: { where: { moderationStatus: "PUBLISHED" }, orderBy: { order: "asc" } } },
+        include: {
+          lessons: {
+            where: {
+              moderationStatus: "PUBLISHED",
+              OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }],
+            },
+            orderBy: { order: "asc" },
+          },
+        },
       },
       assignments: {
         orderBy: { createdAt: "asc" },
