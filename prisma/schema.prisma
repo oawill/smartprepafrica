@@ -107,6 +107,7 @@ model User {
   topicMastery            StudentTopicMastery[]
   examTopicMastery        StudentExamTopicMastery[]
   readinessTrendSnapshots ReadinessTrendSnapshot[]
+  examProfiles            StudentExamProfile[]
   aiInsights              AiLearningInsight[]
   aiUsageLogs             AiUsageLog[]
 
@@ -853,6 +854,7 @@ model Subject {
   aiConversations  AiConversation[]
   topicMastery     StudentTopicMastery[]
   examTopicMastery StudentExamTopicMastery[]
+  examProfiles     StudentExamProfile[]      @relation("StudentExamProfileSubjects")
   aiInsights       AiLearningInsight[]
 }
 
@@ -1673,6 +1675,27 @@ model StudentExamTopicMastery {
 
   @@unique([userId, exam, subjectId, topic])
   @@index([userId, exam, masteryScore])
+}
+
+// The student's personal subject-preparation profile per exam — readiness,
+// drills, recommendations and analytics all read this instead of the full
+// subject catalog. One row per (student, exam): a WAEC selection never
+// overwrites a UTME selection for the same student. institutionId/courseId
+// are forward-compatible-only for now (item 13 of the spec) — no
+// Institution/Course catalog exists yet, so they're plain nullable strings,
+// not FKs, and no UI writes them in this pass.
+model StudentExamProfile {
+  id            String    @id @default(cuid())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  exam          ExamType
+  subjects      Subject[] @relation("StudentExamProfileSubjects")
+  institutionId String?
+  courseId      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, exam])
 }
 
 // One row per (student, exam, day) — captures the readiness % at most once

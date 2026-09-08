@@ -136,12 +136,18 @@ export type SmartSelectionParams = {
   subjectIds: string[];
   purpose: DrillPurpose;
   topic?: string;
+  /** Multiple topics — used by "Practice My Weak Areas" to pull from every
+   * weak/review topic in a subject at once. Ignored when `topic` (singular)
+   * is set. */
+  topics?: string[];
   size: number;
 };
 
 /** Selects up to `size` question ids for a Quick Drill, avoiding repeats
  * and tailoring order to the drill's purpose:
- * - TOPIC_DRILL: filtered to the exact topic, exposure-tiered.
+ * - TOPIC_DRILL: filtered to the exact topic (or, when `topics` plural is
+ *   given instead — "Practice My Weak Areas" — filtered to that set and
+ *   interleaved across them), exposure-tiered.
  * - QUICK_CHECK: exposure-tiered across all eligible subjects/topics, then
  *   interleaved by topic for a balanced mini-assessment.
  * - PRACTICE_SESSION: same as Quick Check but larger, for broader coverage.
@@ -151,7 +157,7 @@ export type SmartSelectionParams = {
  *   HARD, never a hard failure.
  * Returns fewer than `size` gracefully when the eligible pool is small. */
 export async function selectSmartQuestions(params: SmartSelectionParams): Promise<string[]> {
-  const { userId, exam, subjectIds, purpose, topic, size } = params;
+  const { userId, exam, subjectIds, purpose, topic, topics, size } = params;
   if (subjectIds.length === 0 || size <= 0) return [];
 
   const pool = await prisma.question.findMany({
@@ -159,7 +165,7 @@ export async function selectSmartQuestions(params: SmartSelectionParams): Promis
       exam,
       subjectId: { in: subjectIds },
       status: "PUBLISHED",
-      ...(topic ? { topic } : {}),
+      ...(topic ? { topic } : topics && topics.length > 0 ? { topic: { in: topics } } : {}),
     },
     select: { id: true, subjectId: true, topic: true, difficulty: true, passageGroupId: true, passageOrder: true },
   });
@@ -186,11 +192,75 @@ export async function selectSmartQuestions(params: SmartSelectionParams): Promis
       ...shuffle(tiers.staleCorrect),
       ...shuffle(tiers.recentCorrect),
     ];
-    ordered = purpose === "TOPIC_DRILL" ? priorityOrdered : interleaveByTopic(priorityOrdered);
+    // A single-topic TOPIC_DRILL has nothing to interleave; a multi-topic
+    // one (topics plural — "Practice My Weak Areas") benefits from the same
+    // spread-across-topics interleaving as Quick Check/Practice Session.
+    ordered = purpose === "TOPIC_DRILL" && !topics ? priorityOrdered : interleaveByTopic(priorityOrdered);
   }
 
   const units = buildSelectionUnits(
     ordered.map((q) => ({ id: q.id, passageGroupId: q.passageGroupId, passageOrder: q.passageOrder }))
   );
   return packUnitsInOrder(units, size);
+}
+
+/** Per-subject question-count allocation for Smart Mixed Drill — weaker
+ * subjects (lower readinessPct) get proportionally more questions, but
+ * every subject gets at least 1 (never "completely neglect stronger
+ * subjects", per the spec). A subject with no readiness score yet
+ * (`null` — not enough data) is treated as a neutral 50%, not 0%, so a
+ * single untested subject doesn't dominate the whole drill just for
+ * lacking data. Pure and exported for unit testing; always sums to
+ * exactly `totalSize` when `totalSize >= subjects.length` (below that,
+ * only the weakest `totalSize` subjects get an allocation of 1 each). */
+export function allocateWeightedDrillSizes(
+  subjects: { id: string; readinessPct: number | null }[],
+  totalSize: number
+): Record<string, number> {
+  if (subjects.length === 0 || totalSize <= 0) return {};
+
+  if (totalSize < subjects.length) {
+    const weakestFirst = [...subjects].sort((a, b) => (a.readinessPct ?? 50) - (b.readinessPct ?? 50));
+    const result: Record<string, number> = {};
+    for (const s of weakestFirst.slice(0, totalSize)) result[s.id] = 1;
+    return result;
+  }
+
+  const weights = subjects.map((s) => ({ id: s.id, weight: Math.max(1, 100 - (s.readinessPct ?? 50)) }));
+  const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
+
+  // floor(exact) never exceeds exact, and the exacts sum to exactly
+  // totalSize, so sum(floor(exact)) <= totalSize always — leftover here is
+  // guaranteed non-negative, unlike a version that forced a minimum of 1
+  // before redistributing (which could overshoot totalSize when many
+  // subjects have small weights).
+  const raw = weights.map((w) => {
+    const exact = (w.weight / totalWeight) * totalSize;
+    return { id: w.id, floor: Math.floor(exact), remainder: exact - Math.floor(exact) };
+  });
+
+  const result: Record<string, number> = {};
+  for (const r of raw) result[r.id] = r.floor;
+
+  let leftover = totalSize - Object.values(result).reduce((a, b) => a + b, 0);
+  const byRemainderDesc = [...raw].sort((a, b) => b.remainder - a.remainder);
+  for (let i = 0; leftover > 0; i = (i + 1) % byRemainderDesc.length) {
+    result[byRemainderDesc[i].id] += 1;
+    leftover -= 1;
+  }
+
+  // Enforce "never completely neglect a subject": any subject still at 0
+  // steals one slot from whichever subject currently has the largest
+  // allocation. Always resolvable without going negative anywhere, since
+  // totalSize >= subjects.length is guaranteed in this branch.
+  const ids = Object.keys(result);
+  for (const id of ids) {
+    while (result[id] === 0) {
+      const richestId = ids.reduce((a, b) => (result[a] > result[b] ? a : b));
+      result[richestId] -= 1;
+      result[id] += 1;
+    }
+  }
+
+  return result;
 }

@@ -67,6 +67,12 @@ export default async function ExamSetupPage({
         >
           Quick Drills →
         </Link>
+        <Link
+          href={`/practice/${examSlug}/subjects`}
+          className="rounded-full border border-border-strong px-4 py-2 text-sm font-medium text-text-primary hover:border-brand hover:text-brand-text"
+        >
+          Manage My Subjects →
+        </Link>
       </div>
 
       {subjects.length === 0 ? (

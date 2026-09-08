@@ -1,16 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import type { ExamType } from "@prisma/client";
 import type { ExamDrillConfigValues } from "@/lib/practice/exam-drill-config";
-import { startQuickDrill, startFullMock } from "@/app/practice/drills/actions";
+import type { ExamReadiness } from "@/lib/practice/readiness-service";
+import { startQuickDrill, startFullMock, startSmartMixedDrill } from "@/app/practice/drills/actions";
 
 type SubjectOption = { id: string; name: string };
 
-const PRESETS = [
-  {
-    purpose: "QUICK_CHECK" as const,
-    title: "Quick Check",
-    sizeKey: "quickCheckSize" as const,
-    description: "A fast knowledge check across your subjects.",
-  },
+const BROAD_PRESETS = [
   {
     purpose: "PRACTICE_SESSION" as const,
     title: "Practice Session",
@@ -26,23 +24,59 @@ const PRESETS = [
 ];
 
 /** The Quick Drill picker — sizes always come from the exam's
- * ExamDrillConfig (admin-configurable), never hardcoded here. Topic Drill
- * itself isn't offered as a generic preset here (it needs a specific
- * topic, launched instead from the Topic Mastery drill-down via
- * startTopicDrill) — this selector covers Quick Check/Practice
- * Session/Challenge/Full Mock. */
+ * ExamDrillConfig (admin-configurable), never hardcoded here. Subjects are
+ * always the student's selected subjects (StudentExamProfile), never the
+ * full catalog. Topic Drill itself isn't offered as a generic preset here
+ * (it needs a specific topic, launched instead from the Topic Mastery
+ * drill-down via startTopicDrill/startWeakAreasDrill). */
 export function QuickDrillSelector({
   exam,
   subjects,
   config,
+  readiness,
 }: {
   exam: ExamType;
   subjects: SubjectOption[];
   config: ExamDrillConfigValues;
+  readiness: ExamReadiness;
 }) {
+  const [quickCheckSubject, setQuickCheckSubject] = useState(subjects[0]?.id ?? "");
+
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {PRESETS.map((preset) => (
+      <form action={startQuickDrill} className="rounded-xl border border-border bg-surface-raised p-5">
+        <input type="hidden" name="exam" value={exam} />
+        <input type="hidden" name="purpose" value="QUICK_CHECK" />
+        <input type="hidden" name="subjects" value={quickCheckSubject} />
+        <p className="font-semibold text-text-primary">Quick Check</p>
+        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-text">
+          {config.quickCheckSize} Questions
+        </p>
+        <p className="mt-2 text-sm text-text-secondary">A fast knowledge check on one subject.</p>
+        <label className="mt-3 block text-xs font-medium text-text-secondary">
+          Choose Subject
+          <select
+            value={quickCheckSubject}
+            onChange={(e) => setQuickCheckSubject(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
+          >
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="submit"
+          disabled={!quickCheckSubject}
+          className="mt-4 w-full rounded-full bg-brand py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Start Quick Check
+        </button>
+      </form>
+
+      {BROAD_PRESETS.map((preset) => (
         <form key={preset.purpose} action={startQuickDrill} className="rounded-xl border border-border bg-surface-raised p-5">
           <input type="hidden" name="exam" value={exam} />
           <input type="hidden" name="purpose" value={preset.purpose} />
@@ -63,6 +97,33 @@ export function QuickDrillSelector({
           </button>
         </form>
       ))}
+
+      <form action={startSmartMixedDrill} className="rounded-xl border border-brand/30 bg-brand/5 p-5">
+        <input type="hidden" name="exam" value={exam} />
+        {subjects.map((s) => (
+          <input key={s.id} type="hidden" name="subjects" value={s.id} />
+        ))}
+        <p className="font-semibold text-text-primary">Smart Mixed Drill</p>
+        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-text">
+          {config.practiceSessionSize} Questions
+        </p>
+        <p className="mt-2 text-sm text-text-secondary">
+          Automatically weighted across your subjects — more practice where you need it most, without skipping your
+          stronger subjects.
+        </p>
+        {readiness.overall.readinessPct !== null && (
+          <p className="mt-2 text-xs text-text-muted">
+            Currently weighted toward your weakest subject{readiness.subjects.length > 1 ? "s" : ""}.
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={subjects.length === 0}
+          className="mt-4 w-full rounded-full bg-brand py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Start Smart Mixed Drill
+        </button>
+      </form>
 
       <form action={startFullMock} className="rounded-xl border border-brand/30 bg-brand/5 p-5">
         <input type="hidden" name="exam" value={exam} />

@@ -17,9 +17,9 @@ export const PLAN_MOST_POPULAR: SubscriptionPlan = "PREMIUM";
 export const PLAN_PRICING_KOBO: Partial<
   Record<SubscriptionPlan, { monthly?: number; annual?: number }>
 > = {
-  BASIC: { monthly: 150_000 }, // ₦1,500 / month
-  PREMIUM: { monthly: 350_000, annual: 3_360_000 }, // ₦3,500/mo, ₦33,600/yr
-  PRO: { monthly: 500_000, annual: 4_800_000 }, // ₦5,000/mo, ₦48,000/yr
+  BASIC: { monthly: 250_000 }, // ₦2,500 / month
+  PREMIUM: { monthly: 450_000, annual: 4_320_000 }, // ₦4,500/mo, ₦43,200/yr (same 20% annual discount as before)
+  PRO: { monthly: 650_000, annual: 6_240_000 }, // ₦6,500/mo, ₦62,400/yr (same 20% annual discount as before)
 };
 
 export const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {

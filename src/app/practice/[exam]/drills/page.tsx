@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { examLabels, examSlugs } from "@/lib/exam-slugs";
 import { requireStudentSession } from "@/lib/exam-access";
-import { getExamSubjectScope } from "@/lib/practice/readiness-service";
+import { getExamSubjectScope, getExamReadiness } from "@/lib/practice/readiness-service";
+import { hasExamProfile } from "@/lib/practice/exam-profile-service";
 import { getDrillConfig } from "@/lib/practice/exam-drill-config";
 import { QuickDrillSelector } from "@/components/readiness/quick-drill-selector";
 
@@ -13,9 +14,14 @@ export default async function QuickDrillsPage({ params }: PageProps<"/practice/[
 
   const session = await requireStudentSession(`/practice/${examSlug}/drills`);
 
-  const [subjects, config] = await Promise.all([
+  if (!(await hasExamProfile(session.user.id, exam))) {
+    redirect(`/practice/${examSlug}/subjects`);
+  }
+
+  const [subjects, config, readiness] = await Promise.all([
     getExamSubjectScope(session.user.id, exam),
     getDrillConfig(exam),
+    getExamReadiness(session.user.id, exam),
   ]);
 
   return (
@@ -27,6 +33,11 @@ export default async function QuickDrillsPage({ params }: PageProps<"/practice/[
       <p className="mt-2 text-sm text-text-secondary">
         Short on time? Pick a quick drill instead of a full practice session.
       </p>
+      <p className="mt-2">
+        <Link href={`/practice/${examSlug}/subjects`} className="text-sm text-brand-text hover:underline">
+          Manage My Subjects
+        </Link>
+      </p>
 
       {subjects.length === 0 ? (
         <p className="mt-8 rounded-xl border border-border bg-surface-raised p-5 text-sm text-text-secondary">
@@ -34,7 +45,7 @@ export default async function QuickDrillsPage({ params }: PageProps<"/practice/[
         </p>
       ) : (
         <div className="mt-8">
-          <QuickDrillSelector exam={exam} subjects={subjects} config={config} />
+          <QuickDrillSelector exam={exam} subjects={subjects} config={config} readiness={readiness} />
         </div>
       )}
 

@@ -122,54 +122,21 @@ export function classifyAccuracy(accuracyPct: number): AccuracyTier {
 
 // ---------- Subject scope ----------
 
-/** Which subjects to show for this student's exam readiness. For UTME,
- * prefers the student's registered targetSubjects (item 12: "do not
- * display unrelated subjects") intersected with subjects that actually
- * have UTME questions; next prefers subjects the student has actually
- * attempted under UTME. Both are progressively narrower views of "subjects
- * relevant to this student" — but a brand-new UTME student has neither yet,
- * and showing an empty scope would mean they can never start their first
- * drill at all, so the final fallback is every subject with UTME content,
- * same as WAEC/NECO/Post-UTME. Once the student registers subjects or
- * starts practicing, the scope narrows to just what's relevant to them. */
+/** Which subjects to show for this student's exam readiness/drills — their
+ * StudentExamProfile selection, uniformly for all four exams (see
+ * exam-profile-service.ts). Returns an empty array when no profile exists
+ * yet; callers gate on that via hasExamProfile and redirect to onboarding
+ * rather than silently falling back to the full catalog — showing every
+ * subject in existence is exactly what this feature exists to avoid. */
 export async function getExamSubjectScope(
   userId: string,
   exam: ExamType
 ): Promise<{ id: string; name: string }[]> {
-  const allWithContent = () =>
-    prisma.subject.findMany({
-      where: { questions: { some: { exam, status: "PUBLISHED" } } },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    });
-
-  if (exam !== "UTME") return allWithContent();
-
-  const profile = await prisma.studentProfile.findUnique({
-    where: { userId },
-    select: { targetSubjects: { select: { id: true, name: true } } },
+  const profile = await prisma.studentExamProfile.findUnique({
+    where: { userId_exam: { userId, exam } },
+    select: { subjects: { select: { id: true, name: true } } },
   });
-
-  if (profile?.targetSubjects.length) {
-    const withUtmeContent = await prisma.subject.findMany({
-      where: {
-        id: { in: profile.targetSubjects.map((s) => s.id) },
-        questions: { some: { exam: "UTME", status: "PUBLISHED" } },
-      },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    });
-    if (withUtmeContent.length > 0) return withUtmeContent;
-  }
-
-  const attempted = await prisma.subject.findMany({
-    where: { examAttempts: { some: { exam: "UTME", userId } } },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
-  if (attempted.length > 0) return attempted;
-
-  return allWithContent();
+  return profile?.subjects ?? [];
 }
 
 // ---------- Readiness ----------
