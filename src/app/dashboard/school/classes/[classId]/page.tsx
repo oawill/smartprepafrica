@@ -16,6 +16,7 @@ export default async function ClassDetailPage({
   const { classId } = await params;
   const session = await auth();
   if (!session) redirect("/login");
+  const now = new Date();
 
   const school = await prisma.school.findFirst({
     where: { admins: { some: { id: session.user.id } } },
@@ -154,26 +155,36 @@ export default async function ClassDetailPage({
             <p className="mt-2 text-sm text-text-secondary">No courses assigned to this class yet.</p>
           ) : (
             <ul className="mt-3 space-y-2">
-              {assignedCourses.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm"
-                >
-                  <Link
-                    href={`/dashboard/teacher/courses/${a.course.id}`}
-                    className="text-text-primary hover:text-brand-text"
+              {assignedCourses.map((a) => {
+                const isOverdue = a.dueAt && a.dueAt.getTime() < now.getTime();
+                return (
+                  <li
+                    key={a.id}
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm"
                   >
-                    {a.course.title}
-                  </Link>
-                  <form action={unassignCourseFromClass}>
-                    <input type="hidden" name="classId" value={cls.id} />
-                    <input type="hidden" name="courseId" value={a.course.id} />
-                    <button type="submit" className="text-xs text-text-secondary hover:text-danger">
-                      Unassign
-                    </button>
-                  </form>
-                </li>
-              ))}
+                    <div>
+                      <Link
+                        href={`/dashboard/teacher/courses/${a.course.id}`}
+                        className="text-text-primary hover:text-brand-text"
+                      >
+                        {a.course.title}
+                      </Link>
+                      {a.dueAt && (
+                        <p className={`text-xs ${isOverdue ? "text-danger" : "text-text-muted"}`}>
+                          {isOverdue ? "Overdue — was due" : "Due"} {a.dueAt.toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    <form action={unassignCourseFromClass}>
+                      <input type="hidden" name="classId" value={cls.id} />
+                      <input type="hidden" name="courseId" value={a.course.id} />
+                      <button type="submit" className="text-xs text-text-secondary hover:text-danger">
+                        Unassign
+                      </button>
+                    </form>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
@@ -192,6 +203,12 @@ export default async function ClassDetailPage({
                   </option>
                 ))}
               </select>
+              <input
+                type="date"
+                name="dueAt"
+                title="Due date (optional)"
+                className="shrink-0 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
+              />
               <button
                 type="submit"
                 className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"

@@ -324,6 +324,8 @@ export async function assignCourseToClass(formData: FormData) {
 
   const classId = formData.get("classId") as string;
   const courseId = formData.get("courseId") as string;
+  const dueAtRaw = formData.get("dueAt") as string;
+  const dueAt = dueAtRaw ? new Date(dueAtRaw) : null;
 
   const [cls, course] = await Promise.all([
     prisma.class.findUnique({ where: { id: classId }, include: { students: true } }),
@@ -338,8 +340,8 @@ export async function assignCourseToClass(formData: FormData) {
 
   const assignment = await prisma.classCourseAssignment.upsert({
     where: { classId_courseId: { classId, courseId } },
-    update: {},
-    create: { classId, courseId, assignedById: session.user.id },
+    update: { dueAt },
+    create: { classId, courseId, assignedById: session.user.id, dueAt },
   });
 
   await prisma.courseEnrollment.createMany({
