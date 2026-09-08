@@ -14,6 +14,7 @@ export default async function CourseDetailPage({
 }: PageProps<"/educom/[courseId]">) {
   const { courseId } = await params;
   const session = await auth();
+  const now = new Date();
 
   const course = await prisma.course.findUnique({
     where: { id: courseId, published: true },
@@ -86,6 +87,25 @@ export default async function CourseDetailPage({
 
   const firstLesson = course.modules[0]?.lessons[0];
 
+  // If this student's class was assigned this course with a due date, show
+  // it — a plain lookup, not tied to how the enrollment itself was created,
+  // since a student could belong to the class either before or after the
+  // course was assigned.
+  const classAssignment =
+    session && enrollment
+      ? await (async () => {
+          const studentProfile = await prisma.studentProfile.findUnique({
+            where: { userId: session.user.id },
+            select: { classId: true },
+          });
+          if (!studentProfile?.classId) return null;
+          return prisma.classCourseAssignment.findUnique({
+            where: { classId_courseId: { classId: studentProfile.classId, courseId } },
+            select: { dueAt: true },
+          });
+        })()
+      : null;
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
@@ -157,6 +177,16 @@ export default async function CourseDetailPage({
 
       {enrollment ? (
         <div className="mt-6">
+          {classAssignment?.dueAt && (
+            <p
+              className={`mb-2 text-xs ${
+                classAssignment.dueAt.getTime() < now.getTime() ? "text-danger" : "text-text-muted"
+              }`}
+            >
+              {classAssignment.dueAt.getTime() < now.getTime() ? "Overdue — was due" : "Due"}{" "}
+              {classAssignment.dueAt.toLocaleDateString()}
+            </p>
+          )}
           <div className="flex items-center justify-between text-sm text-text-secondary">
             <span>
               {completedLessonIds.size} / {totalLessons} lessons complete

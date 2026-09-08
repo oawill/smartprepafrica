@@ -379,13 +379,16 @@ model Class {
 // touches those enrollments, so a student's progress is never lost by an
 // admin changing what's currently assigned to their class.
 model ClassCourseAssignment {
-  id           String   @id @default(cuid())
-  class        Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  class        Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId      String
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId     String
   assignedById String
-  assignedAt   DateTime @default(now())
+  assignedAt   DateTime  @default(now())
+  // Optional deadline for the cohort to finish this course. Null means no
+  // deadline was set — every existing assignment link is unaffected.
+  dueAt        DateTime?
 
   @@unique([classId, courseId])
 }

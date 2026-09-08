@@ -16,6 +16,7 @@ import {
 } from "@/app/dashboard/school/actions";
 import { PLAN_LABELS } from "@/lib/plans";
 import { getNigerianStates } from "@/lib/nigerian-states";
+import { averageScore, MIN_BENCHMARK_SAMPLE_SIZE } from "@/lib/school-performance";
 
 export default async function SchoolDashboard() {
   const session = await auth();
@@ -51,7 +52,7 @@ export default async function SchoolDashboard() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const [teacherCount, activeAttemptUsers, activeLessonUsers, attempts, enrollments] =
+  const [teacherCount, activeAttemptUsers, activeLessonUsers, attempts, enrollments, stateAttempts, nationalAttempts] =
     await Promise.all([
       prisma.teacherProfile.count({ where: { schoolId: school.id } }),
       prisma.examAttempt.findMany({
@@ -78,6 +79,25 @@ export default async function SchoolDashboard() {
           lessonProgress: { where: { completedAt: { not: null } }, select: { lessonId: true } },
         },
       }),
+      // Benchmark comparisons — scoped to school-affiliated students only,
+      // on both sides, so the comparison is cohort-to-cohort rather than
+      // diluted by individual sign-ups with no school at all.
+      school.state
+        ? prisma.examAttempt.findMany({
+            where: {
+              submittedAt: { not: null },
+              user: { studentProfile: { school: { state: school.state } } },
+            },
+            select: { score: true },
+          })
+        : Promise.resolve([]),
+      prisma.examAttempt.findMany({
+        where: {
+          submittedAt: { not: null },
+          user: { studentProfile: { schoolId: { not: null } } },
+        },
+        select: { score: true },
+      }),
     ]);
 
   const activeStudentIds = new Set([
@@ -85,10 +105,13 @@ export default async function SchoolDashboard() {
     ...activeLessonUsers.map((l) => l.enrollment.userId),
   ]);
 
-  const avgCbtScore =
-    attempts.length > 0
-      ? Math.round(attempts.reduce((sum, a) => sum + (a.score ?? 0), 0) / attempts.length)
+  const avgCbtScore = averageScore(attempts);
+  const stateAvgScore =
+    school.state && stateAttempts.length >= MIN_BENCHMARK_SAMPLE_SIZE
+      ? averageScore(stateAttempts)
       : null;
+  const nationalAvgScore =
+    nationalAttempts.length >= MIN_BENCHMARK_SAMPLE_SIZE ? averageScore(nationalAttempts) : null;
 
   const completionRates = enrollments.map((e) => {
     const total = e.course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
@@ -151,6 +174,12 @@ export default async function SchoolDashboard() {
           >
             Export roster CSV
           </a>
+          <a
+            href="/api/school/performance.csv"
+            className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
+          >
+            Export performance CSV
+          </a>
         </div>
       </div>
 
@@ -176,6 +205,41 @@ export default async function SchoolDashboard() {
           <p className="text-3xl font-semibold">
             {avgCourseCompletion !== null ? `${avgCourseCompletion}%` : "—"}
           </p>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card title="Performance benchmark (average CBT score)">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-xs text-text-muted">This school</p>
+              <p className="text-2xl font-semibold">{avgCbtScore !== null ? `${avgCbtScore}%` : "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-muted">{school.state ?? "State"} average</p>
+              <p className="text-2xl font-semibold">
+                {stateAvgScore !== null ? `${stateAvgScore}%` : "Not enough data yet"}
+              </p>
+              {avgCbtScore !== null && stateAvgScore !== null && (
+                <p className={`text-xs ${avgCbtScore >= stateAvgScore ? "text-success" : "text-danger"}`}>
+                  {avgCbtScore >= stateAvgScore ? "+" : ""}
+                  {avgCbtScore - stateAvgScore} pts vs. state
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-text-muted">National average</p>
+              <p className="text-2xl font-semibold">
+                {nationalAvgScore !== null ? `${nationalAvgScore}%` : "Not enough data yet"}
+              </p>
+              {avgCbtScore !== null && nationalAvgScore !== null && (
+                <p className={`text-xs ${avgCbtScore >= nationalAvgScore ? "text-success" : "text-danger"}`}>
+                  {avgCbtScore >= nationalAvgScore ? "+" : ""}
+                  {avgCbtScore - nationalAvgScore} pts vs. national
+                </p>
+              )}
+            </div>
+          </div>
         </Card>
       </div>
 
