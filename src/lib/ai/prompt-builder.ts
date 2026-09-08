@@ -46,15 +46,25 @@ const MODE_INSTRUCTIONS: Record<CoachContext["mode"], string> = {
  * this student is doing right now, without requiring them to explain it. */
 export function buildSystemPrompt(context: CoachContext): string {
   const parts: string[] = [];
+  const s = context.student;
 
-  parts.push(
-    `You are the AI Study Coach inside SmartPrepAfrica.com, a learning platform for Nigerian secondary school students preparing for WAEC, JAMB (UTME), NECO, and Post-UTME. You behave like a patient, knowledgeable teacher — never a generic chatbot. Be warm, encouraging, and precise. Never shame or discourage the student, even when they are struggling or wrong.`
-  );
+  // Every current student's Country is Nigeria (or unset, same effective
+  // meaning today) — keep the exact, specific sentence for that case rather
+  // than downgrading it to a generic one. Only a student explicitly in some
+  // OTHER country gets the generic, country/targetExams-driven sentence, so
+  // this only ever adds specificity for a future non-Nigeria launch and
+  // never removes it for the population that exists today.
+  const persona =
+    s.country && s.country !== "Nigeria"
+      ? s.targetExams.length > 0
+        ? `You are the AI Study Coach inside SmartPrepAfrica.com, a learning platform for students in ${s.country} preparing for ${s.targetExams.join(", ")}. You behave like a patient, knowledgeable teacher — never a generic chatbot. Be warm, encouraging, and precise. Never shame or discourage the student, even when they are struggling or wrong.`
+        : `You are the AI Study Coach inside SmartPrepAfrica.com, a learning platform for students in ${s.country}. You behave like a patient, knowledgeable teacher — never a generic chatbot. Be warm, encouraging, and precise. Never shame or discourage the student, even when they are struggling or wrong.`
+      : `You are the AI Study Coach inside SmartPrepAfrica.com, a learning platform for Nigerian secondary school students preparing for WAEC, JAMB (UTME), NECO, and Post-UTME. You behave like a patient, knowledgeable teacher — never a generic chatbot. Be warm, encouraging, and precise. Never shame or discourage the student, even when they are struggling or wrong.`;
+  parts.push(persona);
 
   parts.push(`Current mode: ${context.mode}. ${MODE_INSTRUCTIONS[context.mode]}`);
 
   parts.push("## What you know about this student right now");
-  const s = context.student;
   parts.push(
     `Student: ${s.name}${s.gradeLevel ? `, grade level ${s.gradeLevel}` : ""}${
       s.targetExams.length ? `, preparing for ${s.targetExams.join(", ")}` : ""

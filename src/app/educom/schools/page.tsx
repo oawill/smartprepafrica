@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { NIGERIAN_STATES } from "@/lib/nigerian-states";
+import { getNigerianStates } from "@/lib/nigerian-states";
 import { getSchoolRating, formatRating } from "@/lib/ratings";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,7 +11,7 @@ export default async function SchoolsDirectoryPage({
   const stateFilter = typeof state === "string" ? state : "";
   const subjectFilter = typeof subject === "string" ? subject : "";
 
-  const [schools, subjects] = await Promise.all([
+  const [schools, subjects, NIGERIAN_STATES] = await Promise.all([
     prisma.school.findMany({
       where: {
         ...(stateFilter ? { state: stateFilter } : {}),
@@ -29,6 +29,7 @@ export default async function SchoolsDirectoryPage({
       orderBy: { name: "asc" },
     }),
     prisma.subject.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
+    getNigerianStates(),
   ]);
 
   const ratings = await Promise.all(schools.map((s) => getSchoolRating(s.id)));

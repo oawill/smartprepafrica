@@ -7,6 +7,7 @@ import { INTERNATIONAL_EXAM_LANDING_PATH } from "@/lib/international-exams/prici
 import { isToeflEnabled } from "@/lib/toefl/config";
 import { isSatEnabled } from "@/lib/sat/config";
 import { prisma } from "@/lib/prisma";
+import { getFeaturedNigerianStates } from "@/lib/nigerian-states";
 
 const exams = [
   { code: "WAEC", desc: "West African Senior School Certificate Examination" },
@@ -15,7 +16,6 @@ const exams = [
   { code: "Post-UTME", desc: "Post-UTME screening for your target institution" },
 ];
 
-const discoveryStates = ["Lagos", "Rivers", "Kano", "FCT", "Oyo", "Enugu"];
 const discoverySubjects = ["Mathematics", "English Language", "Physics", "Chemistry", "Biology"];
 
 const whySmartPrep = [
@@ -48,16 +48,18 @@ export default async function Home() {
   const showInternationalExams = showToefl || showSat;
 
   // Real counts only — never fabricated. Used for the Learning section below.
-  const [schoolsWithCourses, publishedCourseCount, upcomingLiveClasses] = await Promise.all([
-    prisma.school.count({ where: { courses: { some: { published: true } } } }),
-    prisma.course.count({ where: { published: true } }),
-    prisma.liveClass.findMany({
-      where: { course: { published: true }, scheduledAt: { gte: new Date() } },
-      include: { course: { select: { title: true, school: { select: { name: true } } } } },
-      orderBy: { scheduledAt: "asc" },
-      take: 3,
-    }),
-  ]);
+  const [schoolsWithCourses, publishedCourseCount, upcomingLiveClasses, discoveryStates] =
+    await Promise.all([
+      prisma.school.count({ where: { courses: { some: { published: true } } } }),
+      prisma.course.count({ where: { published: true } }),
+      prisma.liveClass.findMany({
+        where: { course: { published: true }, scheduledAt: { gte: new Date() } },
+        include: { course: { select: { title: true, school: { select: { name: true } } } } },
+        orderBy: { scheduledAt: "asc" },
+        take: 3,
+      }),
+      getFeaturedNigerianStates(),
+    ]);
 
   return (
     <div className="flex flex-1 flex-col">

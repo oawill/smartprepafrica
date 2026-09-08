@@ -422,8 +422,30 @@ model Country {
   partners          Partner[]
   countryExams      CountryExam[]
   countryPlanPrices CountryPlanPrice[]
+  regions           Region[]
 
   @@index([status])
+}
+
+// Replaces the old hardcoded Nigerian-state list (src/lib/nigerian-states.ts)
+// with country-scoped data. Additive only for now: School.state stays a free
+// string and the `?state=` filter is untouched — Region is the source for
+// dropdown options today, not yet the load-bearing FK/filter column. See
+// docs/audit.md §5 for what finishing that migration needs.
+model Region {
+  id        String   @id @default(cuid())
+  country   Country  @relation(fields: [countryId], references: [id])
+  countryId String
+  name      String
+  code      String?
+  // Highlighted on the homepage's "Explore by state" links — an editorial
+  // curation (major population centers), not derived from any metric.
+  // Replaces the separate, previously out-of-sync discoveryStates array in
+  // src/app/page.tsx.
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([countryId, name])
 }
 
 model ExamBody {
@@ -482,6 +504,11 @@ model CountryExamSubject {
   countryExamId String
   subject       Subject     @relation(fields: [subjectId], references: [id])
   subjectId     String
+  // Whether a student preparing for this country's exam must include this
+  // subject, e.g. Nigeria/UTME's English Language. Replaces a hardcoded
+  // `exam === "UTME"` string check in getCompulsorySubjectNames() — the
+  // rule now lives in data, scoped per country+exam, not in application code.
+  isCompulsory  Boolean     @default(false)
   topics        ExamTopic[]
 
   @@unique([countryExamId, subjectId])

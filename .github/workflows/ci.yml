@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # Ephemeral, per-run — never point DATABASE_URL at this from anywhere
+    # but this job. Confirmed via a local dry run (empty DB + prisma db push
+    # + npm test, 212/212 passing) that the suite has no hidden dependency
+    # on pre-existing data. A handful of test files run real queries against
+    # this container (tests/helpers/fixtures.ts, no transaction isolation,
+    # manual cleanup) — that's fine here since the whole container is
+    # destroyed after the job, but never redirect it at shared dev/prod.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: smartprep_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/smartprep_ci?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
+      - run: npx prisma db push --skip-generate
+
+      - run: npx tsc --noEmit
+
+      - run: npx eslint --quiet
+
+      - run: npm test

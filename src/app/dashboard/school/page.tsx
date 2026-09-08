@@ -15,7 +15,7 @@ import {
   assignSponsoredSeat,
 } from "@/app/dashboard/school/actions";
 import { PLAN_LABELS } from "@/lib/plans";
-import { NIGERIAN_STATES } from "@/lib/nigerian-states";
+import { getNigerianStates } from "@/lib/nigerian-states";
 
 export default async function SchoolDashboard() {
   const session = await auth();
@@ -26,6 +26,8 @@ export default async function SchoolDashboard() {
     include: { classes: { orderBy: { name: "asc" } } },
   });
   if (!school) redirect("/dashboard");
+
+  const NIGERIAN_STATES = await getNigerianStates();
 
   const pendingInvitations = await prisma.schoolInvitation.findMany({
     where: { schoolId: school.id, status: "PENDING" },

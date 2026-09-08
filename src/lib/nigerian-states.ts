@@ -1,39 +1,23 @@
-export const NIGERIAN_STATES = [
-  "Abia",
-  "Adamawa",
-  "Akwa Ibom",
-  "Anambra",
-  "Bauchi",
-  "Bayelsa",
-  "Benue",
-  "Borno",
-  "Cross River",
-  "Delta",
-  "Ebonyi",
-  "Edo",
-  "Ekiti",
-  "Enugu",
-  "FCT",
-  "Gombe",
-  "Imo",
-  "Jigawa",
-  "Kaduna",
-  "Kano",
-  "Katsina",
-  "Kebbi",
-  "Kogi",
-  "Kwara",
-  "Lagos",
-  "Nasarawa",
-  "Niger",
-  "Ogun",
-  "Ondo",
-  "Osun",
-  "Oyo",
-  "Plateau",
-  "Rivers",
-  "Sokoto",
-  "Taraba",
-  "Yobe",
-  "Zamfara",
-] as const;
+import { prisma } from "@/lib/prisma";
+
+/** Nigeria's states + FCT, sourced from the Region table (seeded via
+ * scripts/seed-regions.ts) instead of a hardcoded array — see
+ * docs/audit.md §5 for the migration this replaced. */
+export async function getNigerianStates(): Promise<string[]> {
+  const regions = await prisma.region.findMany({
+    where: { country: { code: "NG" } },
+    orderBy: { name: "asc" },
+    select: { name: true },
+  });
+  return regions.map((r) => r.name);
+}
+
+/** States highlighted on the homepage's "Explore by state" links. */
+export async function getFeaturedNigerianStates(): Promise<string[]> {
+  const regions = await prisma.region.findMany({
+    where: { country: { code: "NG" }, featured: true },
+    orderBy: { name: "asc" },
+    select: { name: true },
+  });
+  return regions.map((r) => r.name);
+}

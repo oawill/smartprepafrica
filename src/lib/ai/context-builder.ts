@@ -11,6 +11,7 @@ export type CoachContext = {
     gradeLevel: string | null;
     targetExams: string[];
     homeSchool: string | null;
+    country: string | null;
   };
   course?: {
     title: string;
@@ -78,7 +79,10 @@ export async function buildCoachContext({
   confusionStage,
 }: BuildContextInput): Promise<CoachContext> {
   const [user, studentProfile, recentAttemptRows, weakRows, strongRows] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } }),
+    prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { name: true, country: { select: { name: true } } },
+    }),
     prisma.studentProfile.findUnique({
       where: { userId },
       select: {
@@ -236,6 +240,7 @@ export async function buildCoachContext({
       gradeLevel: studentProfile?.gradeLevel ?? null,
       targetExams: studentProfile?.targetExams ?? [],
       homeSchool: studentProfile?.school?.name ?? null,
+      country: user.country?.name ?? null,
     },
     course,
     lesson,
