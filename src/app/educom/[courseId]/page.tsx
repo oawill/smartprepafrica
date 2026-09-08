@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { enrollInCourse, submitAssignment, submitCourseReview } from "@/app/educom/actions";
-import { formatNaira } from "@/lib/plans";
 import { getCourseRating, formatRating } from "@/lib/ratings";
+import { getUserPlan } from "@/lib/ai/limits";
+import { canEnrollInCourse } from "@/lib/learning/course-access";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { CheckIcon } from "@/components/ui/icons";
 
@@ -48,7 +49,8 @@ export default async function CourseDetailPage({
   const rating = await getCourseRating(course.id);
   const myReview = session ? course.reviews.find((r) => r.userId === session.user.id) : undefined;
 
-  const isPaid = !!course.priceKobo && course.priceKobo > 0;
+  const plan = session ? await getUserPlan(session.user.id) : "FREE";
+  const canEnroll = canEnrollInCourse(plan, course.requiresSubscription);
 
   const totalLessons = course.modules.reduce(
     (sum, m) => sum + m.lessons.length,
@@ -129,7 +131,7 @@ export default async function CourseDetailPage({
           {course._count.enrollments} learner{course._count.enrollments === 1 ? "" : "s"}
         </span>
         <span>{formatRating(rating)}</span>
-        <span>{isPaid ? formatNaira(course.priceKobo!) : "Free"}</span>
+        <span>{course.requiresSubscription ? "Included with subscription" : "Free"}</span>
       </div>
 
       {course.learningObjectives.length > 0 && (
@@ -173,18 +175,20 @@ export default async function CourseDetailPage({
             </Link>
           )}
         </div>
-      ) : isPaid ? (
-        <p className="mt-6 rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm text-text-secondary">
-          Paid course checkout isn&apos;t available yet — pricing is shown for
-          browsing only.
-        </p>
+      ) : !canEnroll ? (
+        <div className="mt-6 rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm text-text-secondary">
+          <p>Included with Basic, Premium, and Pro.</p>
+          <Link href="/pricing" className="mt-2 inline-block font-medium text-brand-text hover:underline">
+            View Plans & Pricing →
+          </Link>
+        </div>
       ) : (
         <form action={enrollInCourse.bind(null, course.id)} className="mt-6">
           <button
             type="submit"
             className="rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
           >
-            Enroll for free
+            {course.requiresSubscription ? "Enroll" : "Enroll for free"}
           </button>
         </form>
       )}

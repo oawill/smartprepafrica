@@ -1136,8 +1136,17 @@ model Course {
   difficulty         Difficulty?
   estimatedMinutes   Int?
   learningObjectives String[]
-  // In kobo; null or 0 means free.
+  // In kobo; null or 0 means free. No longer the real access gate (see
+  // requiresSubscription below) — left in place rather than dropped since
+  // nothing charges against it today.
   priceKobo          Int?
+  // Whether enrolling requires an active BASIC/PREMIUM/PRO subscription
+  // (checked via getUserPlan in src/lib/ai/limits.ts, same function AI
+  // Coach limits use). Defaults true so new courses are gated by default;
+  // set false for an intentionally open/free preview course. Only gates
+  // NEW enrollments — an existing CourseEnrollment row keeps access
+  // regardless of the student's current plan.
+  requiresSubscription Boolean @default(true)
 
   // Set when this course belongs to the "Core Secondary School" or "Exam
   // Preparation" catalog sections rather than the general "Skills" one.

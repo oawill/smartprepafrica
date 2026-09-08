@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import type { CourseCategory, Difficulty } from "@prisma/client";
-import { formatNaira } from "@/lib/plans";
 import { LearnHub } from "@/components/educom/learn-hub";
 
 const skillCategories: { key: CourseCategory; label: string }[] = [
@@ -27,7 +26,7 @@ type CourseCard = {
   instructorName: string | null;
   difficulty: Difficulty | null;
   estimatedMinutes: number | null;
-  priceKobo: number | null;
+  requiresSubscription: boolean;
   _count: { modules: number; enrollments: number };
 };
 
@@ -43,7 +42,7 @@ function CourseCardLink({ course }: { course: CourseCard }) {
         {course.difficulty && <span>· {course.difficulty}</span>}
         {course.estimatedMinutes && <span>· {course.estimatedMinutes} min</span>}
         <span>
-          · {course.priceKobo ? formatNaira(course.priceKobo) : "Free"}
+          · {course.requiresSubscription ? "Included with subscription" : "Free"}
         </span>
         <span>
           · {course._count.enrollments} learner{course._count.enrollments === 1 ? "" : "s"}
@@ -81,8 +80,8 @@ export default async function EduComPage({
         published: true,
         ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
         ...(difficultyFilter ? { difficulty: difficultyFilter as Difficulty } : {}),
-        ...(priceFilter === "free" ? { OR: [{ priceKobo: null }, { priceKobo: 0 }] } : {}),
-        ...(priceFilter === "paid" ? { priceKobo: { gt: 0 } } : {}),
+        ...(priceFilter === "free" ? { requiresSubscription: false } : {}),
+        ...(priceFilter === "paid" ? { requiresSubscription: true } : {}),
         ...(subjectIdFilter ? { subjectId: subjectIdFilter } : {}),
         ...(classLevelIdFilter ? { classLevelId: classLevelIdFilter } : {}),
       },

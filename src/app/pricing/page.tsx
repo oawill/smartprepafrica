@@ -66,6 +66,8 @@ const statusMessages: Record<string, string> = {
 const reasonMessages: Record<string, string> = {
   sat_required: "You need SAT Prep to access that page — purchase it below to continue.",
   toefl_required: "You need TOEFL Prep to access that page — purchase it below to continue.",
+  course_subscription_required:
+    "You need a Basic, Premium, or Pro subscription to enroll in this course — subscribe below to continue.",
 };
 
 export default async function PricingPage({
