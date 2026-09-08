@@ -172,6 +172,25 @@ export default async function LessonPage({
             }
           />
         </div>
+      ) : lesson.type === "PDF" ? (
+        <div className="mt-6 space-y-4">
+          {lesson.pdfUrl && (
+            <a
+              href={lesson.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+            >
+              Open PDF
+              {lesson.pdfSizeBytes && (
+                <span className="opacity-80">
+                  (~{(lesson.pdfSizeBytes / (1024 * 1024)).toFixed(1)} MB)
+                </span>
+              )}
+            </a>
+          )}
+          <div className="mt-2">{lesson.content && renderContent(lesson.content)}</div>
+        </div>
       ) : (
         <div className="mt-2">{lesson.content && renderContent(lesson.content)}</div>
       )}

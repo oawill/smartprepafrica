@@ -132,6 +132,10 @@ export async function createLesson(formData: FormData) {
       order: count,
       content: (formData.get("content") as string)?.trim() || null,
       videoUrl: (formData.get("videoUrl") as string)?.trim() || null,
+      pdfUrl: (formData.get("pdfUrl") as string)?.trim() || null,
+      pdfSizeBytes: formData.get("pdfSizeMb")
+        ? Math.round(Number(formData.get("pdfSizeMb")) * 1024 * 1024)
+        : null,
       topic: (formData.get("topic") as string)?.trim() || null,
       courseTopicId: (formData.get("courseTopicId") as string) || null,
       durationSeconds: formData.get("durationSeconds") ? Number(formData.get("durationSeconds")) : null,
