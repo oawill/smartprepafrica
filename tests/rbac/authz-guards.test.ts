@@ -45,13 +45,23 @@ describe("requireTeacherProfile", () => {
     await assert.rejects(() => requireTeacherProfile(parent.id), /teacher profile/i);
   });
 
-  test("succeeds for a real teacher", async () => {
+  test("succeeds for a real, approved teacher", async () => {
     const teacherUser = await createUser("TEACHER", "authz-teacher");
     userIds.push(teacherUser.id);
-    const profile = await prisma.teacherProfile.create({ data: { userId: teacherUser.id } });
+    const profile = await prisma.teacherProfile.create({
+      data: { userId: teacherUser.id, applicationStatus: "APPROVED" },
+    });
 
     const result = await requireTeacherProfile(teacherUser.id);
     assert.equal(result.id, profile.id);
+  });
+
+  test("throws for a teacher whose application is still PENDING", async () => {
+    const teacherUser = await createUser("TEACHER", "authz-teacher-pending");
+    userIds.push(teacherUser.id);
+    await prisma.teacherProfile.create({ data: { userId: teacherUser.id } });
+
+    await assert.rejects(() => requireTeacherProfile(teacherUser.id), /still under review/i);
   });
 });
 

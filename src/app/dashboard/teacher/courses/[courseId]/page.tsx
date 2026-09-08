@@ -201,6 +201,17 @@ export default async function ManageCoursePage({
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-xs text-text-secondary" htmlFor={`publishAt-${mod.id}`}>
+                  Publish on (optional — leave blank to publish immediately)
+                </label>
+                <input
+                  id={`publishAt-${mod.id}`}
+                  type="datetime-local"
+                  name="publishAt"
+                  className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
+                />
+              </div>
               <input
                 type="url"
                 name="thumbnailUrl"

@@ -19,6 +19,7 @@ export type Permission =
   | "lessons.publish"
   | "schools.view"
   | "schools.approve"
+  | "teachers.approve"
   | "users.view"
   | "users.suspend"
   | "partners.view"
@@ -75,6 +76,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "lessons.publish",
   "schools.view",
   "schools.approve",
+  "teachers.approve",
   "users.view",
   "users.suspend",
   "partners.view",
@@ -168,7 +170,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "sat.review",
     "sat.archive",
   ],
-  SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "users.view", "courses.view", "courses.approve"],
+  SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "teachers.approve", "users.view", "courses.view", "courses.approve"],
   USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke"],
   FINANCE_ADMIN: ["payments.view", "payments.refund", "partners.payout", "analytics.view"],
   PARTNER_ADMIN: ["partners.view", "partners.approve", "partners.payout", "analytics.view"],

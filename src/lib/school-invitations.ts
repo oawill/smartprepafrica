@@ -16,7 +16,11 @@ export async function registerStaffFromInvitation(
   if (invite.invitationExpiresAt < new Date()) throw new Error("This invitation link has expired.");
 
   if (role === "TEACHER") {
-    await tx.teacherProfile.create({ data: { userId, schoolId: invite.schoolId } });
+    // The inviting school admin already vetted this person by name/email —
+    // no additional application review needed, unlike self-registration.
+    await tx.teacherProfile.create({
+      data: { userId, schoolId: invite.schoolId, applicationStatus: "APPROVED" },
+    });
   } else {
     await tx.studentProfile.create({
       data: { userId, schoolId: invite.schoolId, classId: invite.classId },

@@ -22,6 +22,9 @@ export async function requireTeacherProfile(userId: string) {
   if (!teacher) {
     throw new Error("You don't have a teacher profile.");
   }
+  if (teacher.applicationStatus !== "APPROVED") {
+    throw new Error("Your teacher application is still under review.");
+  }
   return teacher;
 }
 

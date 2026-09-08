@@ -6,7 +6,12 @@ import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { hasPermission } from "@/lib/admin/permissions";
 import { roleFromSlug, ROLE_SLUG_LABEL } from "@/lib/admin/user-role-slug";
 import { roleLabel } from "@/lib/roles";
-import { suspendUser, reactivateUser, forceSignOut } from "@/app/dashboard/admin/users/actions";
+import {
+  suspendUser,
+  reactivateUser,
+  forceSignOut,
+  setTeacherApplicationStatus,
+} from "@/app/dashboard/admin/users/actions";
 import { grantAdditionalRole } from "@/app/dashboard/admin/actions";
 
 const ALL_ROLES: Role[] = ["STUDENT", "PARENT", "TEACHER", "SCHOOL_ADMIN", "SPONSOR", "PARTNER", "ADMIN"];
@@ -62,6 +67,7 @@ export default async function AdminUserDetailPage({
   const canSuspend = hasPermission(session.user.adminRole, "users.suspend");
   const canRevoke = hasPermission(session.user.adminRole, "sessions.revoke");
   const canManageRoles = hasPermission(session.user.adminRole, "roles.manage");
+  const canApproveTeachers = hasPermission(session.user.adminRole, "teachers.approve");
   const heldRoles = new Set(user.roles.map((r) => r.role));
   const grantableRoles = ALL_ROLES.filter((r) => !heldRoles.has(r));
 
@@ -136,6 +142,42 @@ export default async function AdminUserDetailPage({
           <Card title="Teacher profile">
             <p className="text-sm text-text-secondary">School: {user.teacherProfile.school?.name ?? "—"}</p>
             <p className="text-sm text-text-secondary">Years experience: {user.teacherProfile.yearsExperience ?? "—"}</p>
+            <p className="text-sm text-text-secondary">
+              Application status:{" "}
+              <span
+                className={
+                  user.teacherProfile.applicationStatus === "APPROVED"
+                    ? "text-success"
+                    : user.teacherProfile.applicationStatus === "REJECTED"
+                      ? "text-danger"
+                      : "text-warning"
+                }
+              >
+                {user.teacherProfile.applicationStatus}
+              </span>
+            </p>
+            {canApproveTeachers && user.teacherProfile.applicationStatus !== "APPROVED" && (
+              <form action={setTeacherApplicationStatus} className="mt-2 flex gap-2">
+                <input type="hidden" name="teacherProfileId" value={user.teacherProfile.id} />
+                <input type="hidden" name="redirectTo" value={redirectTo} />
+                <button
+                  type="submit"
+                  name="status"
+                  value="APPROVED"
+                  className="rounded-lg border border-success/40 px-3 py-1.5 text-xs text-success hover:bg-success-surface"
+                >
+                  Approve
+                </button>
+                <button
+                  type="submit"
+                  name="status"
+                  value="REJECTED"
+                  className="rounded-lg border border-danger/40 px-3 py-1.5 text-xs text-danger hover:bg-danger-surface"
+                >
+                  Reject
+                </button>
+              </form>
+            )}
           </Card>
         )}
         {user.schoolAdminOf.length > 0 && (

@@ -190,3 +190,32 @@ export async function forceSignOut(formData: FormData) {
 
   revalidatePath(redirectTo);
 }
+
+export async function setTeacherApplicationStatus(formData: FormData) {
+  const session = await requireActionPermission("teachers.approve");
+  const teacherProfileId = formData.get("teacherProfileId") as string;
+  const status = formData.get("status") as "APPROVED" | "REJECTED";
+  const redirectTo = formData.get("redirectTo") as string;
+  if (status !== "APPROVED" && status !== "REJECTED") {
+    throw new Error("Invalid teacher application status.");
+  }
+
+  const before = await prisma.teacherProfile.findUniqueOrThrow({ where: { id: teacherProfileId } });
+  await prisma.teacherProfile.update({
+    where: { id: teacherProfileId },
+    data: { applicationStatus: status },
+  });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: `TEACHER_APPLICATION_${status}`,
+    resourceType: "TeacherProfile",
+    resourceId: teacherProfileId,
+    result: "SUCCESS",
+    before: { applicationStatus: before.applicationStatus },
+    after: { applicationStatus: status },
+  });
+
+  revalidatePath(redirectTo);
+}
