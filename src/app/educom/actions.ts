@@ -1,11 +1,13 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
 import { notifyUser } from "@/lib/notify";
+import { getUserPlan } from "@/lib/ai/limits";
+import { canEnrollInCourse } from "@/lib/learning/course-access";
 
 export async function toggleFollowTeacher(teacherId: string) {
   const session = await auth();
@@ -29,6 +31,17 @@ export async function toggleFollowTeacher(teacherId: string) {
 export async function enrollInCourse(courseId: string) {
   const session = await auth();
   if (!session) redirect("/login");
+
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { requiresSubscription: true },
+  });
+  if (!course) notFound();
+
+  const plan = await getUserPlan(session.user.id);
+  if (!canEnrollInCourse(plan, course.requiresSubscription)) {
+    redirect("/pricing?reason=course_subscription_required");
+  }
 
   await prisma.courseEnrollment.upsert({
     where: { userId_courseId: { userId: session.user.id, courseId } },

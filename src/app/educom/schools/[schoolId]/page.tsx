@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSchoolRating, formatRating } from "@/lib/ratings";
-import { formatNaira } from "@/lib/plans";
 import { Badge } from "@/components/ui/badge";
 
 export default async function SchoolProfilePage({
@@ -102,7 +101,7 @@ export default async function SchoolProfilePage({
                   {course.subject && ` · ${course.subject.name}`}
                 </p>
                 <p className="mt-2 text-xs text-text-muted">
-                  {course.priceKobo ? formatNaira(course.priceKobo) : "Free"} ·{" "}
+                  {course.requiresSubscription ? "Included with subscription" : "Free"} ·{" "}
                   {course._count.enrollments} learner{course._count.enrollments === 1 ? "" : "s"}
                 </p>
               </Link>
