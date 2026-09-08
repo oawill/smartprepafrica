@@ -149,6 +149,7 @@ export default async function ManageCoursePage({
                 >
                   <option value="TEXT">Text</option>
                   <option value="VIDEO">Video</option>
+                  <option value="PDF">PDF</option>
                   <option value="QUIZ">Quiz</option>
                 </select>
               </div>
@@ -164,6 +165,22 @@ export default async function ManageCoursePage({
                 placeholder="Video URL (if video lesson)"
                 className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
               />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="url"
+                  name="pdfUrl"
+                  placeholder="PDF URL (if PDF lesson)"
+                  className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  name="pdfSizeMb"
+                  placeholder="PDF size (MB)"
+                  className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="number"

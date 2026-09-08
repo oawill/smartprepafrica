@@ -1225,6 +1225,7 @@ enum LessonType {
   VIDEO
   TEXT
   QUIZ
+  PDF
 }
 
 model Lesson {
@@ -1235,6 +1236,10 @@ model Lesson {
   type     LessonType
   content  String?
   videoUrl String?
+  // Plain-URL PDF lesson content, same convention as videoUrl. pdfSizeBytes
+  // lets the lesson page show "~2.4 MB" before the student downloads it.
+  pdfUrl       String?
+  pdfSizeBytes Int?
   order    Int
   // Matches Question.topic for the same subject, letting this lesson link
   // to SmartPrepAfrica practice questions on the same concept. NEVER
