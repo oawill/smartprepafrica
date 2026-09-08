@@ -15,7 +15,7 @@ export async function saveExamSubjects(formData: FormData) {
   // Compulsory subjects (e.g. UTME's English Language) are always included
   // server-side too, not just disabled client-side — a disabled checkbox
   // is a UI nicety, not the actual guarantee.
-  const compulsoryNames = getCompulsorySubjectNames(exam);
+  const compulsoryNames = await getCompulsorySubjectNames(exam);
   if (compulsoryNames.length > 0) {
     const compulsorySubjects = await prisma.subject.findMany({
       where: { name: { in: compulsoryNames } },

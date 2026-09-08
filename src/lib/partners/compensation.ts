@@ -2,6 +2,9 @@ import type { CommissionEventType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateCommissionNumber } from "@/lib/partners/ids";
 import { notifyPartner } from "@/lib/partners/notify";
+import { formatNaira } from "@/lib/plans";
+
+export { formatNaira };
 
 type TierBracket = { minCount: number; maxCount: number | null; amountKobo: number };
 
@@ -101,14 +104,6 @@ export async function createCommission(input: CreateCommissionInput) {
   );
 
   return commission;
-}
-
-export function formatNaira(kobo: number): string {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    maximumFractionDigits: 0,
-  }).format(kobo / 100);
 }
 
 /** How many of a partner's referred students already have a qualifying

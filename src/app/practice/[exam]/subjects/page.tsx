@@ -34,7 +34,7 @@ export default async function ExamSubjectsPage({ params }: PageProps<"/practice/
   const hasProfile = !!profile;
   const suggested = hasProfile ? [] : await suggestSubjectsFromHistory(userId, exam);
   const initialSelectedIds = hasProfile ? profile.subjects.map((s) => s.id) : suggested.map((s) => s.id);
-  const compulsoryNames = getCompulsorySubjectNames(exam);
+  const compulsoryNames = await getCompulsorySubjectNames(exam);
 
   let waecSubjects: { id: string; name: string }[] | undefined;
   if (exam === "NECO") {

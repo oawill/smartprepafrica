@@ -1,12 +1,27 @@
 import type { ExamType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { EXAM_TYPE_TO_EXAM_CODE } from "@/lib/exam-type-mapping";
 
-/** English Language is the one real, well-known compulsory UTME/JAMB
- * subject — deliberately not a generic "core subjects" system, since no
- * such rule exists anywhere else in the codebase for WAEC/NECO/Post-UTME
- * today. */
-export function getCompulsorySubjectNames(exam: ExamType): string[] {
-  return exam === "UTME" ? ["English Language"] : [];
+/** Reads which subjects are compulsory for this exam from
+ * CountryExamSubject.isCompulsory (e.g. Nigeria/UTME's English Language) —
+ * data-driven instead of a hardcoded `exam === "UTME"` string check.
+ *
+ * Scoping note: this still only ever resolves NIGERIA's rule for the given
+ * ExamType (via the legacy ExamType -> Exam.code bridge) — it does not
+ * accept a countryId/countryExamId from caller context, because nothing
+ * else in Prep (Question, ExamAttempt, StudentExamProfile, readiness,
+ * drills) is country-scoped yet. This moves one hardcoded *rule* into data;
+ * it does not make Prep itself country-aware. */
+export async function getCompulsorySubjectNames(exam: ExamType): Promise<string[]> {
+  const examCode = EXAM_TYPE_TO_EXAM_CODE[exam];
+  const rows = await prisma.countryExamSubject.findMany({
+    where: {
+      isCompulsory: true,
+      countryExam: { country: { code: "NG" }, exam: { code: examCode } },
+    },
+    select: { subject: { select: { name: true } } },
+  });
+  return rows.map((r) => r.subject.name);
 }
 
 export async function getExamProfile(userId: string, exam: ExamType) {

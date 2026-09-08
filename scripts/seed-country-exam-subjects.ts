@@ -39,6 +39,22 @@ async function main() {
     linkCount += 1;
   }
   console.log(`Upserted ${linkCount} CountryExamSubject links for Nigeria.`);
+
+  // English Language is the one real, well-known compulsory UTME/JAMB
+  // subject — see getCompulsorySubjectNames() in
+  // src/lib/practice/exam-profile-service.ts, which reads this flag
+  // instead of a hardcoded string check.
+  const utmeExam = await prisma.exam.findUniqueOrThrow({ where: { code: "UTME" } });
+  const utmeCountryExamId = countryExamIdByExamCode.get(utmeExam.code);
+  const englishSubject = await prisma.subject.findUnique({ where: { name: "English Language" } });
+  if (utmeCountryExamId && englishSubject) {
+    await prisma.countryExamSubject.upsert({
+      where: { countryExamId_subjectId: { countryExamId: utmeCountryExamId, subjectId: englishSubject.id } },
+      update: { isCompulsory: true },
+      create: { countryExamId: utmeCountryExamId, subjectId: englishSubject.id, isCompulsory: true },
+    });
+    console.log("Marked English Language compulsory for Nigeria/UTME.");
+  }
 }
 
 main()

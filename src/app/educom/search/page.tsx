@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { NIGERIAN_STATES } from "@/lib/nigerian-states";
+import { getNigerianStates } from "@/lib/nigerian-states";
 
 export default async function SearchPage({
   searchParams,
@@ -10,7 +10,8 @@ export default async function SearchPage({
 
   // Light heuristic for compound queries like "Mathematics Rivers State":
   // pull out a recognized state name and search the remainder as text.
-  const matchedState = NIGERIAN_STATES.find((s) =>
+  const nigerianStates = await getNigerianStates();
+  const matchedState = nigerianStates.find((s) =>
     query.toLowerCase().includes(s.toLowerCase())
   );
   const textQuery = matchedState

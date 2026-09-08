@@ -3,12 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { requireAdminPage } from "@/lib/admin/authz";
 import { DATE_RANGE_LABELS, parseDateRange, rangeSince, type DateRangeKey } from "@/lib/admin/date-range";
-
-function formatNaira(kobo: number) {
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(
-    kobo / 100
-  );
-}
+import { formatNaira } from "@/lib/plans";
 
 const RANGE_KEYS: DateRangeKey[] = ["today", "week", "month", "quarter", "year", "all"];
 
