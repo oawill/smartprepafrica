@@ -353,9 +353,19 @@ model TeacherProfile {
   // directly (the inviting school admin already vetted them).
   applicationStatus TeacherApplicationStatus @default(PENDING)
 
-  classes   Class[]         @relation("TeacherClasses")
-  courses   Course[]
-  followers TeacherFollow[]
+  // Payout destination — same shape as Partner's bank fields
+  // (schema.prisma:1984-1987). Teachers set these themselves on the new
+  // payouts page; there's no onboarding-time collection flow yet.
+  preferredPaymentMethod String?
+  bankName               String?
+  bankAccountName        String?
+  bankAccountNumber      String?
+
+  classes     Class[]              @relation("TeacherClasses")
+  courses     Course[]
+  followers   TeacherFollow[]
+  commissions TeacherCommission[]
+  payouts     TeacherPayout[]
 }
 
 enum TeacherApplicationStatus {
@@ -1204,6 +1214,7 @@ model Course {
   reviews      CourseReview[]
   liveClasses  LiveClass[]
   discussions  Discussion[]
+  commissions  TeacherCommission[]
 
   aiConversations  AiConversation[]
   classAssignments ClassCourseAssignment[]
@@ -2542,6 +2553,63 @@ model PartnerSettings {
   requireAdminApproval  Boolean  @default(true)
   leaderboardEnabled    Boolean  @default(true)
   updatedAt             DateTime @updatedAt
+}
+
+// ---------- Instructor payouts ----------
+
+// Every real charge on this platform is a Subscription/Payment at the
+// plan level (see src/lib/paystack.ts) — there is no per-course payment
+// to split. A TeacherCommission instead attributes a discrete, real
+// event: a paying-plan student enrolling in that teacher's
+// subscription-gated course. Reuses CommissionStatus/PayoutStatus as-is
+// (never partner-specific) rather than introducing parallel enums.
+model TeacherCommission {
+  id               String           @id @default(cuid())
+  commissionNumber String           @unique
+  teacher          TeacherProfile   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId        String
+  course           Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId         String
+  // Bare reference, not a relation — same convention as
+  // Partner.approvedById elsewhere in this schema.
+  studentUserId    String
+  amountKobo       Int
+  status           CommissionStatus @default(AVAILABLE)
+  payout           TeacherPayout?   @relation(fields: [payoutId], references: [id])
+  payoutId         String?
+  createdAt        DateTime         @default(now())
+  paidAt           DateTime?
+
+  // One commission per teacher+course+student, ever — re-enrolling
+  // (courseEnrollment.upsert is already idempotent) never double-pays.
+  @@unique([teacherId, courseId, studentUserId])
+}
+
+model TeacherPayout {
+  id                  String       @id @default(cuid())
+  payoutNumber        String       @unique
+  teacher             TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId           String
+  amountKobo          Int
+  method              String
+  destinationSnapshot Json?
+  status              PayoutStatus @default(REQUESTED)
+  requestedAt         DateTime     @default(now())
+  approvedAt          DateTime?
+  approvedById        String?
+  paidAt              DateTime?
+  rejectedReason      String?
+
+  commissions TeacherCommission[]
+}
+
+// Singleton config row (id is always 1) — same upsert-on-read pattern as
+// PartnerSettings.
+model TeacherPayoutSettings {
+  id                          Int      @id @default(1)
+  minimumPayoutKobo           Int      @default(1000000) // ₦10,000, same default as PartnerSettings
+  commissionPerEnrollmentKobo Int      @default(50000) // ₦500 starting default, admin-editable
+  updatedAt                   DateTime @updatedAt
 }
 
 // ---------- Branding, Legal & Support ----------

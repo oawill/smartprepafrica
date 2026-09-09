@@ -6,6 +6,7 @@ import { Card } from "@/components/dashboard/card";
 import { NotificationsCard } from "@/components/dashboard/notifications-card";
 import { updateTeacherProfile } from "@/app/dashboard/teacher/actions";
 import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
+import { formatNaira } from "@/lib/teachers/compensation";
 
 export default async function TeacherDashboard() {
   const session = await auth();
@@ -69,6 +70,15 @@ export default async function TeacherDashboard() {
     ? await prisma.discussion.count({
         where: { needsTutor: true, resolvedAt: null, course: { teacherId: teacher.id } },
       })
+    : 0;
+
+  const availableBalanceKobo = teacher
+    ? (
+        await prisma.teacherCommission.aggregate({
+          where: { teacherId: teacher.id, status: "AVAILABLE", payoutId: null },
+          _sum: { amountKobo: true },
+        })
+      )._sum.amountKobo ?? 0
     : 0;
 
   return (
@@ -157,6 +167,11 @@ export default async function TeacherDashboard() {
             </Link>
           )}
         </Card>
+        <Link href="/dashboard/teacher/payouts">
+          <Card title="Available balance">
+            <p className="text-3xl font-semibold">{formatNaira(availableBalanceKobo)}</p>
+          </Card>
+        </Link>
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
