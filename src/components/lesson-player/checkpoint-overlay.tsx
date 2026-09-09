@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { PlayerCheckpoint } from "@/components/lesson-player/types";
 import type { CheckpointAnswerResult } from "@/app/educom/lesson-player-actions";
+import { startTopicDrill } from "@/app/practice/drills/actions";
 import { AnswerOption, type AnswerOptionState } from "@/components/exam/answer-option";
 import { CheckIcon, XIcon } from "@/components/ui/icons";
 
@@ -87,6 +88,27 @@ export function CheckpointOverlay({
             {result.isCorrect ? "Correct — well done." : "Not quite."}
           </p>
           {result.explanation && <p className="mt-1 text-sm text-text-secondary">{result.explanation}</p>}
+          {result.prepDrill && (
+            <div className="mt-4 rounded-lg border border-brand/40 bg-brand/10 p-4">
+              <p className="text-sm font-medium text-brand-text">
+                You&apos;re still working on {result.prepDrill.topic}
+              </p>
+              <p className="mt-1 text-xs text-text-secondary">
+                Practice it in a {result.prepDrill.exam} drill from the real question bank.
+              </p>
+              <form action={startTopicDrill} className="mt-3">
+                <input type="hidden" name="exam" value={result.prepDrill.exam} />
+                <input type="hidden" name="subjectId" value={result.prepDrill.subjectId} />
+                <input type="hidden" name="topic" value={result.prepDrill.topic} />
+                <button
+                  type="submit"
+                  className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+                >
+                  Practice in a {result.prepDrill.exam} drill
+                </button>
+              </form>
+            </div>
+          )}
           <div className="mt-4 flex gap-2">
             {canRetry && (
               <button

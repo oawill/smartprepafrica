@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempt } from "@/lib/ai/mastery-service";
+import { recordCrossoverAttempts, type PrepDrillSuggestion } from "@/lib/learning/prep-crossover";
 import { markLessonComplete } from "@/app/educom/actions";
 
 const AUTO_COMPLETE_PERCENT = 90;
@@ -60,6 +61,7 @@ export type CheckpointAnswerResult = {
   isCorrect: boolean;
   correctOption: string;
   explanation: string | null;
+  prepDrill: PrepDrillSuggestion | null;
 };
 
 /** Grades an in-video checkpoint answer, records it for the AI tutor's
@@ -97,9 +99,16 @@ export async function answerCheckpoint(
 
   const subjectId = question.lesson.module.course.subjectId;
   const topic = question.lesson.topic;
+  let prepDrill: PrepDrillSuggestion | null = null;
   if (subjectId && topic) {
     await recordTopicAttempt({ userId: session.user.id, subjectId, topic, isCorrect });
+    prepDrill = await recordCrossoverAttempts({
+      userId: session.user.id,
+      subjectId,
+      topic,
+      results: [{ isCorrect }],
+    });
   }
 
-  return { isCorrect, correctOption: question.correctOption, explanation: question.explanation };
+  return { isCorrect, correctOption: question.correctOption, explanation: question.explanation, prepDrill };
 }
