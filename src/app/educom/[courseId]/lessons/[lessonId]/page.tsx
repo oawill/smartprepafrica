@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { markLessonComplete, submitQuiz } from "@/app/educom/actions";
 import { startAttempt } from "@/app/practice/actions";
+import { startTopicDrill } from "@/app/practice/drills/actions";
+import { findExistingCrossoverSuggestion } from "@/lib/learning/prep-crossover";
 import { asOptions } from "@/lib/practice-types";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { LessonTabs } from "@/components/lesson-player/lesson-tabs";
@@ -91,6 +93,15 @@ export default async function LessonPage({
 
   const progress = enrollment.lessonProgress[0];
   const isComplete = !!progress?.completedAt;
+
+  const prepDrillSuggestion =
+    isComplete && lesson.type === "QUIZ" && lesson.topic && course.subjectId
+      ? await findExistingCrossoverSuggestion({
+          userId: session.user.id,
+          subjectId: course.subjectId,
+          topic: lesson.topic,
+        })
+      : null;
 
   const source = lesson.type === "VIDEO" ? resolveVideoSource(lesson) : null;
   const playerChapters = lesson.chapters.map((c) => ({
@@ -206,8 +217,31 @@ export default async function LessonPage({
       {lesson.type === "QUIZ" && (
         <div className="mt-6">
           {isComplete ? (
-            <div className="rounded-lg border border-success/40 bg-success-surface px-4 py-3 text-sm text-success">
-              Quiz score: {Math.round(progress!.score ?? 0)}%
+            <div className="space-y-3">
+              <div className="rounded-lg border border-success/40 bg-success-surface px-4 py-3 text-sm text-success">
+                Quiz score: {Math.round(progress!.score ?? 0)}%
+              </div>
+              {prepDrillSuggestion && (
+                <div className="rounded-lg border border-brand/40 bg-brand/10 p-4">
+                  <p className="text-sm font-medium text-brand-text">
+                    You&apos;re still working on {prepDrillSuggestion.topic}
+                  </p>
+                  <p className="mt-1 text-xs text-text-secondary">
+                    Practice it in a {prepDrillSuggestion.exam} drill from the real question bank.
+                  </p>
+                  <form action={startTopicDrill} className="mt-3">
+                    <input type="hidden" name="exam" value={prepDrillSuggestion.exam} />
+                    <input type="hidden" name="subjectId" value={prepDrillSuggestion.subjectId} />
+                    <input type="hidden" name="topic" value={prepDrillSuggestion.topic} />
+                    <button
+                      type="submit"
+                      className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+                    >
+                      Practice in a {prepDrillSuggestion.exam} drill
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           ) : quizQuestions.length === 0 ? (
             <p className="text-sm text-text-secondary">

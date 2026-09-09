@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
+import { recordCrossoverAttempts } from "@/lib/learning/prep-crossover";
 import { notifyUser } from "@/lib/notify";
 import { getUserPlan } from "@/lib/ai/limits";
 import { canEnrollInCourse } from "@/lib/learning/course-access";
@@ -149,6 +150,12 @@ export async function submitQuiz(lessonId: string, formData: FormData) {
       results.map((r) => ({ subjectId, topic: lesson.topic!, isCorrect: r.isCorrect }))
     );
     await refreshTopicInsights(session.user.id);
+    await recordCrossoverAttempts({
+      userId: session.user.id,
+      subjectId,
+      topic: lesson.topic,
+      results: results.map((r) => ({ isCorrect: r.isCorrect })),
+    });
   }
 
   await checkCourseCompletion(session.user.id, enrollment.id, courseId);
