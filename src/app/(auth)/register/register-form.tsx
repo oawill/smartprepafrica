@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Label, Input, FieldError } from "@/components/ui/form";
+import { PhoneSignupForm } from "@/components/auth/phone-signup-form";
 
 const roleOptions = [
   { value: "STUDENT", label: "Student" },
@@ -29,6 +30,7 @@ export default function RegisterForm({
 }) {
   const router = useRouter();
   const [role, setRole] = useState<(typeof roleOptions)[number]["value"]>("STUDENT");
+  const [signupMethod, setSignupMethod] = useState<"email" | "phone">("email");
   const [countryCode, setCountryCode] = useState(countries[0]?.code ?? "NG");
   const [examCodes, setExamCodes] = useState<string[]>([]);
   const [subjectIds, setSubjectIds] = useState<string[]>([]);
@@ -184,7 +186,7 @@ export default function RegisterForm({
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div className="mt-6 space-y-4">
           {countries.length > 1 && (
             <div>
               <Label htmlFor="countryCode">Where are you studying?</Label>
@@ -236,6 +238,42 @@ export default function RegisterForm({
             </fieldset>
           )}
 
+          {role === "STUDENT" && !staffInvite && !schoolInvite && (
+            <fieldset>
+              <legend className="text-sm text-text-secondary">Sign up with:</legend>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {(["email", "phone"] as const).map((method) => (
+                  <label
+                    key={method}
+                    className={`cursor-pointer rounded-lg border px-2 py-2 text-center text-xs font-medium transition ${
+                      signupMethod === method
+                        ? "border-brand bg-brand/10 text-text-primary"
+                        : "border-border-strong text-text-secondary hover:border-text-muted"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="signupMethod"
+                      value={method}
+                      checked={signupMethod === method}
+                      onChange={() => setSignupMethod(method)}
+                      className="sr-only"
+                    />
+                    {method === "email" ? "Email" : "Phone"}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+        </div>
+
+        {role === "STUDENT" && !staffInvite && signupMethod === "phone" ? (
+          <div className="mt-4">
+            <PhoneSignupForm countryCode={countryCode} referral={referral} />
+          </div>
+        ) : (
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           {role === "STUDENT" && !staffInvite && availableExams.length > 0 && (
             <fieldset>
               <legend className="text-sm text-text-secondary">What are you preparing for? (optional)</legend>
@@ -343,6 +381,7 @@ export default function RegisterForm({
             {loading ? "Creating account…" : "Create account"}
           </button>
         </form>
+        )}
 
         <p className="mt-6 text-center text-sm text-text-secondary">
           Already have an account?{" "}

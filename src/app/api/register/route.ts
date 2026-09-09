@@ -8,7 +8,8 @@ import { registerSchoolFromInvitation } from "@/lib/partners/school-leads";
 import { registerStaffFromInvitation } from "@/lib/school-invitations";
 import { recordAcceptance } from "@/lib/legal/documents";
 import { logAudit } from "@/lib/admin/audit";
-import { EXAM_CODE_TO_EXAM_TYPE } from "@/lib/exam-type-mapping";
+import { createStudentAccount } from "@/lib/registration/create-student-account";
+import { resolveRegistrationCountry } from "@/lib/registration/resolve-country";
 
 const baseFields = {
   name: z.string().min(2),
@@ -68,15 +69,7 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(data.password, 10);
-
-  // Only an ACTIVE country is a valid choice — this is the enforcement point
-  // for "don't expose a country until Admin activates it" even if a client
-  // somehow submits a Draft country's code. Falls back to Nigeria (the
-  // default market) when no code is sent or it doesn't resolve.
-  const country =
-    (data.countryCode &&
-      (await prisma.country.findFirst({ where: { code: data.countryCode, status: "ACTIVE" } }))) ||
-    (await prisma.country.findFirst({ where: { code: "NG" } }));
+  const country = await resolveRegistrationCountry(data.countryCode);
 
   const cookieStore = await cookies();
   const refCode = data.ref || cookieStore.get("edp_ref")?.value || null;
@@ -86,6 +79,23 @@ export async function POST(request: Request) {
   const userAgent = request.headers.get("user-agent");
 
   const user = await prisma.$transaction(async (tx) => {
+    if (data.role === "STUDENT") {
+      return createStudentAccount(tx, {
+        name: data.name,
+        email: data.email,
+        passwordHash,
+        countryId: country?.id,
+        staffInviteToken: data.staffInviteToken,
+        examCodes: data.examCodes,
+        subjectIds: data.subjectIds,
+        refCode,
+        campaignSlug,
+        clickToken,
+        ipHash,
+        userAgent,
+      });
+    }
+
     const user = await tx.user.create({
       data: {
         name: data.name,
@@ -98,24 +108,6 @@ export async function POST(request: Request) {
     await tx.userRole.create({ data: { userId: user.id, role: data.role } });
 
     switch (data.role) {
-      case "STUDENT":
-        if (data.staffInviteToken) {
-          await registerStaffFromInvitation(tx, data.staffInviteToken, "STUDENT", user.id);
-        } else {
-          const targetExams = (data.examCodes ?? [])
-            .map((code) => EXAM_CODE_TO_EXAM_TYPE[code])
-            .filter((examType): examType is NonNullable<typeof examType> => !!examType);
-          await tx.studentProfile.create({
-            data: {
-              userId: user.id,
-              targetExams,
-              targetSubjects: data.subjectIds?.length
-                ? { connect: data.subjectIds.map((id) => ({ id })) }
-                : undefined,
-            },
-          });
-        }
-        break;
       case "TEACHER":
         if (data.staffInviteToken) {
           await registerStaffFromInvitation(tx, data.staffInviteToken, "TEACHER", user.id);

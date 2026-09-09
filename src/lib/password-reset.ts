@@ -1,27 +1,15 @@
-import { randomInt, createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { generateOtp, hashOtp } from "@/lib/otp";
 
-const OTP_LENGTH = 6;
+export { generateOtp, hashOtp };
+
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const MAX_ATTEMPTS = 5;
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
 const IP_RATE_LIMIT_WINDOW_MIN = 15;
 const IP_RATE_LIMIT_MAX = 5; // requests per IP per window, across all emails
 const EMAIL_RATE_LIMIT_WINDOW_MIN = 15;
 const EMAIL_RATE_LIMIT_MAX = 3; // requests per account per window
-
-/** Cryptographically secure 6-digit OTP, zero-padded (e.g. "004821"). */
-export function generateOtp(): string {
-  return String(randomInt(0, 10 ** OTP_LENGTH)).padStart(OTP_LENGTH, "0");
-}
-
-/** Deliberately SHA-256, not bcrypt — see the schema comment on
- * PasswordResetToken for why a fast hash is correct for a short-lived,
- * attempt-capped, server-generated numeric code. */
-export function hashOtp(otp: string): string {
-  return createHash("sha256").update(otp).digest("hex");
-}
 
 /** IP-hash rate limit — checked unconditionally, before any user lookup,
  * since this is the real defense against enumeration-by-volume and must
