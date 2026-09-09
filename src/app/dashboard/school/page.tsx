@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { NotificationsCard } from "@/components/dashboard/notifications-card";
 import { BulkUploadForm } from "@/components/school/bulk-upload-form";
+import { BulkAssignLicensesForm } from "@/components/school/bulk-assign-licenses-form";
 import { InviteForm } from "@/components/school/invite-form";
 import {
   updateSchoolProfile,
@@ -14,7 +15,8 @@ import {
   createClass,
   assignSponsoredSeat,
 } from "@/app/dashboard/school/actions";
-import { PLAN_LABELS } from "@/lib/plans";
+import { purchaseSchoolLicenses, assignSchoolLicenseSeat } from "@/app/dashboard/school/license-actions";
+import { PLAN_LABELS, formatMoney, resolvePlanPrice } from "@/lib/plans";
 import { getNigerianStates } from "@/lib/nigerian-states";
 import { averageScore, MIN_BENCHMARK_SAMPLE_SIZE } from "@/lib/school-performance";
 
@@ -150,6 +152,21 @@ export default async function SchoolDashboard() {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  const licensePurchases = await prisma.schoolLicensePurchase.findMany({
+    where: { schoolId: school.id, status: "SUCCESS" },
+    include: { vouchers: { select: { status: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  const availableLicenseSeats = licensePurchases.reduce(
+    (sum, p) => sum + p.vouchers.filter((v) => v.status === "ACTIVE").length,
+    0
+  );
+  const redeemedLicenseSeats = licensePurchases.reduce(
+    (sum, p) => sum + p.vouchers.filter((v) => v.status === "REDEEMED").length,
+    0
+  );
+  const perSeatPrice = await resolvePlanPrice("SCHOOL");
 
   return (
     <div>
@@ -470,6 +487,74 @@ export default async function SchoolDashboard() {
         </div>
       )}
 
+      <div className="mt-6">
+        <Card title="Buy student licenses">
+          <p className="text-sm text-text-secondary">
+            {perSeatPrice ? formatMoney(perSeatPrice.amountMinor, perSeatPrice.currency) : "—"} per
+            seat / month. {availableLicenseSeats} available · {redeemedLicenseSeats} assigned.
+          </p>
+          <form action={purchaseSchoolLicenses} className="mt-3 flex flex-wrap items-end gap-3">
+            <div>
+              <label className="block text-xs text-text-secondary" htmlFor="seatCount">
+                Seats
+              </label>
+              <input
+                id="seatCount"
+                name="seatCount"
+                type="number"
+                min={1}
+                defaultValue={10}
+                required
+                className="mt-1 w-24 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-text-secondary" htmlFor="durationDays">
+                Duration (days)
+              </label>
+              <input
+                id="durationDays"
+                name="durationDays"
+                type="number"
+                min={1}
+                defaultValue={365}
+                required
+                className="mt-1 w-28 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-brand"
+              />
+            </div>
+            <button
+              type="submit"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+            >
+              Buy licenses
+            </button>
+          </form>
+
+          {availableLicenseSeats > 0 && (
+            <form action={assignSchoolLicenseSeat} className="mt-4 flex gap-2 border-t border-border pt-4">
+              <select
+                name="studentProfileId"
+                required
+                className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
+              >
+                <option value="">Assign a seat to…</option>
+                {students.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.user.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                Assign seat
+              </button>
+            </form>
+          )}
+        </Card>
+      </div>
+
       {sponsorshipPrograms.length > 0 && (
         <div className="mt-6">
           <Card title="Sponsored licenses">
@@ -522,10 +607,21 @@ export default async function SchoolDashboard() {
         </div>
       )}
 
-      <div className="mt-6">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Bulk-upload students (CSV)">
           <BulkUploadForm classes={school.classes} />
         </Card>
+        {availableLicenseSeats > 0 && (
+          <Card title="Bulk-license new students (CSV)">
+            <p className="text-xs text-text-muted">
+              Creates a new account for each row and licenses it immediately —
+              {" "}{availableLicenseSeats} seat{availableLicenseSeats === 1 ? "" : "s"} available.
+            </p>
+            <div className="mt-3">
+              <BulkAssignLicensesForm classes={school.classes} />
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

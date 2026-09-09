@@ -25,6 +25,19 @@ export default async function AdminSchoolsPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const licensePurchases = await prisma.schoolLicensePurchase.findMany({
+    where: { status: "SUCCESS" },
+    select: { schoolId: true, vouchers: { select: { status: true } } },
+  });
+  const licenseCountsBySchool = new Map<string, { purchased: number; available: number; redeemed: number }>();
+  for (const p of licensePurchases) {
+    const counts = licenseCountsBySchool.get(p.schoolId) ?? { purchased: 0, available: 0, redeemed: 0 };
+    counts.purchased += p.vouchers.length;
+    counts.available += p.vouchers.filter((v) => v.status === "ACTIVE").length;
+    counts.redeemed += p.vouchers.filter((v) => v.status === "REDEEMED").length;
+    licenseCountsBySchool.set(p.schoolId, counts);
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-semibold text-text-primary">Schools</h1>
@@ -40,6 +53,13 @@ export default async function AdminSchoolsPage() {
               <Badge tone={STATUS_TONE[s.status] ?? "neutral"}>{s.status}</Badge>
             </p>
             {s.statusReason && <p className="mt-1 text-xs text-text-muted">Reason on file: {s.statusReason}</p>}
+            {licenseCountsBySchool.has(s.id) && (
+              <p className="mt-1 text-xs text-text-muted">
+                Licenses: {licenseCountsBySchool.get(s.id)!.purchased} purchased ·{" "}
+                {licenseCountsBySchool.get(s.id)!.available} available ·{" "}
+                {licenseCountsBySchool.get(s.id)!.redeemed} assigned
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
               {s.status !== "ACTIVE" && (
                 <form action={verifyAndActivateSchool}>
