@@ -77,7 +77,9 @@ export function formatNaira(kobo: number): string {
  * per-interval country pricing isn't configurable via Admin yet), else the
  * hardcoded Nigeria default above — so every existing Nigeria checkout
  * resolves to exactly the same amount/currency it always has, until a
- * country's price is explicitly configured in Admin. */
+ * country's price is explicitly configured in Admin. A non-Nigeria country
+ * with no override gets null rather than a silently-mislabeled NGN quote —
+ * callers already treat null as "not available for checkout here". */
 export async function resolvePlanPrice(
   plan: SubscriptionPlan,
   countryId?: string | null,
@@ -88,6 +90,9 @@ export async function resolvePlanPrice(
       where: { countryId_plan: { countryId, plan } },
     });
     if (override) return { amountMinor: override.priceMinor, currency: override.currency };
+
+    const country = await prisma.country.findUnique({ where: { id: countryId }, select: { code: true } });
+    if (country?.code !== "NG") return null;
   }
   const fallback = PLAN_PRICING_KOBO[plan];
   const amountMinor = interval === "ANNUAL" ? fallback?.annual : fallback?.monthly;

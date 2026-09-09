@@ -2,9 +2,13 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notifyUser } from "@/lib/notify";
 import { generateTeacherCommissionNumber } from "@/lib/teachers/ids";
+import { formatMoney } from "@/lib/plans";
 
+// TeacherPayoutSettings is a single global config row, not country-scoped,
+// so this stays NGN-hardcoded — there's no per-country amount to plumb
+// through yet.
 export function formatNaira(amountKobo: number): string {
-  return `₦${(amountKobo / 100).toLocaleString("en-NG")}`;
+  return formatMoney(amountKobo, "NGN");
 }
 
 /** Singleton config row, created with defaults on first read — same

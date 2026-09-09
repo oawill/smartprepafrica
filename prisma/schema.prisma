@@ -79,6 +79,11 @@ model User {
   // accounts that existed before this field was added.
   studentNumber String? @unique
 
+  // E.164 phone number (e.g. "+2348012345678"). Nullable — no phone-based
+  // signup flow exists yet (see docs/migration-plan.md Revised Phase 3);
+  // this is schema prep with no consumer until that phase.
+  phone String? @unique
+
   studentProfile StudentProfile?
   parentLinks    ParentStudentLink[] @relation("ParentLinks")
   schoolAdminOf  School[]            @relation("SchoolAdmins")
