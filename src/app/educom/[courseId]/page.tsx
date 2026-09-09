@@ -7,6 +7,8 @@ import { getCourseRating, formatRating } from "@/lib/ratings";
 import { getUserPlan } from "@/lib/ai/limits";
 import { canEnrollInCourse } from "@/lib/learning/course-access";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
+import { DiscussionThread } from "@/components/discussions/discussion-thread";
+import { hasPermission } from "@/lib/admin/permissions";
 import { CheckIcon } from "@/components/ui/icons";
 
 export default async function CourseDetailPage({
@@ -86,6 +88,25 @@ export default async function CourseDetailPage({
       : 0;
 
   const firstLesson = course.modules[0]?.lessons[0];
+
+  const [teacherProfile, currentUser, discussions] = session
+    ? await Promise.all([
+        prisma.teacherProfile.findUnique({ where: { userId: session.user.id } }),
+        prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, adminRole: true } }),
+        prisma.discussion.findMany({
+          where: { courseId, lessonId: null },
+          include: {
+            author: { select: { name: true } },
+            replies: { include: { author: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+      ])
+    : [null, null, []];
+
+  const isCourseTeacher = !!teacherProfile && course.teacherId === teacherProfile.id;
+  const isDiscussionAdmin = currentUser?.role === "ADMIN" && hasPermission(currentUser.adminRole, "discussions.manage");
+  const canDiscuss = !!enrollment || isCourseTeacher || isDiscussionAdmin;
 
   // If this student's class was assigned this course with a due date, show
   // it — a plain lookup, not tied to how the enrollment itself was created,
@@ -348,6 +369,19 @@ export default async function CourseDetailPage({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {canDiscuss && (
+        <div className="mt-10 border-t border-border pt-8">
+          <h2 className="text-lg font-semibold text-text-primary">Course discussion</h2>
+          <div className="mt-3">
+            <DiscussionThread
+              discussions={discussions}
+              courseId={course.id}
+              canResolve={isCourseTeacher || !!isDiscussionAdmin}
+            />
+          </div>
         </div>
       )}
 
