@@ -11,6 +11,7 @@ import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-serv
 import { getExamReadiness as getExamScopedReadiness } from "@/lib/practice/readiness-service";
 import { DashboardReadinessCard } from "@/components/readiness/dashboard-readiness-card";
 import { getOrCreateLinkCode } from "@/lib/parent-links";
+import { BADGE_CATALOG } from "@/lib/gamification/badges";
 
 export default async function StudentDashboard({
   searchParams,
@@ -20,7 +21,7 @@ export default async function StudentDashboard({
   if (!session) return null;
   const userId = session.user.id;
 
-  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, studentProfile] =
+  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, studentProfile, badgesEarned] =
     await Promise.all([
       prisma.examAttempt.findMany({
         where: { userId, submittedAt: { not: null } },
@@ -39,7 +40,11 @@ export default async function StudentDashboard({
       }),
       getTodaysRecommendation(userId),
       getExamReadiness(userId),
-      prisma.studentProfile.findUnique({ where: { userId }, select: { id: true, targetExams: true } }),
+      prisma.studentProfile.findUnique({
+        where: { userId },
+        select: { id: true, targetExams: true, xp: true, currentStreakDays: true },
+      }),
+      prisma.userBadge.count({ where: { userId } }),
     ]);
 
   // Which exams to show the compact Readiness widget for — the student's
@@ -147,8 +152,32 @@ export default async function StudentDashboard({
           </p>
         </Card>
         <Card title="Study streak">
-          <p className="text-3xl font-semibold">0 days</p>
+          <p className="text-3xl font-semibold">{studentProfile?.currentStreakDays ?? 0} days</p>
         </Card>
+      </div>
+
+      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-text-muted">
+        Achievements
+      </h2>
+      <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card title="XP">
+          <p className="text-3xl font-semibold">{studentProfile?.xp ?? 0}</p>
+          <p className="mt-1 text-xs text-text-muted">
+            Level {Math.floor((studentProfile?.xp ?? 0) / 100) + 1}
+          </p>
+        </Card>
+        <Link href="/dashboard/student/badges">
+          <Card title="Badges earned">
+            <p className="text-3xl font-semibold">
+              {badgesEarned} / {BADGE_CATALOG.length}
+            </p>
+          </Card>
+        </Link>
+        <Link href="/dashboard/student/leaderboard">
+          <Card title="Leaderboard">
+            <p className="text-sm text-brand-text">View your school&apos;s leaderboard →</p>
+          </Card>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-success">

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { notifyUser } from "@/lib/notify";
 import { logAudit } from "@/lib/admin/audit";
 import { resolveParticipant } from "@/lib/learning/discussion-access";
+import { awardXp } from "@/lib/gamification/xp-service";
 
 export async function createDiscussion(formData: FormData) {
   const session = await auth();
@@ -31,9 +32,11 @@ export async function createDiscussion(formData: FormData) {
     }
   }
 
-  await prisma.discussion.create({
+  const discussion = await prisma.discussion.create({
     data: { courseId, lessonId, authorId: session.user.id, title, body, needsTutor },
   });
+
+  await awardXp(session.user.id, "DISCUSSION_POST", discussion.id);
 
   if (needsTutor && course.teacher) {
     const author = await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } });
@@ -64,9 +67,11 @@ export async function createDiscussionReply(formData: FormData) {
 
   const { isTeacher, isAdmin } = await resolveParticipant(session.user.id, discussion.courseId);
 
-  await prisma.discussionReply.create({
+  const reply = await prisma.discussionReply.create({
     data: { discussionId, authorId: session.user.id, body, isTutorReply: isTeacher || isAdmin },
   });
+
+  await awardXp(session.user.id, "DISCUSSION_REPLY", reply.id);
 
   revalidatePath(
     discussion.lessonId ? `/educom/${discussion.courseId}/lessons/${discussion.lessonId}` : `/educom/${discussion.courseId}`
