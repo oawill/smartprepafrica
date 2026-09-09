@@ -118,23 +118,20 @@ real plan here, rather than guessing at scope now).
 
 ---
 
-## Open questions before Revised Phase 1 starts
+## Decisions (resolved 2026-09-09)
 
-1. **Redirect mechanism** — Next.js `redirects()` config (simple,
-   edge-cached, but requires a fixed list/pattern per route shape) vs. a
-   middleware-based catch-all (more flexible for the dynamic `[courseId]`/
-   `[lessonId]` segments, slightly more runtime cost per request). Given
-   every `/educom` route has a `[courseId]`/`[lessonId]`-shaped Next.js
-   dynamic segment, a middleware rewrite is likely cleaner than enumerating
-   static redirect patterns — recommend confirming this before implementation.
-2. **Skills vertical archival** — should `archived` courses stay
-   discoverable via direct link for a NON-enrolled visitor who has an old
-   bookmark (e.g. shared on social media before archival), or only for
-   already-enrolled learners? The brief says "keep their URLs resolving
-   for enrolled learners" specifically — confirming that a non-enrolled
-   visitor hitting an archived course URL should see a clear "this course
-   is no longer offered" state rather than a 404, or ideally a 404.
-3. **Programme timing** — deferred to its own phase, per Revised Phase 1
-   above — confirm.
+1. **Redirect mechanism** — middleware catch-all. One rule matches any
+   `/educom/*` path, 301s to the same path under `/learn/*`, preserving
+   the full pathname tail and every query param automatically. No
+   per-route-shape maintenance as new routes are added under `/learn`.
+2. **Archived-course visibility** — 404 for a non-enrolled visitor.
+   Matches the brief's literal wording; an enrolled learner still
+   resolves normally since the page's own enrollment check runs first
+   and short-circuits before any archived-status check would 404 them.
+3. **Programme timing** — deferred to its own later phase. Revised
+   Phase 1 ships only the `/learn` rename, Skills-vertical archival, and
+   Class/Course relabeling (both already exist in substance as
+   `LiveClass`/`Course` — this is copy/vocabulary, not new schema).
 
-Ready to start **Revised Phase 1** on your go-ahead, in plan mode as usual.
+Ready to start **Revised Phase 1** — see plan mode for the concrete
+implementation plan.
