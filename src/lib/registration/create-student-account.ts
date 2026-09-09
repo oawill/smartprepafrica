@@ -2,6 +2,7 @@ import type { Prisma, User } from "@prisma/client";
 import { captureAttributionAtRegistration } from "@/lib/partners/attribution";
 import { registerStaffFromInvitation } from "@/lib/school-invitations";
 import { resolveSchoolByJoinCode } from "@/lib/registration/school-join-code";
+import { redeemVoucherRecord } from "@/lib/vouchers";
 import { recordAcceptance } from "@/lib/legal/documents";
 import { EXAM_CODE_TO_EXAM_TYPE } from "@/lib/exam-type-mapping";
 
@@ -20,6 +21,10 @@ export type CreateStudentAccountInput = {
    * staffInviteToken is also set — an invite link always wins. */
   schoolJoinCode?: string;
   schoolJoinPin?: string;
+  /** Door 3 — sponsor prepaid voucher self-redemption at registration
+   * (see src/lib/vouchers.ts). Independent of schoolJoinCode/PIN — a
+   * student can have a school affiliation and a voucher at once. */
+  voucherCode?: string;
   examCodes?: string[];
   subjectIds?: string[];
   refCode?: string | null;
@@ -73,6 +78,14 @@ export async function createStudentAccount(
           : undefined,
       },
     });
+  }
+
+  if (data.voucherCode) {
+    const voucher = await tx.voucher.findUnique({ where: { code: data.voucherCode } });
+    if (!voucher) throw new Error("Invalid sponsor code.");
+    // redeemVoucherRecord re-validates ACTIVE/expiry itself — no need to
+    // duplicate that check here, just resolve code -> id.
+    await redeemVoucherRecord(voucher.id, user.id, tx);
   }
 
   if (data.refCode) {

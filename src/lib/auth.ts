@@ -92,6 +92,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         countryCode: { label: "Country code" },
         schoolJoinCode: { label: "School join code" },
         schoolJoinPin: { label: "School join PIN" },
+        voucherCode: { label: "Sponsor code" },
       },
       authorize: async (credentials, request) => {
         const phone = credentials?.phone as string | undefined;
@@ -166,6 +167,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               clickToken: (credentials?.clickToken as string | undefined) ?? null,
               schoolJoinCode: credentials?.schoolJoinCode as string | undefined,
               schoolJoinPin: credentials?.schoolJoinPin as string | undefined,
+              voucherCode: credentials?.voucherCode as string | undefined,
               ipHash,
               userAgent,
             })

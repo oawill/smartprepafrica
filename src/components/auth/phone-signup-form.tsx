@@ -17,12 +17,16 @@ export function PhoneSignupForm({
   countryCode,
   referral,
   schoolJoin,
+  voucherCode,
 }: {
   countryCode: string;
   referral: { ref: string | null; campaign: string | null };
   /** Door 2 — set when the student verified a school join code/PIN
    * before switching to the phone signup method. */
   schoolJoin?: { joinCode: string; joinPin: string; schoolName: string } | null;
+  /** Door 3 — set when the student verified a sponsor voucher code
+   * before switching to the phone signup method. */
+  voucherCode?: string;
 }) {
   const router = useRouter();
   const [phone, setPhone] = useState("");
@@ -70,6 +74,7 @@ export function PhoneSignupForm({
       redirect: false,
       ...(referral.ref ? { ref: referral.ref, campaign: referral.campaign ?? undefined } : {}),
       ...(schoolJoin ? { schoolJoinCode: schoolJoin.joinCode, schoolJoinPin: schoolJoin.joinPin } : {}),
+      ...(voucherCode ? { voucherCode } : {}),
     });
 
     setSubmitting(false);
