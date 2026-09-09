@@ -8,7 +8,7 @@ import { VideoPlayer, type VideoPlayerHandle } from "@/components/lesson-player/
 import { ChapterList } from "@/components/lesson-player/chapter-list";
 import { TranscriptView } from "@/components/lesson-player/transcript-view";
 import { useProgressSync } from "@/components/lesson-player/use-progress-sync";
-import { answerCheckpoint } from "@/app/educom/lesson-player-actions";
+import { answerCheckpoint } from "@/app/learn/lesson-player-actions";
 import type { VideoSource } from "@/lib/video/types";
 import type { PlayerChapter, PlayerCheckpoint } from "@/components/lesson-player/types";
 

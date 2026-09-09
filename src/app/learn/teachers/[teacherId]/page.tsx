@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTeacherRating, formatRating } from "@/lib/ratings";
-import { toggleFollowTeacher } from "@/app/educom/actions";
+import { toggleFollowTeacher } from "@/app/learn/actions";
 
 export default async function TeacherProfilePage({
   params,
-}: PageProps<"/educom/teachers/[teacherId]">) {
+}: PageProps<"/learn/teachers/[teacherId]">) {
   const { teacherId } = await params;
   const session = await auth();
 
@@ -43,7 +43,7 @@ export default async function TeacherProfilePage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
+      <Link href="/learn" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
 
@@ -54,7 +54,7 @@ export default async function TeacherProfilePage({
           {teacher.school && (
             <>
               {" · "}
-              <Link href={`/educom/schools/${teacher.school.id}`} className="text-brand-text hover:underline">
+              <Link href={`/learn/schools/${teacher.school.id}`} className="text-brand-text hover:underline">
                 {teacher.school.name}
               </Link>
               {teacher.school.state && ` — ${teacher.school.state}`}
@@ -99,7 +99,7 @@ export default async function TeacherProfilePage({
             {teacher.courses.map((course) => (
               <Link
                 key={course.id}
-                href={`/educom/${course.id}`}
+                href={`/learn/${course.id}`}
                 className="rounded-lg border border-border bg-surface-raised p-4 hover:border-border-strong"
               >
                 <p className="font-medium text-text-primary">{course.title}</p>

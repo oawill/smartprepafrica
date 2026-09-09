@@ -4,7 +4,7 @@ import { getNigerianStates } from "@/lib/nigerian-states";
 
 export default async function SearchPage({
   searchParams,
-}: PageProps<"/educom/search">) {
+}: PageProps<"/learn/search">) {
   const { q } = await searchParams;
   const query = typeof q === "string" ? q.trim() : "";
 
@@ -25,6 +25,7 @@ export default async function SearchPage({
         prisma.course.findMany({
           where: {
             published: true,
+            archived: false,
             ...(textQuery ? { title: { contains: textQuery, mode: "insensitive" } } : {}),
             ...(matchedState ? { school: { state: matchedState } } : {}),
           },
@@ -57,7 +58,7 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
+      <Link href="/learn" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
       <h1 className="mt-4 text-h1 font-semibold text-text-primary">Search Courses</h1>
@@ -89,7 +90,7 @@ export default async function SearchPage({
                 {courses.map((c) => (
                   <Link
                     key={c.id}
-                    href={`/educom/${c.id}`}
+                    href={`/learn/${c.id}`}
                     className="rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
                   >
                     <p className="text-text-primary">{c.title}</p>
@@ -115,7 +116,7 @@ export default async function SearchPage({
                 {schools.map((s) => (
                   <Link
                     key={s.id}
-                    href={`/educom/schools/${s.id}`}
+                    href={`/learn/schools/${s.id}`}
                     className="rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
                   >
                     <p className="text-text-primary">{s.name}</p>
@@ -137,7 +138,7 @@ export default async function SearchPage({
                 {teachers.map((t) => (
                   <Link
                     key={t.id}
-                    href={`/educom/teachers/${t.id}`}
+                    href={`/learn/teachers/${t.id}`}
                     className="rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
                   >
                     <p className="text-text-primary">{t.user.name}</p>

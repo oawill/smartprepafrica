@@ -114,7 +114,7 @@ export default async function ClassDetailPage({
           )}
         </Card>
 
-        <Card title="Add a student to this class">
+        <Card title="Add a student to this cohort">
           {unassignedStudents.length === 0 ? (
             <p className="text-sm text-text-secondary">
               No unassigned students in your school right now.
@@ -148,11 +148,11 @@ export default async function ClassDetailPage({
       <div className="mt-6">
         <Card title="Assigned courses">
           <p className="text-xs text-text-muted">
-            Assigning a course enrolls every current student in this class; students added later
+            Assigning a course enrolls every current student in this cohort; students added later
             are enrolled automatically too.
           </p>
           {assignedCourses.length === 0 ? (
-            <p className="mt-2 text-sm text-text-secondary">No courses assigned to this class yet.</p>
+            <p className="mt-2 text-sm text-text-secondary">No courses assigned to this cohort yet.</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {assignedCourses.map((a) => {
@@ -223,7 +223,7 @@ export default async function ClassDetailPage({
       <div className="mt-6">
         <Card title="Roster">
           {cls.students.length === 0 ? (
-            <p className="text-sm text-text-secondary">No students in this class yet.</p>
+            <p className="text-sm text-text-secondary">No students in this cohort yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-text-muted">

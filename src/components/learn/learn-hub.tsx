@@ -94,7 +94,7 @@ export async function LearnHub({ userId }: { userId: string }) {
           </div>
           <p className="mt-1 text-xs text-text-secondary">{continueLearning.pct}% complete</p>
           <Link
-            href={`/educom/${continueLearning.enrollment.course.id}/lessons/${continueLearning.nextLesson!.id}`}
+            href={`/learn/${continueLearning.enrollment.course.id}/lessons/${continueLearning.nextLesson!.id}`}
             className="mt-3 inline-block rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
           >
             Continue: {continueLearning.nextLesson!.title}
@@ -109,7 +109,7 @@ export async function LearnHub({ userId }: { userId: string }) {
             {withProgress.map(({ enrollment, pct }) => (
               <Link
                 key={enrollment.id}
-                href={`/educom/${enrollment.course.id}`}
+                href={`/learn/${enrollment.course.id}`}
                 className="rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm hover:border-border-strong"
               >
                 <p className="text-text-primary">{enrollment.course.title}</p>
@@ -138,7 +138,7 @@ export async function LearnHub({ userId }: { userId: string }) {
             {schoolCourses.map((c) => (
               <Link
                 key={c.id}
-                href={`/educom/${c.id}`}
+                href={`/learn/${c.id}`}
                 className="rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm text-text-primary hover:border-border-strong"
               >
                 {c.title}
@@ -155,7 +155,7 @@ export async function LearnHub({ userId }: { userId: string }) {
             {newAndRecommended.map((c) => (
               <Link
                 key={c.id}
-                href={`/educom/${c.id}`}
+                href={`/learn/${c.id}`}
                 className="rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm text-text-primary hover:border-border-strong"
               >
                 <p>{c.title}</p>

@@ -8,8 +8,8 @@ const columns = [
     heading: "Platform",
     links: [
       { label: "SmartPrepAfrica Prep", href: "/practice" },
-      { label: "SmartPrepAfrica Learning", href: "/educom" },
-      { label: "Schools", href: "/educom/schools" },
+      { label: "SmartPrepAfrica Learning", href: "/learn" },
+      { label: "Schools", href: "/learn/schools" },
       { label: "Pricing", href: "/pricing" },
     ],
   },

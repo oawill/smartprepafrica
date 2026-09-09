@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function SchoolProfilePage({
   params,
-}: PageProps<"/educom/schools/[schoolId]">) {
+}: PageProps<"/learn/schools/[schoolId]">) {
   const { schoolId } = await params;
 
   const school = await prisma.school.findUnique({
@@ -46,7 +46,7 @@ export default async function SchoolProfilePage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
-      <Link href="/educom/schools" className="text-sm text-text-secondary hover:text-text-primary">
+      <Link href="/learn/schools" className="text-sm text-text-secondary hover:text-text-primary">
         ← All schools
       </Link>
 
@@ -92,7 +92,7 @@ export default async function SchoolProfilePage({
             {school.courses.map((course) => (
               <Link
                 key={course.id}
-                href={`/educom/${course.id}`}
+                href={`/learn/${course.id}`}
                 className="rounded-lg border border-border bg-surface-raised p-4 hover:border-border-strong"
               >
                 <p className="font-medium text-text-primary">{course.title}</p>
@@ -119,7 +119,7 @@ export default async function SchoolProfilePage({
             {school.teachers.map((t) => (
               <Link
                 key={t.id}
-                href={`/educom/teachers/${t.id}`}
+                href={`/learn/teachers/${t.id}`}
                 className="rounded-lg border border-border bg-surface-raised p-4 hover:border-border-strong"
               >
                 <p className="font-medium text-text-primary">{t.user.name}</p>

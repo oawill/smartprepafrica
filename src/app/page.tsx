@@ -88,7 +88,7 @@ export default async function Home() {
               Start preparing free
             </Link>
             <Link
-              href="/educom"
+              href="/learn"
               className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
             >
               Explore Learning
@@ -192,20 +192,20 @@ export default async function Home() {
             )}
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
-                href="/educom"
+                href="/learn"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Explore Classes
               </Link>
               <Link
-                href="/educom/schools"
+                href="/learn/schools"
                 className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
               >
                 View Schools
               </Link>
               {upcomingLiveClasses.length > 0 && (
                 <Link
-                  href="/educom"
+                  href="/learn"
                   className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
                 >
                   Join a Live Class
@@ -227,7 +227,7 @@ export default async function Home() {
               {upcomingLiveClasses.map((lc) => (
                 <Link
                   key={lc.id}
-                  href="/educom"
+                  href="/learn"
                   className="rounded-xl border border-border bg-surface-raised p-4 hover:border-border-strong"
                 >
                   <span className="inline-block rounded-full bg-surface-sunken px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
@@ -254,7 +254,7 @@ export default async function Home() {
                   {discoveryStates.map((state) => (
                     <Link
                       key={state}
-                      href={`/educom/schools?state=${encodeURIComponent(state)}`}
+                      href={`/learn/schools?state=${encodeURIComponent(state)}`}
                       className="rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-brand hover:text-brand-text"
                     >
                       {state}
@@ -268,7 +268,7 @@ export default async function Home() {
                   {discoverySubjects.map((subject) => (
                     <Link
                       key={subject}
-                      href={`/educom/schools?subject=${encodeURIComponent(subject)}`}
+                      href={`/learn/schools?subject=${encodeURIComponent(subject)}`}
                       className="rounded-full border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-brand hover:text-brand-text"
                     >
                       {subject}

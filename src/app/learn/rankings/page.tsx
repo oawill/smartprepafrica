@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export default async function RankingsPage({
   searchParams,
-}: PageProps<"/educom/rankings">) {
+}: PageProps<"/learn/rankings">) {
   const { subject } = await searchParams;
   const subjectFilter = typeof subject === "string" ? subject : "";
 
@@ -12,6 +12,7 @@ export default async function RankingsPage({
     prisma.course.findMany({
       where: {
         published: true,
+        archived: false,
         ...(subjectFilter ? { subject: { name: subjectFilter } } : {}),
       },
       include: {
@@ -24,6 +25,7 @@ export default async function RankingsPage({
         courses: {
           where: {
             published: true,
+            archived: false,
             ...(subjectFilter ? { subject: { name: subjectFilter } } : {}),
           },
           select: { reviews: { select: { rating: true } } },
@@ -37,6 +39,7 @@ export default async function RankingsPage({
         courses: {
           where: {
             published: true,
+            archived: false,
             ...(subjectFilter ? { subject: { name: subjectFilter } } : {}),
           },
           select: { reviews: { select: { rating: true } } },
@@ -44,7 +47,7 @@ export default async function RankingsPage({
       },
     }),
     prisma.course.findMany({
-      where: { published: true, ...(subjectFilter ? { subject: { name: subjectFilter } } : {}) },
+      where: { published: true, archived: false, ...(subjectFilter ? { subject: { name: subjectFilter } } : {}) },
       include: {
         school: { select: { name: true } },
         _count: { select: { enrollments: true } },
@@ -53,7 +56,7 @@ export default async function RankingsPage({
       take: 5,
     }),
     prisma.course.findMany({
-      where: { published: true, ...(subjectFilter ? { subject: { name: subjectFilter } } : {}) },
+      where: { published: true, archived: false, ...(subjectFilter ? { subject: { name: subjectFilter } } : {}) },
       include: { school: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -91,7 +94,7 @@ export default async function RankingsPage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
+      <Link href="/learn" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
       <h1 className="mt-4 text-3xl font-semibold">Discover on SmartPrepAfrica.com</h1>
@@ -133,7 +136,7 @@ export default async function RankingsPage({
             {ratedCourses.map(({ course, avg, count }) => (
               <Link
                 key={course.id}
-                href={`/educom/${course.id}`}
+                href={`/learn/${course.id}`}
                 className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>
@@ -163,7 +166,7 @@ export default async function RankingsPage({
             {ratedSchools.map(({ school, avg, count }) => (
               <Link
                 key={school.id}
-                href={`/educom/schools/${school.id}`}
+                href={`/learn/schools/${school.id}`}
                 className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>
@@ -188,7 +191,7 @@ export default async function RankingsPage({
             {ratedTeachers.map(({ teacher, avg, count }) => (
               <Link
                 key={teacher.id}
-                href={`/educom/teachers/${teacher.id}`}
+                href={`/learn/teachers/${teacher.id}`}
                 className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>
@@ -213,7 +216,7 @@ export default async function RankingsPage({
             {trending.map((c) => (
               <Link
                 key={c.id}
-                href={`/educom/${c.id}`}
+                href={`/learn/${c.id}`}
                 className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
               >
                 <span>{c.title}</span>
@@ -230,7 +233,7 @@ export default async function RankingsPage({
           {newCourses.map((c) => (
             <Link
               key={c.id}
-              href={`/educom/${c.id}`}
+              href={`/learn/${c.id}`}
               className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 text-sm hover:border-border-strong"
             >
               <span>{c.title}</span>

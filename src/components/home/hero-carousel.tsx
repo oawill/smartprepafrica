@@ -41,7 +41,7 @@ const SLIDES: Slide[] = [
     eyebrow: "SmartPrepAfrica Learning",
     title: "Learn Beyond Your School",
     copy: "Join live classes and courses from great teachers and schools across Nigeria.",
-    cta: { label: "Explore Learning", href: "/educom" },
+    cta: { label: "Explore Learning", href: "/learn" },
   },
   {
     src: "/homepage/carousel-5-succeed.png",

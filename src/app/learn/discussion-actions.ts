@@ -45,11 +45,11 @@ export async function createDiscussion(formData: FormData) {
       course.teacher.userId,
       "TUTOR_REQUEST",
       `${author?.name} asked for tutor help in "${courseTitle?.title}".`,
-      lessonId ? `/educom/${courseId}/lessons/${lessonId}` : `/educom/${courseId}`
+      lessonId ? `/learn/${courseId}/lessons/${lessonId}` : `/learn/${courseId}`
     );
   }
 
-  revalidatePath(lessonId ? `/educom/${courseId}/lessons/${lessonId}` : `/educom/${courseId}`);
+  revalidatePath(lessonId ? `/learn/${courseId}/lessons/${lessonId}` : `/learn/${courseId}`);
 }
 
 export async function createDiscussionReply(formData: FormData) {
@@ -74,7 +74,7 @@ export async function createDiscussionReply(formData: FormData) {
   await awardXp(session.user.id, "DISCUSSION_REPLY", reply.id);
 
   revalidatePath(
-    discussion.lessonId ? `/educom/${discussion.courseId}/lessons/${discussion.lessonId}` : `/educom/${discussion.courseId}`
+    discussion.lessonId ? `/learn/${discussion.courseId}/lessons/${discussion.lessonId}` : `/learn/${discussion.courseId}`
   );
 }
 
@@ -107,7 +107,7 @@ export async function markDiscussionResolved(formData: FormData) {
   }
 
   revalidatePath(
-    discussion.lessonId ? `/educom/${discussion.courseId}/lessons/${discussion.lessonId}` : `/educom/${discussion.courseId}`
+    discussion.lessonId ? `/learn/${discussion.courseId}/lessons/${discussion.lessonId}` : `/learn/${discussion.courseId}`
   );
   revalidatePath("/dashboard/teacher/discussions");
   revalidatePath("/dashboard/admin/discussions");

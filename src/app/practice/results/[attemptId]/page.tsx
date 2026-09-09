@@ -143,7 +143,7 @@ export default async function ResultsPage({
                 {recommendedLessons.map((lesson) => (
                   <li key={lesson.id}>
                     <Link
-                      href={`/educom/${lesson.module.course.id}/lessons/${lesson.id}`}
+                      href={`/learn/${lesson.module.course.id}/lessons/${lesson.id}`}
                       className="text-brand-text hover:underline"
                     >
                       {lesson.title}

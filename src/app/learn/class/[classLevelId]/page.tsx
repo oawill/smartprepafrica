@@ -17,7 +17,7 @@ export default async function ClassLevelPage({
 
   const subjectCounts = await prisma.course.groupBy({
     by: ["subjectId"],
-    where: { published: true, classLevelId, subjectId: { not: null } },
+    where: { published: true, archived: false, classLevelId, subjectId: { not: null } },
     _count: { _all: true },
   });
 
@@ -29,7 +29,7 @@ export default async function ClassLevelPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
+      <Link href="/learn" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to SmartPrepAfrica Learning
       </Link>
 
@@ -46,7 +46,7 @@ export default async function ClassLevelPage({
           {subjects.map((s) => (
             <Link
               key={s.id}
-              href={`/educom?classLevelId=${classLevel.id}&subjectId=${s.id}`}
+              href={`/learn?classLevelId=${classLevel.id}&subjectId=${s.id}`}
               className="rounded-xl border border-border bg-surface-raised p-5 hover:border-border-strong"
             >
               <p className="font-medium text-text-primary">{s.name}</p>

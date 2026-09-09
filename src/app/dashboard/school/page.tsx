@@ -180,7 +180,7 @@ export default async function SchoolDashboard() {
         </div>
         <div className="flex shrink-0 gap-2">
           <Link
-            href={`/educom/schools/${school.id}`}
+            href={`/learn/schools/${school.id}`}
             className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             View public profile
@@ -212,7 +212,7 @@ export default async function SchoolDashboard() {
         <Card title="Teachers">
           <p className="text-3xl font-semibold">{teacherCount}</p>
         </Card>
-        <Card title="Classes">
+        <Card title="Cohorts">
           <p className="text-3xl font-semibold">{school.classes.length}</p>
         </Card>
         <Card title="Average CBT score">
@@ -391,9 +391,9 @@ export default async function SchoolDashboard() {
           </form>
         </Card>
 
-        <Card title="Classes">
+        <Card title="Cohorts">
           {school.classes.length === 0 ? (
-            <p className="text-sm text-text-secondary">No classes yet.</p>
+            <p className="text-sm text-text-secondary">No cohorts yet.</p>
           ) : (
             <ul className="space-y-1.5">
               {school.classes.map((c) => (
@@ -414,7 +414,7 @@ export default async function SchoolDashboard() {
               type="text"
               name="className"
               required
-              placeholder="New class name (e.g. SS2 Gold)"
+              placeholder="New cohort name (e.g. SS2 Gold)"
               className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand"
             />
             <button

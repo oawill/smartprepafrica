@@ -86,10 +86,10 @@ export function PublicHeader() {
             </Link>
           ))}
           <NavDropdown label="Exam Prep" href="/practice" links={examPrepLinks} />
-          <Link href="/educom" className="text-text-secondary hover:text-text-primary">
+          <Link href="/learn" className="text-text-secondary hover:text-text-primary">
             Learning
           </Link>
-          <Link href="/educom/schools" className="text-text-secondary hover:text-text-primary">
+          <Link href="/learn/schools" className="text-text-secondary hover:text-text-primary">
             Schools
           </Link>
           <NavDropdown
@@ -183,14 +183,14 @@ export function PublicHeader() {
             </div>
 
             <Link
-              href="/educom"
+              href="/learn"
               onClick={() => setMenuOpen(false)}
               className="text-text-secondary hover:text-text-primary"
             >
               Learning
             </Link>
             <Link
-              href="/educom/schools"
+              href="/learn/schools"
               onClick={() => setMenuOpen(false)}
               className="text-text-secondary hover:text-text-primary"
             >

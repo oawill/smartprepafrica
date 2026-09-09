@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "Live Classes & Courses for Secondary School Students — join classes, courses and masterclasses from schools and teachers across Nigeria on SmartPrepAfrica Learning.",
 };
 
-export default function EducomLayout({ children }: { children: ReactNode }) {
+export default function LearnLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
       <PublicHeader />

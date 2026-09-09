@@ -28,7 +28,7 @@ export async function toggleFollowTeacher(teacherId: string) {
     });
   }
 
-  revalidatePath(`/educom/teachers/${teacherId}`);
+  revalidatePath(`/learn/teachers/${teacherId}`);
 }
 
 export async function enrollInCourse(courseId: string) {
@@ -67,7 +67,7 @@ export async function enrollInCourse(courseId: string) {
     }
   }
 
-  revalidatePath(`/educom/${courseId}`);
+  revalidatePath(`/learn/${courseId}`);
 }
 
 async function checkCourseCompletion(userId: string, enrollmentId: string, courseId: string) {
@@ -125,8 +125,8 @@ export async function markLessonComplete(lessonId: string) {
   await awardXp(session.user.id, "LESSON_COMPLETE", lessonId);
   await checkCourseCompletion(session.user.id, enrollment.id, courseId);
 
-  revalidatePath(`/educom/${courseId}`);
-  revalidatePath(`/educom/${courseId}/lessons/${lessonId}`);
+  revalidatePath(`/learn/${courseId}`);
+  revalidatePath(`/learn/${courseId}/lessons/${lessonId}`);
 }
 
 export async function submitQuiz(lessonId: string, formData: FormData) {
@@ -182,8 +182,8 @@ export async function submitQuiz(lessonId: string, formData: FormData) {
 
   await checkCourseCompletion(session.user.id, enrollment.id, courseId);
 
-  revalidatePath(`/educom/${courseId}`);
-  revalidatePath(`/educom/${courseId}/lessons/${lessonId}`);
+  revalidatePath(`/learn/${courseId}`);
+  revalidatePath(`/learn/${courseId}/lessons/${lessonId}`);
 }
 
 export async function submitAssignment(assignmentId: string, formData: FormData) {
@@ -232,7 +232,7 @@ export async function submitAssignment(assignmentId: string, formData: FormData)
 
   await checkCourseCompletion(session.user.id, enrollment.id, assignment.courseId);
 
-  revalidatePath(`/educom/${assignment.courseId}`);
+  revalidatePath(`/learn/${assignment.courseId}`);
 }
 
 export async function submitCourseReview(courseId: string, formData: FormData) {
@@ -258,5 +258,5 @@ export async function submitCourseReview(courseId: string, formData: FormData) {
     create: { courseId, userId: session.user.id, rating, comment },
   });
 
-  revalidatePath(`/educom/${courseId}`);
+  revalidatePath(`/learn/${courseId}`);
 }

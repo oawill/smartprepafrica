@@ -94,7 +94,7 @@ export default async function TeacherDashboard() {
         </div>
         {teacher && (
           <Link
-            href={`/educom/teachers/${teacher.id}`}
+            href={`/learn/teachers/${teacher.id}`}
             className="shrink-0 rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
           >
             View public profile
@@ -150,7 +150,7 @@ export default async function TeacherDashboard() {
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card title="Classes">
+        <Card title="Cohorts">
           <p className="text-3xl font-semibold">{classCount}</p>
         </Card>
         <Card title="Courses">
@@ -175,11 +175,11 @@ export default async function TeacherDashboard() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="My classes">
+        <Card title="My cohorts">
           {!teacher || teacher.classes.length === 0 ? (
             <p className="text-sm text-text-secondary">
-              No classes assigned yet. Your school administrator can assign
-              you to a class.
+              No cohorts assigned yet. Your school administrator can assign
+              you to a cohort.
             </p>
           ) : (
             <ul className="space-y-1.5">

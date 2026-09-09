@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
-import { createDiscussionReply, markDiscussionResolved } from "@/app/educom/discussion-actions";
+import { createDiscussionReply, markDiscussionResolved } from "@/app/learn/discussion-actions";
 
 export default async function TeacherDiscussionsPage() {
   const session = await auth();
@@ -39,7 +39,7 @@ export default async function TeacherDiscussionsPage() {
             <Card key={d.id} title={d.title}>
               <p className="text-xs text-text-muted">
                 {d.author.name} ·{" "}
-                <Link href={`/educom/${d.course.id}`} className="hover:underline">
+                <Link href={`/learn/${d.course.id}`} className="hover:underline">
                   {d.course.title}
                 </Link>{" "}
                 · {new Date(d.createdAt).toLocaleString()}

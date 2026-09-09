@@ -1,4 +1,4 @@
-import { createDiscussion, createDiscussionReply, markDiscussionResolved } from "@/app/educom/discussion-actions";
+import { createDiscussion, createDiscussionReply, markDiscussionResolved } from "@/app/learn/discussion-actions";
 import { Badge } from "@/components/ui/badge";
 
 export type DiscussionThreadItem = {
