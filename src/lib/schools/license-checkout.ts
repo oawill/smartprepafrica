@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { resolvePlanPrice } from "@/lib/plans";
-import { initializeTransaction, verifyTransaction } from "@/lib/paystack";
+import { getPaymentProvider, getDefaultPaymentProviderName } from "@/lib/payments";
 
 function generateVoucherCode(): string {
   return `SL-${randomBytes(4).toString("hex").toUpperCase()}`;
@@ -69,6 +69,7 @@ export async function initiateSchoolLicenseCheckout(opts: {
   const amountKobo = perSeatPrice.amountMinor * opts.seatCount;
 
   const reference = `slp_${randomUUID()}`;
+  const providerName = getDefaultPaymentProviderName();
 
   await prisma.schoolLicensePurchase.create({
     data: {
@@ -79,7 +80,7 @@ export async function initiateSchoolLicenseCheckout(opts: {
       durationDays: opts.durationDays,
       amountKobo,
       currency: perSeatPrice.currency,
-      provider: "paystack",
+      provider: providerName,
       reference,
       status: "PENDING",
     },
@@ -88,9 +89,9 @@ export async function initiateSchoolLicenseCheckout(opts: {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002";
 
   try {
-    return await initializeTransaction({
+    return await getPaymentProvider(providerName).initializeTransaction({
       email: opts.payerEmail,
-      amountKobo,
+      amountMinor: amountKobo,
       currency: perSeatPrice.currency,
       reference,
       callbackUrl: `${baseUrl}/api/payments/school-license-callback`,
@@ -119,9 +120,9 @@ export async function activateSchoolLicensePurchaseForReference(reference: strin
     return purchase;
   }
 
-  const result = await verifyTransaction(reference);
+  const result = await getPaymentProvider(purchase.provider).verifyTransaction(reference);
 
-  if (result.status !== "success") {
+  if (!result.successful) {
     await prisma.schoolLicensePurchase.update({ where: { reference }, data: { status: "FAILED" } });
     return null;
   }

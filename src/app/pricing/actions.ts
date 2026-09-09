@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import type { SubscriptionPlan, BillingInterval } from "@prisma/client";
 import { auth } from "@/lib/auth";
-import { initiateSubscriptionCheckout } from "@/lib/paystack";
+import { initiateSubscriptionCheckout } from "@/lib/subscriptions/checkout";
 
 export async function checkout(formData: FormData) {
   const session = await auth();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { activateSubscriptionForReference } from "@/lib/paystack";
+import { activateSubscriptionForReference } from "@/lib/subscriptions/checkout";
 
 export async function GET(request: NextRequest) {
   const reference =
