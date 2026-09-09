@@ -145,7 +145,7 @@ export default async function LessonPage({
         ← {course.title}
       </Link>
 
-      <div className="mt-4 flex items-start justify-between gap-4">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs text-text-muted">
             Lesson {currentIndex + 1} of {flatLessons.length}
@@ -157,6 +157,7 @@ export default async function LessonPage({
             <AiCoachPanel
               context={{ courseId, lessonId }}
               defaultMode="EXPLAIN"
+              triggerClassName="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               suggestedPrompts={[
                 "Explain this lesson simply",
                 "Give me an example",
@@ -164,7 +165,7 @@ export default async function LessonPage({
                 "What should I remember for the exam?",
               ]}
             />
-            <a href="#discussion" className="text-xs text-text-secondary hover:text-brand-text">
+            <a href="#discussion" className="whitespace-nowrap text-xs text-text-secondary hover:text-brand-text">
               Still stuck? Ask a tutor
             </a>
           </div>
