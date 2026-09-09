@@ -5,13 +5,16 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Label, Input, FieldError } from "@/components/ui/form";
+import { PhoneLoginForm } from "@/components/auth/phone-login-form";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetSuccess = searchParams.get("reset") === "success";
+  const callbackUrl = searchParams.get("callbackUrl");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [method, setMethod] = useState<"email" | "phone">("email");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +38,6 @@ function LoginForm() {
     // Only ever follow a same-origin relative path (starts with "/", not
     // "//") — a callbackUrl is an untrusted query param, so anything else
     // would be an open-redirect vector.
-    const callbackUrl = searchParams.get("callbackUrl");
     const isSafeRelativePath = !!callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//");
     router.push(isSafeRelativePath ? (callbackUrl as string) : "/dashboard");
   }
@@ -52,31 +54,45 @@ function LoginForm() {
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required />
-          </div>
-          <div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-xs text-brand-text hover:underline">
-                Forgot password?
-              </Link>
+        {method === "email" ? (
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" required />
             </div>
-            <Input id="password" name="password" type="password" required />
+            <div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link href="/forgot-password" className="text-xs text-brand-text hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <Input id="password" name="password" type="password" required />
+            </div>
+
+            {error && <FieldError>{error}</FieldError>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
+            >
+              {loading ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+        ) : (
+          <div className="mt-6">
+            <PhoneLoginForm callbackUrl={callbackUrl} />
           </div>
+        )}
 
-          {error && <FieldError>{error}</FieldError>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
-          >
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={() => setMethod(method === "email" ? "phone" : "email")}
+          className="mt-4 w-full text-center text-xs text-brand-text hover:underline"
+        >
+          {method === "email" ? "Log in with phone instead" : "Log in with email instead"}
+        </button>
 
         <p className="mt-6 text-center text-sm text-text-secondary">
           No account yet?{" "}

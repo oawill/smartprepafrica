@@ -2507,6 +2507,26 @@ model PasswordResetToken {
   @@index([expiresAt])
 }
 
+// Proves ownership of a phone number for both phone-signup and
+// phone-login — scoped by phone, not userId, since at send-time (and
+// for a first-time signup) no User row exists yet. Mirrors
+// PasswordResetToken's shape; see src/lib/phone-otp.ts.
+model PhoneOtp {
+  id            String    @id @default(cuid())
+  phone         String
+  otpHash       String
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(5)
+  expiresAt     DateTime
+  consumedAt    DateTime?
+  invalidatedAt DateTime?
+  ipHash        String?
+  createdAt     DateTime  @default(now())
+
+  @@index([phone])
+  @@index([expiresAt])
+}
+
 model PartnerAuditLog {
   id          String  @id @default(cuid())
   actor       User?   @relation("AuditActor", fields: [actorUserId], references: [id])
