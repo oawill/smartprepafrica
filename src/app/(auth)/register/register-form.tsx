@@ -54,6 +54,11 @@ export default function RegisterForm({
   const [joinPinInput, setJoinPinInput] = useState("");
   const [joinCodeError, setJoinCodeError] = useState<string | null>(null);
   const [verifyingJoinCode, setVerifyingJoinCode] = useState(false);
+  const [voucher, setVoucher] = useState<{ code: string; planLabel: string } | null>(null);
+  const [showVoucherForm, setShowVoucherForm] = useState(false);
+  const [voucherCodeInput, setVoucherCodeInput] = useState("");
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [verifyingVoucher, setVerifyingVoucher] = useState(false);
 
   // Plain browser API rather than useSearchParams, so this page doesn't need
   // a Suspense boundary just to read a couple of query params once.
@@ -125,6 +130,29 @@ export default function RegisterForm({
     setShowJoinCodeForm(false);
   }
 
+  async function handleVerifyVoucher(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setVoucherError(null);
+    setVerifyingVoucher(true);
+
+    const res = await fetch("/api/sponsor-code/lookup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: voucherCodeInput }),
+    });
+    const data = await res.json().catch(() => null);
+
+    setVerifyingVoucher(false);
+
+    if (!res.ok) {
+      setVoucherError(data?.error ?? "Invalid or expired sponsor code.");
+      return;
+    }
+
+    setVoucher({ code: voucherCodeInput, planLabel: data.planLabel });
+    setShowVoucherForm(false);
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -157,6 +185,7 @@ export default function RegisterForm({
       const validSubjectIds = new Set(availableSubjects.map((s) => s.id));
       payload.examCodes = examCodes;
       payload.subjectIds = subjectIds.filter((id) => validSubjectIds.has(id));
+      if (voucher) payload.voucherCode = voucher.code;
     }
 
     const res = await fetch("/api/register", {
@@ -332,6 +361,53 @@ export default function RegisterForm({
           )}
 
           {role === "STUDENT" && !staffInvite && !schoolInvite && (
+            <div>
+              {voucher ? (
+                <p className="rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-xs text-brand-text">
+                  You&apos;ll get 30 days of <strong>{voucher.planLabel}</strong> on us.{" "}
+                  <button type="button" onClick={() => setVoucher(null)} className="underline">
+                    Change
+                  </button>
+                </p>
+              ) : showVoucherForm ? (
+                <form onSubmit={handleVerifyVoucher} className="space-y-2 rounded-lg border border-border p-3">
+                  <Input
+                    placeholder="Sponsor code"
+                    value={voucherCodeInput}
+                    onChange={(e) => setVoucherCodeInput(e.target.value)}
+                    required
+                  />
+                  {voucherError && <FieldError>{voucherError}</FieldError>}
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={verifyingVoucher}
+                      className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover disabled:opacity-60"
+                    >
+                      {verifyingVoucher ? "Checking…" : "Verify"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowVoucherForm(false)}
+                      className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowVoucherForm(true)}
+                  className="text-xs text-brand-text hover:underline"
+                >
+                  Have a sponsor code?
+                </button>
+              )}
+            </div>
+          )}
+
+          {role === "STUDENT" && !staffInvite && !schoolInvite && (
             <fieldset>
               <legend className="text-sm text-text-secondary">Sign up with:</legend>
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -363,7 +439,12 @@ export default function RegisterForm({
 
         {role === "STUDENT" && !staffInvite && signupMethod === "phone" ? (
           <div className="mt-4">
-            <PhoneSignupForm countryCode={countryCode} referral={referral} schoolJoin={schoolJoin} />
+            <PhoneSignupForm
+              countryCode={countryCode}
+              referral={referral}
+              schoolJoin={schoolJoin}
+              voucherCode={voucher?.code}
+            />
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
