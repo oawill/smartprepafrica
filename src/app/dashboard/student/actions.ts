@@ -24,3 +24,17 @@ export async function redeemVoucher(formData: FormData) {
 
   revalidatePath("/dashboard/student");
 }
+
+export async function setLeaderboardOptIn(formData: FormData) {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  const optIn = formData.get("leaderboardOptIn") === "on";
+
+  await prisma.studentProfile.update({
+    where: { userId: session.user.id },
+    data: { leaderboardOptIn: optIn },
+  });
+
+  revalidatePath("/dashboard/student/leaderboard");
+}

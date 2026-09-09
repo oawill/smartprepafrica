@@ -9,6 +9,7 @@ import { recordExamTopicAttempts, recordReadinessSnapshot } from "@/lib/practice
 import { buildSelectionUnits, selectContiguousUnits } from "@/lib/practice/attempt-selection";
 import { examLabels } from "@/lib/exam-slugs";
 import { notifyUser } from "@/lib/notify";
+import { awardXp } from "@/lib/gamification/xp-service";
 
 export async function startAttempt(formData: FormData) {
   const session = await auth();
@@ -160,6 +161,8 @@ export async function submitAttempt(attemptId: string) {
     where: { id: attemptId },
     data: { submittedAt: new Date(), score },
   });
+
+  await awardXp(session.user.id, "EXAM_ATTEMPT", attemptId);
 
   // Only mock exams, not every practice question — matches the brief's
   // example ("Tunde completed his UTME mock examination with 74%") without

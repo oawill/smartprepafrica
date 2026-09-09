@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
 import { recordCrossoverAttempts } from "@/lib/learning/prep-crossover";
+import { awardXp } from "@/lib/gamification/xp-service";
 import { notifyUser } from "@/lib/notify";
 import { getUserPlan } from "@/lib/ai/limits";
 import { canEnrollInCourse } from "@/lib/learning/course-access";
@@ -77,6 +78,8 @@ async function checkCourseCompletion(userId: string, enrollmentId: string, cours
       update: {},
       create: { userId, courseId },
     });
+
+    await awardXp(userId, "COURSE_COMPLETE", courseId);
   }
 }
 
@@ -103,6 +106,7 @@ export async function markLessonComplete(lessonId: string) {
     create: { enrollmentId: enrollment.id, lessonId, completedAt: new Date() },
   });
 
+  await awardXp(session.user.id, "LESSON_COMPLETE", lessonId);
   await checkCourseCompletion(session.user.id, enrollment.id, courseId);
 
   revalidatePath(`/educom/${courseId}`);
@@ -142,6 +146,8 @@ export async function submitQuiz(lessonId: string, formData: FormData) {
     update: { completedAt: new Date(), score },
     create: { enrollmentId: enrollment.id, lessonId, completedAt: new Date(), score },
   });
+
+  await awardXp(session.user.id, "LESSON_COMPLETE", lessonId);
 
   const subjectId = lesson.module.course.subjectId;
   if (subjectId && lesson.topic && total > 0) {

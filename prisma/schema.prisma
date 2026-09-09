@@ -104,6 +104,7 @@ model User {
   lessonCheckpointResponses LessonCheckpointResponse[]
   discussionsAuthored       Discussion[]
   discussionRepliesAuthored DiscussionReply[]
+  xpEvents                  XpEvent[]
 
   aiConversations         AiConversation[]
   topicMastery            StudentTopicMastery[]
@@ -198,6 +199,19 @@ model StudentProfile {
   // access to this student's academic data once linked.
   linkCode       String?             @unique
   parentLinks    ParentStudentLink[] @relation("StudentLinks")
+
+  // Gamification — see src/lib/gamification/xp-service.ts for the award
+  // logic. xp is a denormalized total kept in sync with the XpEvent
+  // ledger (the source of truth) purely for fast reads. lastActivityDate
+  // is day-granularity, compared via computeStreakUpdate.
+  xp                Int       @default(0)
+  currentStreakDays Int       @default(0)
+  longestStreakDays Int       @default(0)
+  lastActivityDate  DateTime?
+  // Opt-in (default hidden), not opt-out like the Partner referral
+  // leaderboard's hideFromLeaderboard — students must actively choose to
+  // appear, per the brief's requirement.
+  leaderboardOptIn  Boolean   @default(false)
 }
 
 enum ParentLinkStatus {
@@ -1520,6 +1534,28 @@ model UserBadge {
   awardedAt DateTime @default(now())
 
   @@unique([userId, badgeId])
+}
+
+// Append-only XP ledger — the source of truth StudentProfile.xp is kept
+// in sync with. (userId, type, sourceId) uniqueness is what makes
+// awardXp idempotent: re-completing an already-completed lesson, or a
+// retried form submission, never double-awards. See
+// src/lib/gamification/xp-service.ts.
+model XpEvent {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  // "LESSON_COMPLETE" | "COURSE_COMPLETE" | "EXAM_ATTEMPT" |
+  // "DISCUSSION_POST" | "DISCUSSION_REPLY" — plain string rather than an
+  // enum so a new award type never needs a migration, matching
+  // Notification.type's existing convention.
+  type      String
+  amount    Int
+  sourceId  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, type, sourceId])
+  @@index([userId, createdAt])
 }
 
 // ---------- Commerce: subscriptions, payments, vouchers, referrals ----------
