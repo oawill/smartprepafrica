@@ -184,6 +184,7 @@ export function VideoPlayer({
 
         {activeCheckpoint && (
           <CheckpointOverlay
+            key={activeCheckpoint.id}
             checkpoint={activeCheckpoint}
             onAnswer={handleAnswer}
             onContinue={continueAfterCheckpoint}
