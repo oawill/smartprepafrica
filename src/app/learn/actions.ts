@@ -11,6 +11,7 @@ import { awardEnrollmentCommission } from "@/lib/teachers/compensation";
 import { notifyUser } from "@/lib/notify";
 import { getUserPlan } from "@/lib/ai/limits";
 import { canEnrollInCourse } from "@/lib/learning/course-access";
+import { generateCertificateVerificationCode } from "@/lib/certificates/verification-code";
 
 export async function toggleFollowTeacher(teacherId: string) {
   const session = await auth();
@@ -92,7 +93,7 @@ async function checkCourseCompletion(userId: string, enrollmentId: string, cours
     await prisma.certificate.upsert({
       where: { userId_courseId: { userId, courseId } },
       update: {},
-      create: { userId, courseId },
+      create: { userId, courseId, verificationCode: generateCertificateVerificationCode() },
     });
 
     await awardXp(userId, "COURSE_COMPLETE", courseId);

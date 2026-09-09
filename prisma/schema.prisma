@@ -1550,6 +1550,12 @@ model Certificate {
   courseId String
   issuedAt DateTime @default(now())
   certUrl  String?
+  // Short, human-typeable alternative to the cuid `id` in the certificate
+  // URL — meant to be read off a printed certificate and typed in, unlike
+  // the id (meant for a clicked/pasted link). Random, not sequential
+  // (see src/lib/certificates/verification-code.ts) — sequential would
+  // let anyone enumerate every issued certificate via /verify/[code].
+  verificationCode String? @unique
 
   @@unique([userId, courseId])
 }
