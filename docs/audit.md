@@ -17,9 +17,9 @@ different in shape: a `/learn` rename, removing the Skills vertical, a
 three-tier Class/Course/Programme vocabulary (Programme doesn't exist),
 phone-first/OTP student intake (auth is email+password only today), a
 payment-provider abstraction (Paystack is hardcoded everywhere), and
-offline/PWA/low-bandwidth work (not audited here — no existing PWA
-manifest or offline-cache code was found in either pass). See
-`docs/migration-plan.md` for the resulting revised phase plan.
+offline/PWA/low-bandwidth work — **now audited, see §11**: zero PWA/
+offline infrastructure and zero low-bandwidth accommodation exist today.
+See `docs/migration-plan.md` for the resulting revised phase plan.
 
 ---
 
@@ -218,6 +218,77 @@ Confirmed shipped and live in production, contrary to the brief's
   escalation to the course's teacher or an admin fallback queue.
 - **Gamification** — XP, badges, and an opt-in per-school leaderboard that
   never publicly ranks below the top 20.
+
+## 11. Mobile-first / low-bandwidth / offline (audited 2026-09-09)
+
+Not audited in the original pass; this section closes that gap ahead of
+Revised Phase 6, via three focused sweeps against `master`. Headline: the
+app has **zero PWA/offline infrastructure** and **zero low-bandwidth
+accommodation** today — this is unbuilt, not partially built.
+
+**PWA / offline — confirmed absent, not just unconfigured.** No
+`manifest.json`/`manifest.webmanifest` anywhere in `public/` or `src/app/`;
+`src/app/layout.tsx`'s `metadata` export sets only `title`/`description` —
+no `manifest`, icons, `themeColor`, or `display` mode. No service worker
+(`public/` holds only 12 static image/svg files), no `next-pwa`/`workbox`/
+`serwist` dependency, no `beforeinstallprompt` handling anywhere. No
+offline-detection code at all — every "offline" string hit in `src/` is an
+unrelated Google OAuth `access_type: "offline"` refresh-token param, not
+app connectivity. `next.config.ts` is the framework default (empty
+`NextConfig` object) — no caching headers, no Next 16 `"use cache"`/
+`cacheLife`/`cacheTag` usage anywhere in `src/app/**` despite the feature
+being available in this Next version.
+
+**Bundle/asset weight — mixed.** Fonts are handled well:
+`next/font/google` self-hosts `Geist`/`Geist_Mono` at build time
+(`src/app/layout.tsx:2,7-15`), no render-blocking Google Fonts request
+anywhere. Images are the opposite: `next/image` is used in only 2 files
+codebase-wide (`hero-carousel.tsx`, `logo.tsx`) — everything else that
+renders a remote image bypasses Next's automatic optimization/responsive
+sizing entirely, including SAT drill question figures
+(`sat-drill-runner.tsx:231`), which load per-question during timed
+sessions. `next.config.ts` has no `images` block at all (no
+`remotePatterns`, no AVIF/WebP `formats`), so even adding `next/image`
+usage for externally-hosted images would need that config first.
+Dependencies are mostly reasonable (no moment.js, no icon-set bloat, no
+chart-library bloat) but include a heavy video-rendering toolchain
+(`remotion` + `@remotion/*`) and `exceljs` whose client-vs-server-only
+boundaries weren't verified in this pass — worth a bundle-analyzer check
+before Phase 6 implementation, not just a dependency-list read.
+
+**Responsive coverage — mobile-first where present, but thin and
+inconsistent.** Only ~33% of `.tsx` files (89/269) use any `sm:`/`md:`/
+`lg:` Tailwind prefix. Spot-checked pages follow the correct pattern
+(unprefixed base = mobile, breakpoints layer upward — e.g.
+`pricing/page.tsx`'s `grid gap-4 sm:grid-cols-2`), not desktop-first with
+mobile bolted on. But coverage is uneven: `src/app/learn/[courseId]/
+lessons/[lessonId]/page.tsx` (402 lines, the actual lesson-player page) has
+**zero** responsive-prefix classes — needs a real visual check on narrow
+screens, not just a grep, since the transcript/video panels are exactly
+where a fixed layout would break down on a small phone. No
+`navigator.connection`/`saveData` API usage and no user-facing "data
+saver"/"lite mode" preference exists anywhere — confirmed absent, not one
+incidental false-positive match.
+
+**Low-bandwidth communication fallback — manual only, one real gap.**
+WhatsApp/SMS today is either (a) a genuinely working `wa.me` deep-link
+share button on partner referral cards (`referral-link-card.tsx:22-49` —
+opens WhatsApp pre-filled, a real user action, not a server send), or (b)
+copy telling an admin to manually share an invite link "via WhatsApp, SMS,
+in person" (`invite-form.tsx:72-74`, already noted in a prior phase). The
+Door-1 phone+OTP self-signup flow (prior phase) is the only place an
+actual server-driven SMS send is wired up — and even that is a
+`ConsoleSmsProvider` stub, not a live send. `src/lib/notify.ts`
+(`notifyUser`) and its partner counterpart are **in-app-only** — no
+email/SMS/push dispatch layer exists at all, so there's no "best available
+channel" abstraction to build on. The one genuine strandable-user gap:
+password reset (`src/app/api/auth/forgot-password/route.ts`) is fully
+gated on `isEmailConfigured()` with **zero fallback** — a student who
+signed up via Door 1's phone+OTP path (no email required to log in,
+per that phase's design) who somehow needs password reset has no
+symmetrical phone-based recovery path today, since phone accounts have no
+password to reset in the first place; this is more a note for whoever
+eventually designs account-recovery-by-phone than a live bug.
 
 Not yet built, and not covered by any existing feature under a different
 name: the `/learn` rename, Skills-vertical archival, Class/Course/Programme

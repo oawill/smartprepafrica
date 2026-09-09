@@ -110,11 +110,47 @@ data). Small, additive, no risk to the existing URL.
 
 ## Revised Phase 6 — Mobile-first / low-bandwidth / offline
 
-Not audited in depth this pass (no PWA manifest or offline-cache code
-was found in either audit sweep, but a dedicated audit pass would be
-needed before planning this phase properly — recommend a short, focused
-audit of the current mobile experience and bundle size before writing a
-real plan here, rather than guessing at scope now).
+Audited 2026-09-09 (`docs/audit.md` §11): zero PWA/offline
+infrastructure and zero low-bandwidth accommodation exist today — this
+is unbuilt, not partially built. Genuinely several independent pieces
+of work, not one phase; proposed as sub-phases, same shape as Revised
+Phase 3's three doors, each with its own plan/approval cycle:
+
+- **6a — PWA installability.** `manifest.json` + icons + `themeColor` +
+  `metadata.manifest` in `src/app/layout.tsx`. Small, additive, no
+  runtime behavior change for anyone who doesn't install it — the
+  natural first slice since it unblocks nothing else and risks nothing.
+- **6b — Image optimization.** Add a `next.config.ts` `images` block
+  (remote patterns + AVIF/WebP `formats`), then convert the handful of
+  real remote-image call sites (confirmed: SAT drill question figures
+  in `sat-drill-runner.tsx`, plus any others a full sweep turns up) from
+  raw `<img>` to `next/image`. Targeted — only 2 files use `next/image`
+  today, so this is "wire up the config + fix the sites that actually
+  matter," not a blanket rewrite.
+- **6c — Lesson-player responsive pass.** `src/app/learn/[courseId]/
+  lessons/[lessonId]/page.tsx` has zero responsive-prefix classes
+  despite being the highest-stakes mobile screen in the app (video +
+  transcript + quiz on one page). Needs a real visual check on a
+  narrow viewport before writing fixes, not a blind class-adding pass.
+- **6d — Offline resilience.** The largest, most architecturally risky
+  piece: a service worker, an offline fallback page/state, and a real
+  caching strategy (candidate: Next 16's `"use cache"`/`cacheLife` for
+  server-rendered content, a SW cache for the app shell + recently
+  viewed lesson content). Needs its own dedicated design pass — service
+  workers interact with Vercel's Fluid Compute/caching model in ways
+  that need care, and "what should actually work offline" (browse
+  already-downloaded lesson content? resume a practice session
+  mid-flight?) is a product decision, not just an engineering one.
+- **Not part of this phase** (flagged, not scoped): password reset has
+  zero fallback when email isn't configured/deliverable
+  (`docs/audit.md` §11's last paragraph), and phone-only (Door 1)
+  accounts have no password to reset in the first place. This is an
+  auth-completeness gap, not a mobile/offline one — worth its own
+  future phase (phone-based account recovery) rather than folding into
+  Phase 6.
+
+No decision made yet on sequencing 6a–6d or which to build first —
+flagging here for your call rather than assuming.
 
 ---
 
