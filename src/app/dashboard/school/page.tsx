@@ -9,6 +9,7 @@ import { BulkAssignLicensesForm } from "@/components/school/bulk-assign-licenses
 import { InviteForm } from "@/components/school/invite-form";
 import {
   updateSchoolProfile,
+  regenerateSchoolJoinCode,
   inviteTeacher,
   inviteStudent,
   revokeSchoolInvitation,
@@ -453,6 +454,39 @@ export default async function SchoolDashboard() {
               classes={school.classes}
             />
           </div>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card title="Join code">
+          <p className="text-xs text-text-muted">
+            A standing code + PIN anyone can use to join your school themselves — share it verbally
+            or on a poster, unlike the one-time invite links above. Students and teachers who join
+            this way start unassigned to a cohort (students) or pending platform review (teachers),
+            same as everyone else you add.
+          </p>
+          {school.joinCode ? (
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <div>
+                <p className="text-xs text-text-muted">Code</p>
+                <p className="font-mono text-lg font-semibold text-text-primary">{school.joinCode}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">PIN</p>
+                <p className="font-mono text-lg font-semibold text-text-primary">{school.joinPin}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-text-secondary">No join code generated yet.</p>
+          )}
+          <form action={regenerateSchoolJoinCode} className="mt-3">
+            <button
+              type="submit"
+              className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted"
+            >
+              {school.joinCode ? "Regenerate (invalidates the old code)" : "Generate join code"}
+            </button>
+          </form>
         </Card>
       </div>
 

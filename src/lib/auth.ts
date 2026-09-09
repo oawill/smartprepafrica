@@ -90,6 +90,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         campaign: { label: "Campaign" },
         clickToken: { label: "Click token" },
         countryCode: { label: "Country code" },
+        schoolJoinCode: { label: "School join code" },
+        schoolJoinPin: { label: "School join PIN" },
       },
       authorize: async (credentials, request) => {
         const phone = credentials?.phone as string | undefined;
@@ -145,22 +147,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const emailTaken = await prisma.user.findUnique({ where: { email }, select: { id: true } });
         if (emailTaken) return null;
 
-        await consumeOtpForPhone(phone);
         const country = await resolveRegistrationCountry(credentials?.countryCode as string | undefined);
         const ipHash = hashIp(ip);
-        const user = await prisma.$transaction((tx) =>
-          createStudentAccount(tx, {
-            name,
-            email,
-            phone,
-            countryId: country?.id,
-            refCode: (credentials?.ref as string | undefined) ?? null,
-            campaignSlug: (credentials?.campaign as string | undefined) ?? null,
-            clickToken: (credentials?.clickToken as string | undefined) ?? null,
-            ipHash,
-            userAgent,
-          })
-        );
+        // consumeOtpForPhone runs only after a successful create — a bad
+        // school join-code/PIN throws inside the transaction (rolling it
+        // back entirely), and the OTP must stay live so the student can
+        // just fix the code and resubmit rather than requesting a new one.
+        let user;
+        try {
+          user = await prisma.$transaction((tx) =>
+            createStudentAccount(tx, {
+              name,
+              email,
+              phone,
+              countryId: country?.id,
+              refCode: (credentials?.ref as string | undefined) ?? null,
+              campaignSlug: (credentials?.campaign as string | undefined) ?? null,
+              clickToken: (credentials?.clickToken as string | undefined) ?? null,
+              schoolJoinCode: credentials?.schoolJoinCode as string | undefined,
+              schoolJoinPin: credentials?.schoolJoinPin as string | undefined,
+              ipHash,
+              userAgent,
+            })
+          );
+        } catch {
+          return null;
+        }
+        await consumeOtpForPhone(phone);
         await logLoginActivity({ userId: user.id, email: user.email, success: true, ip, userAgent });
         return {
           id: user.id,
