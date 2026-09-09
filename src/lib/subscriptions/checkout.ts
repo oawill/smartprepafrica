@@ -4,87 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { resolvePlanPrice } from "@/lib/plans";
 import { handlePartnerCommissionsForPayment } from "@/lib/partners/payment-hooks";
 import { reverseCommissionsForPayment } from "@/lib/partners/compensation";
-
-const PAYSTACK_BASE = "https://api.paystack.co";
-
-function requireSecretKey(): string {
-  const key = process.env.PAYSTACK_SECRET_KEY;
-  if (!key) {
-    throw new Error(
-      "Payments are not configured yet. Set PAYSTACK_SECRET_KEY in .env to enable checkout."
-    );
-  }
-  return key;
-}
-
-export async function initializeTransaction(opts: {
-  email: string;
-  amountKobo: number;
-  currency: string;
-  reference: string;
-  callbackUrl: string;
-  metadata: Record<string, unknown>;
-}): Promise<string> {
-  const secretKey = requireSecretKey();
-
-  const res = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: opts.email,
-      amount: opts.amountKobo,
-      currency: opts.currency,
-      reference: opts.reference,
-      callback_url: opts.callbackUrl,
-      metadata: opts.metadata,
-    }),
-  });
-
-  const data = await res.json();
-  if (!res.ok || !data.status) {
-    throw new Error(data.message ?? "Failed to initialize payment.");
-  }
-
-  return data.data.authorization_url as string;
-}
-
-type VerifyResult = {
-  status: string;
-  reference: string;
-  amount: number;
-  metadata: Record<string, unknown> | null;
-};
-
-export async function verifyTransaction(
-  reference: string
-): Promise<VerifyResult> {
-  const secretKey = requireSecretKey();
-
-  const res = await fetch(
-    `${PAYSTACK_BASE}/transaction/verify/${encodeURIComponent(reference)}`,
-    { headers: { Authorization: `Bearer ${secretKey}` } }
-  );
-
-  const data = await res.json();
-  if (!res.ok || !data.status) {
-    throw new Error(data.message ?? "Failed to verify payment.");
-  }
-
-  return {
-    status: data.data.status,
-    reference: data.data.reference,
-    amount: data.data.amount,
-    metadata: data.data.metadata ?? null,
-  };
-}
+import { getPaymentProvider, getDefaultPaymentProviderName } from "@/lib/payments";
 
 /**
- * Verifies a transaction with Paystack and activates the subscription it
- * paid for. Idempotent — safe to call from both the browser callback route
- * and the server-to-server webhook for the same reference.
+ * Verifies a transaction with its recorded payment provider and
+ * activates the subscription it paid for. Idempotent — safe to call
+ * from both the browser callback route and the server-to-server
+ * webhook for the same reference.
  */
 export async function activateSubscriptionForReference(reference: string) {
   const payment = await prisma.payment.findUnique({ where: { reference } });
@@ -92,9 +18,9 @@ export async function activateSubscriptionForReference(reference: string) {
     return payment;
   }
 
-  const result = await verifyTransaction(reference);
+  const result = await getPaymentProvider(payment.provider).verifyTransaction(reference);
 
-  if (result.status !== "success") {
+  if (!result.successful) {
     await prisma.payment.update({
       where: { reference },
       data: { status: "FAILED" },
@@ -161,12 +87,13 @@ export async function reversePaymentForReference(reference: string, reason: stri
 }
 
 /**
- * Creates a pending Payment and starts a Paystack transaction for a
- * subscription plan. If `beneficiaryUserId` is set, the resulting
- * subscription grants access to that user rather than the payer (e.g. a
- * parent subscribing their child). Throws on failure — the pending Payment
- * is marked FAILED before the error propagates, so callers only need to
- * decide how to redirect.
+ * Creates a pending Payment and starts a transaction with the current
+ * default payment provider for a subscription plan. If
+ * `beneficiaryUserId` is set, the resulting subscription grants access
+ * to that user rather than the payer (e.g. a parent subscribing their
+ * child). Throws on failure — the pending Payment is marked FAILED
+ * before the error propagates, so callers only need to decide how to
+ * redirect.
  */
 export async function initiateSubscriptionCheckout(opts: {
   payerId: string;
@@ -186,6 +113,7 @@ export async function initiateSubscriptionCheckout(opts: {
   }
 
   const reference = `sp_${randomUUID()}`;
+  const providerName = getDefaultPaymentProviderName();
 
   await prisma.payment.create({
     data: {
@@ -193,7 +121,7 @@ export async function initiateSubscriptionCheckout(opts: {
       amountKobo: price.amountMinor,
       currency: price.currency,
       interval,
-      provider: "paystack",
+      provider: providerName,
       reference,
       status: "PENDING",
     },
@@ -202,9 +130,9 @@ export async function initiateSubscriptionCheckout(opts: {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002";
 
   try {
-    return await initializeTransaction({
+    return await getPaymentProvider(providerName).initializeTransaction({
       email: opts.payerEmail,
-      amountKobo: price.amountMinor,
+      amountMinor: price.amountMinor,
       currency: price.currency,
       reference,
       callbackUrl: `${baseUrl}/api/payments/callback`,

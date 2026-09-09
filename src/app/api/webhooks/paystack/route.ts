@@ -1,24 +1,13 @@
-import crypto from "node:crypto";
-import { activateSubscriptionForReference, reversePaymentForReference } from "@/lib/paystack";
+import { getPaymentProvider } from "@/lib/payments";
+import { activateSubscriptionForReference, reversePaymentForReference } from "@/lib/subscriptions/checkout";
 import { activateInternationalExamPurchaseForReference } from "@/lib/international-exams/checkout-service";
 import { activateSchoolLicensePurchaseForReference } from "@/lib/schools/license-checkout";
 
 export async function POST(request: Request) {
-  const secret = process.env.PAYSTACK_SECRET_KEY;
-  const signature = request.headers.get("x-paystack-signature");
-
-  if (!secret || !signature) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
   const rawBody = await request.text();
-  const expectedSignature = crypto
-    .createHmac("sha512", secret)
-    .update(rawBody)
-    .digest("hex");
 
-  if (expectedSignature !== signature) {
-    return new Response("Invalid signature", { status: 401 });
+  if (!getPaymentProvider("paystack").verifyWebhookSignature(rawBody, request.headers)) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const event = JSON.parse(rawBody);

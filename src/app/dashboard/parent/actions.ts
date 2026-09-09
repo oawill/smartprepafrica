@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { SubscriptionPlan, BillingInterval } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { initiateSubscriptionCheckout } from "@/lib/paystack";
+import { initiateSubscriptionCheckout } from "@/lib/subscriptions/checkout";
 import { logAudit } from "@/lib/admin/audit";
 
 /** Requests a link to a student by their link code — this only creates a
