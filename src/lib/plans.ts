@@ -20,6 +20,10 @@ export const PLAN_PRICING_KOBO: Partial<
   BASIC: { monthly: 250_000 }, // ₦2,500 / month
   PREMIUM: { monthly: 450_000, annual: 4_320_000 }, // ₦4,500/mo, ₦43,200/yr (same 20% annual discount as before)
   PRO: { monthly: 650_000, annual: 6_240_000 }, // ₦6,500/mo, ₦62,400/yr (same 20% annual discount as before)
+  // Per-seat price for a school's bulk licence purchase — below BASIC's
+  // per-student price as the bulk discount. Monthly-only for now, same as
+  // BASIC.
+  SCHOOL: { monthly: 200_000 }, // ₦2,000 / seat / month
 };
 
 export const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {

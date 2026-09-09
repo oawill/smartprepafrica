@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { activateSubscriptionForReference, reversePaymentForReference } from "@/lib/paystack";
 import { activateInternationalExamPurchaseForReference } from "@/lib/international-exams/checkout-service";
+import { activateSchoolLicensePurchaseForReference } from "@/lib/schools/license-checkout";
 
 export async function POST(request: Request) {
   const secret = process.env.PAYSTACK_SECRET_KEY;
@@ -24,14 +25,15 @@ export async function POST(request: Request) {
 
   if (event.event === "charge.success") {
     // The webhook URL is one fixed account-wide setting in Paystack, so
-    // both the existing subscription flow and the new one-time
-    // TOEFL/SAT purchase flow land here. Each activation function is a
-    // safe no-op when the reference doesn't belong to its own table
-    // (Payment vs. InternationalExamPurchase), so calling both
-    // unconditionally is safe and needs no branching — the existing
-    // subscription activation call is untouched.
+    // every one-time/subscription purchase flow lands here. Each
+    // activation function is a safe no-op when the reference doesn't
+    // belong to its own table (Payment vs. InternationalExamPurchase vs.
+    // SchoolLicensePurchase), so calling all of them unconditionally is
+    // safe and needs no branching — the existing subscription activation
+    // call is untouched.
     await activateSubscriptionForReference(event.data.reference);
     await activateInternationalExamPurchaseForReference(event.data.reference);
+    await activateSchoolLicensePurchaseForReference(event.data.reference);
   }
 
   // Refund/chargeback event names and payload shape per Paystack's webhook

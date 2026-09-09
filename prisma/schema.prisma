@@ -105,6 +105,7 @@ model User {
   discussionsAuthored       Discussion[]
   discussionRepliesAuthored DiscussionReply[]
   xpEvents                  XpEvent[]
+  schoolLicensePurchases    SchoolLicensePurchase[]
 
   aiConversations         AiConversation[]
   topicMastery            StudentTopicMastery[]
@@ -319,6 +320,7 @@ model School {
   createdAt         DateTime           @default(now())
 
   sponsorshipPrograms SponsorshipProgram[]
+  licensePurchases    SchoolLicensePurchase[]
 
   // A school may be pursued by multiple partners before it registers; only
   // one of these leads (if any) becomes the authoritative attribution.
@@ -1680,18 +1682,23 @@ model SponsorshipProgram {
 }
 
 model Voucher {
-  id         String              @id @default(cuid())
-  code       String              @unique
-  sponsor    SponsorProfile?     @relation(fields: [sponsorId], references: [id])
+  id         String                 @id @default(cuid())
+  code       String                 @unique
+  sponsor    SponsorProfile?        @relation(fields: [sponsorId], references: [id])
   sponsorId  String?
-  program    SponsorshipProgram? @relation(fields: [programId], references: [id])
+  program    SponsorshipProgram?    @relation(fields: [programId], references: [id])
   programId  String?
-  issuedBy   User                @relation("VoucherIssuer", fields: [issuedById], references: [id])
+  // Set instead of `program` for a school-purchased (paid) seat batch —
+  // see SchoolLicensePurchase. A voucher belongs to at most one batch,
+  // sponsor or school, same nullable-optional-parent shape as `program`.
+  schoolLicensePurchase   SchoolLicensePurchase? @relation(fields: [schoolLicensePurchaseId], references: [id])
+  schoolLicensePurchaseId String?
+  issuedBy   User                   @relation("VoucherIssuer", fields: [issuedById], references: [id])
   issuedById String
   plan       SubscriptionPlan
-  status     VoucherStatus       @default(ACTIVE)
+  status     VoucherStatus          @default(ACTIVE)
   expiresAt  DateTime?
-  createdAt  DateTime            @default(now())
+  createdAt  DateTime               @default(now())
 
   redemption VoucherRedemption?
 }
@@ -1703,6 +1710,34 @@ model VoucherRedemption {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   redeemedAt DateTime @default(now())
+}
+
+// A school's real, paid purchase of a block of SCHOOL-plan seats — the
+// payment leg the Sponsor voucher system never needed (sponsor funding
+// happens off-platform). Deliberately its own standalone, self-verifying
+// table rather than another row in the shared Payment model, mirroring
+// InternationalExamPurchase — this keeps activateSubscriptionForReference
+// from ever mistaking this reference for a personal-subscription charge.
+model SchoolLicensePurchase {
+  id            String        @id @default(cuid())
+  school        School        @relation(fields: [schoolId], references: [id])
+  schoolId      String
+  purchasedBy   User          @relation(fields: [purchasedById], references: [id])
+  purchasedById String
+  plan          SubscriptionPlan // always SCHOOL today; stored for clarity/future flexibility
+  seatCount     Int
+  durationDays  Int
+  amountKobo    Int
+  currency      String        @default("NGN")
+  provider      String        @default("paystack")
+  reference     String        @unique
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  paidAt        DateTime?
+
+  vouchers Voucher[]
+
+  @@index([schoolId])
 }
 
 enum ReferralStatus {
