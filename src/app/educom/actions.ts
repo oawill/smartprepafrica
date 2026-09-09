@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
 import { recordCrossoverAttempts } from "@/lib/learning/prep-crossover";
 import { awardXp } from "@/lib/gamification/xp-service";
+import { awardEnrollmentCommission } from "@/lib/teachers/compensation";
 import { notifyUser } from "@/lib/notify";
 import { getUserPlan } from "@/lib/ai/limits";
 import { canEnrollInCourse } from "@/lib/learning/course-access";
@@ -45,11 +46,26 @@ export async function enrollInCourse(courseId: string) {
     redirect("/pricing?reason=course_subscription_required");
   }
 
+  const existingEnrollment = await prisma.courseEnrollment.findUnique({
+    where: { userId_courseId: { userId: session.user.id, courseId } },
+  });
+
   await prisma.courseEnrollment.upsert({
     where: { userId_courseId: { userId: session.user.id, courseId } },
     update: {},
     create: { userId: session.user.id, courseId },
   });
+
+  // A commission failure must never block the student's actual
+  // enrollment — same defensive wrapping the Partner referral system
+  // uses around its own commission-creation hook.
+  if (!existingEnrollment && plan !== "FREE") {
+    try {
+      await awardEnrollmentCommission(courseId, session.user.id);
+    } catch (error) {
+      console.error("Failed to award teacher enrollment commission:", error);
+    }
+  }
 
   revalidatePath(`/educom/${courseId}`);
 }
