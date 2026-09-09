@@ -66,14 +66,14 @@ export function LessonTabs({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 rounded-full border border-border p-1">
           {tabs.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium sm:px-4 sm:text-sm ${
+              className={`rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap sm:px-4 sm:text-sm ${
                 tab === t.key ? "bg-brand text-brand-foreground" : "text-text-muted hover:text-text-secondary"
               }`}
             >
@@ -86,6 +86,7 @@ export function LessonTabs({
             context={{ courseId, lessonId, chapterId: currentChapter?.id ?? null }}
             defaultMode="EXPLAIN"
             triggerLabel="Ask SmartPrep AI"
+            triggerClassName="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             quickActions={LESSON_QUICK_ACTIONS}
             suggestedPrompts={[
               "I don't understand this part.",
@@ -97,7 +98,7 @@ export function LessonTabs({
           <button
             type="button"
             onClick={() => setTab("discussion")}
-            className="text-xs text-text-secondary hover:text-brand-text"
+            className="whitespace-nowrap text-xs text-text-secondary hover:text-brand-text"
           >
             Still stuck? Ask a tutor
           </button>
