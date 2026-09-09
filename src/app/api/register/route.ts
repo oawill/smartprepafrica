@@ -10,6 +10,7 @@ import { recordAcceptance } from "@/lib/legal/documents";
 import { logAudit } from "@/lib/admin/audit";
 import { createStudentAccount } from "@/lib/registration/create-student-account";
 import { resolveRegistrationCountry } from "@/lib/registration/resolve-country";
+import { resolveSchoolByJoinCode } from "@/lib/registration/school-join-code";
 
 const baseFields = {
   name: z.string().min(2),
@@ -29,11 +30,19 @@ const registerSchema = z.discriminatedUnion("role", [
     role: z.literal("STUDENT"),
     ...baseFields,
     staffInviteToken: z.string().optional(),
+    schoolJoinCode: z.string().optional(),
+    schoolJoinPin: z.string().optional(),
     examCodes: z.array(z.string()).optional(),
     subjectIds: z.array(z.string()).optional(),
   }),
   z.object({ role: z.literal("PARENT"), ...baseFields }),
-  z.object({ role: z.literal("TEACHER"), ...baseFields, staffInviteToken: z.string().optional() }),
+  z.object({
+    role: z.literal("TEACHER"),
+    ...baseFields,
+    staffInviteToken: z.string().optional(),
+    schoolJoinCode: z.string().optional(),
+    schoolJoinPin: z.string().optional(),
+  }),
   z.object({ role: z.literal("SPONSOR"), ...baseFields }),
   z.object({
     role: z.literal("SCHOOL_ADMIN"),
@@ -86,6 +95,8 @@ export async function POST(request: Request) {
         passwordHash,
         countryId: country?.id,
         staffInviteToken: data.staffInviteToken,
+        schoolJoinCode: data.schoolJoinCode,
+        schoolJoinPin: data.schoolJoinPin,
         examCodes: data.examCodes,
         subjectIds: data.subjectIds,
         refCode,
@@ -112,7 +123,15 @@ export async function POST(request: Request) {
         if (data.staffInviteToken) {
           await registerStaffFromInvitation(tx, data.staffInviteToken, "TEACHER", user.id);
         } else {
-          await tx.teacherProfile.create({ data: { userId: user.id } });
+          // Door 2 — self-registered via school join-code stays PENDING
+          // (schema comment on TeacherProfile.applicationStatus): the
+          // code proves school affiliation, not per-person vetting, so
+          // this is not the same as an admin-approved invite link.
+          const school =
+            data.schoolJoinCode && data.schoolJoinPin
+              ? await resolveSchoolByJoinCode(tx, data.schoolJoinCode, data.schoolJoinPin)
+              : null;
+          await tx.teacherProfile.create({ data: { userId: user.id, schoolId: school?.id } });
         }
         break;
       case "SPONSOR":

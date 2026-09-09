@@ -312,6 +312,18 @@ model School {
   // Permanent human-readable reference, e.g. SCH-000045. Backfilled for
   // schools that existed before this field was added.
   schoolNumber      String?            @unique
+  // A standing, human-typeable code (paired with joinPin) letting any
+  // student or teacher self-register into this school without an admin
+  // pre-creating a per-person SchoolInvitation. Unlike invitationToken
+  // (opaque, single-use, per-invitee), this is a shared, reusable secret
+  // the school distributes verbally/on a poster — nullable until an
+  // admin first generates one.
+  joinCode          String?            @unique
+  // Plaintext by design, not hashed — like a Wi-Fi password, the admin
+  // must be able to redisplay and re-share it, unlike a login credential.
+  // Regenerating either value invalidates the old one, the school's way
+  // of revoking a leaked code.
+  joinPin           String?
   status            SchoolStatus       @default(PENDING)
   statusReason      String?
   statusChangedById String?

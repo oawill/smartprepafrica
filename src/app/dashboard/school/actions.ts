@@ -10,6 +10,8 @@ import { parseSimpleCsv, generateTempPassword } from "@/lib/csv";
 import { redeemVoucherRecord } from "@/lib/vouchers";
 import { logAudit } from "@/lib/admin/audit";
 import { requireSchoolAdmin as assertSchoolAdmin } from "@/lib/authz";
+import { generateJoinCode, generateJoinPin } from "@/lib/registration/school-join-code";
+import { Prisma } from "@prisma/client";
 
 const INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -44,6 +46,45 @@ export async function updateSchoolProfile(formData: FormData) {
       coverImageUrl: (formData.get("coverImageUrl") as string)?.trim() || null,
       description: (formData.get("description") as string)?.trim() || null,
     },
+  });
+
+  revalidatePath("/dashboard/school");
+}
+
+/** Generates (or rotates) this school's standing join code+PIN — the
+ * Door 2 self-registration path (docs/migration-plan.md Revised Phase
+ * 3), distinct from the per-invitee links below. Retries on a
+ * collision the same way createUniqueVoucher does
+ * (dashboard/sponsor/actions.ts). */
+export async function regenerateSchoolJoinCode() {
+  const session = await auth();
+  if (!session) redirect("/login");
+  const school = await assertSchoolAdmin(session.user.id);
+
+  let updated;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      updated = await prisma.school.update({
+        where: { id: school.id },
+        data: { joinCode: generateJoinCode(), joinPin: generateJoinPin() },
+      });
+      break;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        continue; // joinCode collision — retry with a fresh one.
+      }
+      throw error;
+    }
+  }
+  if (!updated) throw new Error("Could not generate a unique join code. Try again.");
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: "SCHOOL_ADMIN",
+    action: "SCHOOL_JOIN_CODE_REGENERATED",
+    resourceType: "School",
+    resourceId: school.id,
+    result: "SUCCESS",
   });
 
   revalidatePath("/dashboard/school");

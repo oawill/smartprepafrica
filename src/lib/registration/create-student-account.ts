@@ -1,6 +1,7 @@
 import type { Prisma, User } from "@prisma/client";
 import { captureAttributionAtRegistration } from "@/lib/partners/attribution";
 import { registerStaffFromInvitation } from "@/lib/school-invitations";
+import { resolveSchoolByJoinCode } from "@/lib/registration/school-join-code";
 import { recordAcceptance } from "@/lib/legal/documents";
 import { EXAM_CODE_TO_EXAM_TYPE } from "@/lib/exam-type-mapping";
 
@@ -14,6 +15,11 @@ export type CreateStudentAccountInput = {
   passwordHash?: string;
   countryId?: string;
   staffInviteToken?: string;
+  /** Door 2 — school join-code self-registration (see
+   * src/lib/registration/school-join-code.ts). Ignored when
+   * staffInviteToken is also set — an invite link always wins. */
+  schoolJoinCode?: string;
+  schoolJoinPin?: string;
   examCodes?: string[];
   subjectIds?: string[];
   refCode?: string | null;
@@ -51,9 +57,16 @@ export async function createStudentAccount(
     const targetExams = (data.examCodes ?? [])
       .map((code) => EXAM_CODE_TO_EXAM_TYPE[code])
       .filter((examType): examType is NonNullable<typeof examType> => !!examType);
+    // Door 2 — no classId: cohort assignment stays admin-driven
+    // afterward, same as a bulk-uploaded or invite-linked student.
+    const school =
+      data.schoolJoinCode && data.schoolJoinPin
+        ? await resolveSchoolByJoinCode(tx, data.schoolJoinCode, data.schoolJoinPin)
+        : null;
     await tx.studentProfile.create({
       data: {
         userId: user.id,
+        schoolId: school?.id,
         targetExams,
         targetSubjects: data.subjectIds?.length
           ? { connect: data.subjectIds.map((id) => ({ id })) }
