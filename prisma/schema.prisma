@@ -102,6 +102,8 @@ model User {
   teacherFollows            TeacherFollow[]
   courseReviews             CourseReview[]
   lessonCheckpointResponses LessonCheckpointResponse[]
+  discussionsAuthored       Discussion[]
+  discussionRepliesAuthored DiscussionReply[]
 
   aiConversations         AiConversation[]
   topicMastery            StudentTopicMastery[]
@@ -1187,6 +1189,7 @@ model Course {
   assignments  Assignment[]
   reviews      CourseReview[]
   liveClasses  LiveClass[]
+  discussions  Discussion[]
 
   aiConversations  AiConversation[]
   classAssignments ClassCourseAssignment[]
@@ -1214,6 +1217,50 @@ model LiveClass {
   durationMinutes Int
   meetingUrl      String
   createdAt       DateTime @default(now())
+}
+
+// Public, peer-visible Q&A per lesson (or per course when lessonId is
+// null) — doubles as the human-escalation queue via needsTutor rather
+// than a separate ticket model, since both are "ask a question, get an
+// answer" at heart.
+model Discussion {
+  id       String  @id @default(cuid())
+  course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId String?
+  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  title    String
+  body     String
+
+  // Set at creation by the "I'd like a tutor to help me with this"
+  // checkbox. Notifies the course's teacher if one is assigned; otherwise
+  // the thread simply appears in the admin fallback queue.
+  needsTutor Boolean   @default(false)
+  resolvedAt DateTime?
+
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  replies   DiscussionReply[]
+
+  @@index([courseId, lessonId, createdAt])
+  @@index([needsTutor, resolvedAt])
+}
+
+model DiscussionReply {
+  id           String     @id @default(cuid())
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  discussionId String
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId     String
+  body         String
+  // True when the author is the course's own teacher or an admin — lets
+  // the UI badge "Tutor" replies distinctly from peer replies.
+  isTutorReply Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@index([discussionId, createdAt])
 }
 
 model Module {
@@ -1313,6 +1360,7 @@ model Lesson {
   relatedFrom    Lesson[] @relation("RelatedLessons")
 
   aiConversations AiConversation[]
+  discussions     Discussion[]
 }
 
 // Timestamped video chapters with a chapter-aware transcript segment, so

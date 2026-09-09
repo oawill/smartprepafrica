@@ -9,8 +9,10 @@ import { findExistingCrossoverSuggestion } from "@/lib/learning/prep-crossover";
 import { asOptions } from "@/lib/practice-types";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { LessonTabs } from "@/components/lesson-player/lesson-tabs";
+import { DiscussionThread } from "@/components/discussions/discussion-thread";
 import { resolveVideoSource } from "@/lib/video/resolve-video-source";
 import { Badge } from "@/components/ui/badge";
+import { hasPermission } from "@/lib/admin/permissions";
 
 function renderContent(content: string) {
   const segments = content.split("```");
@@ -72,7 +74,7 @@ export default async function LessonPage({
   const prevLesson = flatLessons[currentIndex - 1];
   const nextLesson = flatLessons[currentIndex + 1];
 
-  const [enrollment, quizQuestions, lesson, checkpointRows] = await Promise.all([
+  const [enrollment, quizQuestions, lesson, checkpointRows, discussions, teacherProfile, currentUser] = await Promise.all([
     prisma.courseEnrollment.findUnique({
       where: { userId_courseId: { userId: session.user.id, courseId } },
       include: { lessonProgress: { where: { lessonId } } },
@@ -88,8 +90,22 @@ export default async function LessonPage({
       where: { lessonId, atSeconds: { not: null } },
       orderBy: { atSeconds: "asc" },
     }),
+    prisma.discussion.findMany({
+      where: { courseId, lessonId },
+      include: {
+        author: { select: { name: true } },
+        replies: { include: { author: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.teacherProfile.findUnique({ where: { userId: session.user.id } }),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, adminRole: true } }),
   ]);
   if (!enrollment) redirect(`/educom/${courseId}`);
+
+  const canResolveDiscussion =
+    (!!teacherProfile && course.teacherId === teacherProfile.id) ||
+    (currentUser?.role === "ADMIN" && hasPermission(currentUser.adminRole, "discussions.manage"));
 
   const progress = enrollment.lessonProgress[0];
   const isComplete = !!progress?.completedAt;
@@ -137,16 +153,21 @@ export default async function LessonPage({
           <h1 className="mt-1 text-h2 font-semibold text-text-primary">{lesson.title}</h1>
         </div>
         {lesson.type !== "VIDEO" && (
-          <AiCoachPanel
-            context={{ courseId, lessonId }}
-            defaultMode="EXPLAIN"
-            suggestedPrompts={[
-              "Explain this lesson simply",
-              "Give me an example",
-              "Quiz me on this topic",
-              "What should I remember for the exam?",
-            ]}
-          />
+          <div className="flex items-center gap-2">
+            <AiCoachPanel
+              context={{ courseId, lessonId }}
+              defaultMode="EXPLAIN"
+              suggestedPrompts={[
+                "Explain this lesson simply",
+                "Give me an example",
+                "Quiz me on this topic",
+                "What should I remember for the exam?",
+              ]}
+            />
+            <a href="#discussion" className="text-xs text-text-secondary hover:text-brand-text">
+              Still stuck? Ask a tutor
+            </a>
+          </div>
         )}
       </div>
 
@@ -162,6 +183,14 @@ export default async function LessonPage({
             notesMarkdown={lesson.notesMarkdown}
             transcriptFull={lesson.transcriptFull}
             learningObjectives={lesson.learningObjectives}
+            discussionPanel={
+              <DiscussionThread
+                discussions={discussions}
+                courseId={courseId}
+                lessonId={lesson.id}
+                canResolve={!!canResolveDiscussion}
+              />
+            }
             practicePanel={
               lesson.topic && course.subjectId ? (
                 <div className="rounded-lg border border-brand/40 bg-brand/10 p-4">
@@ -324,6 +353,20 @@ export default async function LessonPage({
               Practice: {lesson.topic}
             </button>
           </form>
+        </div>
+      )}
+
+      {lesson.type !== "VIDEO" && (
+        <div id="discussion" className="mt-8">
+          <h2 className="text-sm font-semibold text-text-primary">Discussion</h2>
+          <div className="mt-3">
+            <DiscussionThread
+              discussions={discussions}
+              courseId={courseId}
+              lessonId={lesson.id}
+              canResolve={!!canResolveDiscussion}
+            />
+          </div>
         </div>
       )}
 

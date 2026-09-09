@@ -12,7 +12,7 @@ import { answerCheckpoint } from "@/app/educom/lesson-player-actions";
 import type { VideoSource } from "@/lib/video/types";
 import type { PlayerChapter, PlayerCheckpoint } from "@/components/lesson-player/types";
 
-type Tab = "video" | "notes" | "transcript" | "practice";
+type Tab = "video" | "notes" | "transcript" | "practice" | "discussion";
 
 export function LessonTabs({
   lessonId,
@@ -26,6 +26,7 @@ export function LessonTabs({
   learningObjectives,
   onVideoEnded,
   practicePanel,
+  discussionPanel,
 }: {
   lessonId: string;
   courseId: string;
@@ -38,6 +39,7 @@ export function LessonTabs({
   learningObjectives: string[];
   onVideoEnded?: () => void;
   practicePanel: React.ReactNode;
+  discussionPanel: React.ReactNode;
 }) {
   const [tab, setTab] = useState<Tab>("video");
   const [currentSeconds, setCurrentSeconds] = useState(initialPositionSeconds ?? 0);
@@ -59,6 +61,7 @@ export function LessonTabs({
     { key: "notes", label: "Notes" },
     { key: "transcript", label: "Transcript" },
     { key: "practice", label: "Practice" },
+    { key: "discussion", label: "Discussion" },
   ];
 
   return (
@@ -78,18 +81,27 @@ export function LessonTabs({
             </button>
           ))}
         </div>
-        <AiCoachPanel
-          context={{ courseId, lessonId, chapterId: currentChapter?.id ?? null }}
-          defaultMode="EXPLAIN"
-          triggerLabel="Ask SmartPrep AI"
-          quickActions={LESSON_QUICK_ACTIONS}
-          suggestedPrompts={[
-            "I don't understand this part.",
-            "Explain it more simply.",
-            "Give me another example.",
-            "Quiz me on what I just watched.",
-          ]}
-        />
+        <div className="flex items-center gap-2">
+          <AiCoachPanel
+            context={{ courseId, lessonId, chapterId: currentChapter?.id ?? null }}
+            defaultMode="EXPLAIN"
+            triggerLabel="Ask SmartPrep AI"
+            quickActions={LESSON_QUICK_ACTIONS}
+            suggestedPrompts={[
+              "I don't understand this part.",
+              "Explain it more simply.",
+              "Give me another example.",
+              "Quiz me on what I just watched.",
+            ]}
+          />
+          <button
+            type="button"
+            onClick={() => setTab("discussion")}
+            className="text-xs text-text-secondary hover:text-brand-text"
+          >
+            Still stuck? Ask a tutor
+          </button>
+        </div>
       </div>
 
       <div className="mt-4">
@@ -161,6 +173,8 @@ export function LessonTabs({
         )}
 
         {tab === "practice" && <div>{practicePanel}</div>}
+
+        {tab === "discussion" && <div>{discussionPanel}</div>}
       </div>
     </div>
   );

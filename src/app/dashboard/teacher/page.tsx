@@ -65,6 +65,12 @@ export default async function TeacherDashboard() {
   }
   const fallingBehindCount = [...avgByUser.values()].filter((avg) => avg < 40).length;
 
+  const openTutorRequestCount = teacher
+    ? await prisma.discussion.count({
+        where: { needsTutor: true, resolvedAt: null, course: { teacherId: teacher.id } },
+      })
+    : 0;
+
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
@@ -142,6 +148,14 @@ export default async function TeacherDashboard() {
         </Card>
         <Card title="Students falling behind (avg < 40%)">
           <p className="text-3xl font-semibold">{fallingBehindCount}</p>
+        </Card>
+        <Card title="Open tutor requests">
+          <p className="text-3xl font-semibold">{openTutorRequestCount}</p>
+          {openTutorRequestCount > 0 && (
+            <Link href="/dashboard/teacher/discussions" className="mt-2 inline-block text-xs text-brand-text hover:underline">
+              View requests →
+            </Link>
+          )}
         </Card>
       </div>
 
