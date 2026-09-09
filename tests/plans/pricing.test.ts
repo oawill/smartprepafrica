@@ -1,6 +1,7 @@
-import { test, describe } from "node:test";
+import { test, describe, after } from "node:test";
 import assert from "node:assert/strict";
-import { PLAN_PRICING_KOBO, annualSavingsKobo, formatNaira } from "../../src/lib/plans";
+import { PLAN_PRICING_KOBO, annualSavingsKobo, formatNaira, resolvePlanPrice } from "../../src/lib/plans";
+import { prisma, uniqueSuffix } from "../helpers/fixtures";
 
 describe("Subscription plan pricing", () => {
   test("Premium is ₦4,500/month and ₦43,200/year", () => {
@@ -33,5 +34,57 @@ describe("Subscription plan pricing", () => {
   test("annualSavingsKobo returns null for a plan with no annual price", () => {
     assert.equal(annualSavingsKobo("BASIC"), null);
     assert.equal(annualSavingsKobo("FREE"), null);
+  });
+});
+
+describe("resolvePlanPrice currency fallback (DB-backed)", () => {
+  const countryIds: string[] = [];
+
+  after(async () => {
+    await prisma.countryPlanPrice.deleteMany({ where: { countryId: { in: countryIds } } });
+    await prisma.country.deleteMany({ where: { id: { in: countryIds } } });
+  });
+
+  async function makeTestCountry() {
+    const suffix = uniqueSuffix();
+    const country = await prisma.country.create({
+      data: {
+        name: `Test Country ${suffix}`,
+        code: suffix.slice(-6).toUpperCase(), // unlikely to collide with a real 2-letter ISO code
+        currency: "GHS",
+        currencySymbol: "₵",
+        flag: "🏳️",
+        timezone: "Africa/Accra",
+      },
+    });
+    countryIds.push(country.id);
+    return country;
+  }
+
+  test("no country falls back to the hardcoded Nigeria default", async () => {
+    const price = await resolvePlanPrice("BASIC", null);
+    assert.deepEqual(price, { amountMinor: 250_000, currency: "NGN" });
+  });
+
+  test("Nigeria with no override falls back to the hardcoded default", async () => {
+    const nigeria = await prisma.country.findUniqueOrThrow({ where: { code: "NG" } });
+    const price = await resolvePlanPrice("PRO", nigeria.id);
+    assert.deepEqual(price, { amountMinor: 650_000, currency: "NGN" });
+  });
+
+  test("a non-Nigeria country with no override returns null, not a mislabeled NGN quote", async () => {
+    const country = await makeTestCountry();
+    const price = await resolvePlanPrice("BASIC", country.id);
+    assert.equal(price, null);
+  });
+
+  test("a non-Nigeria country with an explicit override uses it", async () => {
+    const country = await makeTestCountry();
+    await prisma.countryPlanPrice.create({
+      data: { countryId: country.id, plan: "BASIC", priceMinor: 12_000, currency: "GHS" },
+    });
+
+    const price = await resolvePlanPrice("BASIC", country.id);
+    assert.deepEqual(price, { amountMinor: 12_000, currency: "GHS" });
   });
 });
