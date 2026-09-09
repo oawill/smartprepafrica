@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
@@ -20,6 +20,11 @@ export const metadata: Metadata = {
     default: "SmartPrepAfrica.com",
   },
   description: "Prepare smarter, pass better, achieve more.",
+  manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f97316",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
