@@ -1164,6 +1164,14 @@ model Course {
   published     Boolean        @default(false)
   createdAt     DateTime       @default(now())
 
+  // Withdrawn from the catalog (search/rankings/catalog home never show
+  // it) without deleting it — an already-enrolled learner's URL and
+  // progress are completely unaffected; a non-enrolled visitor gets a
+  // 404. Distinct from `published`/`moderationStatus`: this is a
+  // deliberate "we no longer offer this" decision, not a content-review
+  // state.
+  archived Boolean @default(false)
+
   // Moderation workflow, layered on top of the existing `published` gate
   // (which remains the actual visibility switch so nothing regresses).
   // Legacy rows default to DRAFT here and are backfilled from `published`

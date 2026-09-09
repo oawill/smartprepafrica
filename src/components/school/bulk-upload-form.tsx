@@ -31,14 +31,14 @@ export function BulkUploadForm({
         {classes.length > 0 && (
           <div>
             <label className="block text-sm text-text-secondary" htmlFor="classId">
-              Assign to class (optional)
+              Assign to cohort (optional)
             </label>
             <select
               id="classId"
               name="classId"
               className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
-              <option value="">No class</option>
+              <option value="">No cohort</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}

@@ -2,10 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { enrollInCourse, submitAssignment, submitCourseReview } from "@/app/educom/actions";
+import { enrollInCourse, submitAssignment, submitCourseReview } from "@/app/learn/actions";
 import { getCourseRating, formatRating } from "@/lib/ratings";
 import { getUserPlan } from "@/lib/ai/limits";
-import { canEnrollInCourse } from "@/lib/learning/course-access";
+import { canEnrollInCourse, shouldHideArchivedCourse } from "@/lib/learning/course-access";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { DiscussionThread } from "@/components/discussions/discussion-thread";
 import { hasPermission } from "@/lib/admin/permissions";
@@ -13,7 +13,7 @@ import { CheckIcon } from "@/components/ui/icons";
 
 export default async function CourseDetailPage({
   params,
-}: PageProps<"/educom/[courseId]">) {
+}: PageProps<"/learn/[courseId]">) {
   const { courseId } = await params;
   const session = await auth();
   const now = new Date();
@@ -77,6 +77,11 @@ export default async function CourseDetailPage({
       })
     : null;
 
+  // Archived courses (Skills vertical removal) keep resolving for
+  // learners already enrolled — everyone else gets a plain 404, same as
+  // a course that never existed.
+  if (shouldHideArchivedCourse(course.archived, !!enrollment)) notFound();
+
   const completedLessonIds = new Set(
     (enrollment?.lessonProgress ?? [])
       .filter((p) => p.completedAt)
@@ -129,7 +134,7 @@ export default async function CourseDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
+      <Link href="/learn" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
 
@@ -154,7 +159,7 @@ export default async function CourseDetailPage({
       {course.school && (
         <p className="mt-2 text-sm text-text-secondary">
           Offered by{" "}
-          <Link href={`/educom/schools/${course.school.id}`} className="text-brand-text hover:underline">
+          <Link href={`/learn/schools/${course.school.id}`} className="text-brand-text hover:underline">
             {course.school.name}
           </Link>
           {course.school.state && ` — ${course.school.state}`}
@@ -167,7 +172,7 @@ export default async function CourseDetailPage({
         {course.teacher ? (
           <span>
             Taught by{" "}
-            <Link href={`/educom/teachers/${course.teacher.id}`} className="text-brand-text hover:underline">
+            <Link href={`/learn/teachers/${course.teacher.id}`} className="text-brand-text hover:underline">
               {course.teacher.user.name}
             </Link>
           </span>
@@ -227,7 +232,7 @@ export default async function CourseDetailPage({
           )}
           {firstLesson && (
             <Link
-              href={`/educom/${course.id}/lessons/${firstLesson.id}`}
+              href={`/learn/${course.id}/lessons/${firstLesson.id}`}
               className="mt-4 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
               {completedLessonIds.size > 0 ? "Continue course" : "Start course"}
@@ -277,7 +282,7 @@ export default async function CourseDetailPage({
                 return (
                   <li key={lesson.id}>
                     {enrollment ? (
-                      <Link href={`/educom/${course.id}/lessons/${lesson.id}`}>
+                      <Link href={`/learn/${course.id}/lessons/${lesson.id}`}>
                         {content}
                       </Link>
                     ) : (

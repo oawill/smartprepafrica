@@ -27,7 +27,7 @@ export type NavItem = { label: string; href: string };
 const defaultNav: NavItem[] = [
   { label: "Overview", href: "" }, // href filled in with roleDashboardPath at use-site
   { label: "Prep", href: "/practice" },
-  { label: "Learning", href: "/educom" },
+  { label: "Learning", href: "/learn" },
   { label: "Plans & billing", href: "/pricing" },
 ];
 
@@ -36,7 +36,7 @@ const defaultNav: NavItem[] = [
 const studentNav: NavItem[] = [
   { label: "Home", href: "" },
   { label: "Prep", href: "/practice" },
-  { label: "Learning", href: "/educom" },
+  { label: "Learning", href: "/learn" },
   { label: "Review", href: "/practice/history" },
   { label: "Plans & billing", href: "/pricing" },
 ];

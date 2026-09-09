@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function SchoolsDirectoryPage({
   searchParams,
-}: PageProps<"/educom/schools">) {
+}: PageProps<"/learn/schools">) {
   const { state, subject } = await searchParams;
   const stateFilter = typeof state === "string" ? state : "";
   const subjectFilter = typeof subject === "string" ? subject : "";
@@ -36,7 +36,7 @@ export default async function SchoolsDirectoryPage({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <Link href="/educom" className="text-sm text-text-secondary hover:text-text-primary">
+      <Link href="/learn" className="text-sm text-text-secondary hover:text-text-primary">
         ← Back to Courses
       </Link>
       <h1 className="mt-4 text-h1 font-semibold text-text-primary">Explore schools</h1>
@@ -91,7 +91,7 @@ export default async function SchoolsDirectoryPage({
             return (
               <Link
                 key={school.id}
-                href={`/educom/schools/${school.id}`}
+                href={`/learn/schools/${school.id}`}
                 className="rounded-xl border border-border bg-surface-raised p-5 hover:border-border-strong"
               >
                 <div className="flex items-start justify-between">

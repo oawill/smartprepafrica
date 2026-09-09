@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { PlayerCheckpoint } from "@/components/lesson-player/types";
-import type { CheckpointAnswerResult } from "@/app/educom/lesson-player-actions";
+import type { CheckpointAnswerResult } from "@/app/learn/lesson-player-actions";
 import { startTopicDrill } from "@/app/practice/drills/actions";
 import { AnswerOption, type AnswerOptionState } from "@/components/exam/answer-option";
 import { CheckIcon, XIcon } from "@/components/ui/icons";

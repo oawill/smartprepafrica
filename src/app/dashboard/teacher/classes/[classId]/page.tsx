@@ -74,7 +74,7 @@ export default async function TeacherClassPage({
       <div className="mt-6">
         <Card title="Roster">
           {cls.students.length === 0 ? (
-            <p className="text-sm text-text-secondary">No students in this class yet.</p>
+            <p className="text-sm text-text-secondary">No students in this cohort yet.</p>
           ) : (
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-text-muted">

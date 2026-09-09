@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { markLessonComplete, submitQuiz } from "@/app/educom/actions";
+import { markLessonComplete, submitQuiz } from "@/app/learn/actions";
 import { startAttempt } from "@/app/practice/actions";
 import { startTopicDrill } from "@/app/practice/drills/actions";
 import { findExistingCrossoverSuggestion } from "@/lib/learning/prep-crossover";
@@ -42,7 +42,7 @@ function renderContent(content: string) {
 
 export default async function LessonPage({
   params,
-}: PageProps<"/educom/[courseId]/lessons/[lessonId]">) {
+}: PageProps<"/learn/[courseId]/lessons/[lessonId]">) {
   const { courseId, lessonId } = await params;
   const session = await auth();
   if (!session) redirect("/login");
@@ -101,7 +101,7 @@ export default async function LessonPage({
     prisma.teacherProfile.findUnique({ where: { userId: session.user.id } }),
     prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, adminRole: true } }),
   ]);
-  if (!enrollment) redirect(`/educom/${courseId}`);
+  if (!enrollment) redirect(`/learn/${courseId}`);
 
   const canResolveDiscussion =
     (!!teacherProfile && course.teacherId === teacherProfile.id) ||
@@ -139,7 +139,7 @@ export default async function LessonPage({
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <Link
-        href={`/educom/${courseId}`}
+        href={`/learn/${courseId}`}
         className="text-sm text-text-secondary hover:text-text-primary"
       >
         ← {course.title}
@@ -373,7 +373,7 @@ export default async function LessonPage({
       <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
         {prevLesson ? (
           <Link
-            href={`/educom/${courseId}/lessons/${prevLesson.id}`}
+            href={`/learn/${courseId}/lessons/${prevLesson.id}`}
             className="text-sm text-text-secondary hover:text-text-primary"
           >
             ← {prevLesson.title}
@@ -383,14 +383,14 @@ export default async function LessonPage({
         )}
         {nextLesson ? (
           <Link
-            href={`/educom/${courseId}/lessons/${nextLesson.id}`}
+            href={`/learn/${courseId}/lessons/${nextLesson.id}`}
             className="text-sm font-medium text-brand-text hover:underline"
           >
             {nextLesson.title} →
           </Link>
         ) : (
           <Link
-            href={`/educom/${courseId}`}
+            href={`/learn/${courseId}`}
             className="text-sm font-medium text-brand-text hover:underline"
           >
             Back to course overview →

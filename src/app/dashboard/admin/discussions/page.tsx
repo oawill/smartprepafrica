@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Card } from "@/components/dashboard/card";
-import { createDiscussionReply, markDiscussionResolved } from "@/app/educom/discussion-actions";
+import { createDiscussionReply, markDiscussionResolved } from "@/app/learn/discussion-actions";
 
 export default async function AdminDiscussionsPage() {
   await requireAdminPagePermission("discussions.manage");
@@ -34,7 +34,7 @@ export default async function AdminDiscussionsPage() {
             <Card key={d.id} title={d.title}>
               <p className="text-xs text-text-muted">
                 {d.author.name} ·{" "}
-                <Link href={`/educom/${d.course.id}`} className="hover:underline">
+                <Link href={`/learn/${d.course.id}`} className="hover:underline">
                   {d.course.title}
                 </Link>{" "}
                 · {new Date(d.createdAt).toLocaleString()}

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import type { VideoSource } from "@/lib/video/types";
 import type { PlayerChapter, PlayerCheckpoint } from "@/components/lesson-player/types";
-import type { CheckpointAnswerResult } from "@/app/educom/lesson-player-actions";
+import type { CheckpointAnswerResult } from "@/app/learn/lesson-player-actions";
 import { CheckpointOverlay } from "@/components/lesson-player/checkpoint-overlay";
 
 const PLAYBACK_SPEEDS = [0.75, 1, 1.25, 1.5, 2];

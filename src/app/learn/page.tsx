@@ -1,22 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import type { CourseCategory, Difficulty } from "@prisma/client";
-import { LearnHub } from "@/components/educom/learn-hub";
-
-const skillCategories: { key: CourseCategory; label: string }[] = [
-  { key: "ACADEMIC", label: "Academic" },
-  { key: "CAREER_DEVELOPMENT", label: "Career development" },
-  { key: "TECHNOLOGY", label: "Technology" },
-  { key: "AI", label: "AI" },
-  { key: "CODING", label: "Coding" },
-  { key: "FINANCIAL_LITERACY", label: "Financial literacy" },
-  { key: "COMMUNICATION", label: "Communication" },
-  { key: "LEADERSHIP", label: "Leadership" },
-  { key: "MINDSET", label: "Mindset" },
-  { key: "DISCIPLINE", label: "Discipline" },
-  { key: "LIFE_SKILLS", label: "Life skills" },
-];
+import type { Difficulty } from "@prisma/client";
+import { LearnHub } from "@/components/learn/learn-hub";
 
 const difficulties: Difficulty[] = ["EASY", "MEDIUM", "HARD"];
 
@@ -33,7 +19,7 @@ type CourseCard = {
 function CourseCardLink({ course }: { course: CourseCard }) {
   return (
     <Link
-      href={`/educom/${course.id}`}
+      href={`/learn/${course.id}`}
       className="block rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-secondary hover:border-border-strong"
     >
       <span className="font-medium text-text-primary">{course.title}</span>
@@ -60,9 +46,9 @@ function timeUntil(target: Date, now: Date): string {
   return `starts in ${Math.round(hours / 24)}d`;
 }
 
-export default async function EduComPage({
+export default async function LearnPage({
   searchParams,
-}: PageProps<"/educom">) {
+}: PageProps<"/learn">) {
   const { q, difficulty, price, subjectId, classLevelId } = await searchParams;
   const search = typeof q === "string" ? q : "";
   const difficultyFilter = typeof difficulty === "string" ? difficulty : "";
@@ -78,6 +64,7 @@ export default async function EduComPage({
     prisma.course.findMany({
       where: {
         published: true,
+        archived: false,
         ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
         ...(difficultyFilter ? { difficulty: difficultyFilter as Difficulty } : {}),
         ...(priceFilter === "free" ? { requiresSubscription: false } : {}),
@@ -95,7 +82,7 @@ export default async function EduComPage({
     // A class still counts as live for the length of its stated duration.
     prisma.liveClass.findMany({
       where: {
-        course: { published: true },
+        course: { published: true, archived: false },
         scheduledAt: { gte: new Date(now.getTime() - 3 * 60 * 60 * 1000) },
       },
       include: {
@@ -112,7 +99,7 @@ export default async function EduComPage({
     }),
     prisma.course.groupBy({
       by: ["subjectId"],
-      where: { published: true, subjectId: { not: null } },
+      where: { published: true, archived: false, subjectId: { not: null } },
       _count: { _all: true },
     }),
     prisma.subject.findMany({ orderBy: { name: "asc" } }),
@@ -127,7 +114,6 @@ export default async function EduComPage({
 
   const coreSecondary = courses.filter((c) => c.subjectId);
   const examPrep = courses.filter((c) => c.examType && !c.subjectId);
-  const skills = courses.filter((c) => !c.subjectId && !c.examType);
 
   const coreBySubject = new Map<string, typeof coreSecondary>();
   for (const c of coreSecondary) {
@@ -138,11 +124,6 @@ export default async function EduComPage({
   const examByType = new Map<string, typeof examPrep>();
   for (const c of examPrep) {
     examByType.set(c.examType!, [...(examByType.get(c.examType!) ?? []), c]);
-  }
-
-  const skillsByCategory = new Map<CourseCategory, typeof skills>();
-  for (const c of skills) {
-    skillsByCategory.set(c.category, [...(skillsByCategory.get(c.category) ?? []), c]);
   }
 
   return (
@@ -161,19 +142,19 @@ export default async function EduComPage({
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
-          href="/educom/schools"
+          href="/learn/schools"
           className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           View Schools →
         </Link>
         <Link
-          href="/educom/search"
+          href="/learn/search"
           className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           Search →
         </Link>
         <Link
-          href="/educom/rankings"
+          href="/learn/rankings"
           className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           Popular this week →
@@ -211,7 +192,7 @@ export default async function EduComPage({
                   </p>
                   {lc.course.school && (
                     <Link
-                      href={`/educom/schools/${lc.course.school.id}`}
+                      href={`/learn/schools/${lc.course.school.id}`}
                       className="mt-1 inline-block text-xs text-brand-text hover:underline"
                     >
                       {lc.course.school.name}
@@ -226,12 +207,12 @@ export default async function EduComPage({
 
       {classLevels.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold text-text-primary">Browse by Class Level</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Browse by Grade Level</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {classLevels.map((cl) => (
               <Link
                 key={cl.id}
-                href={`/educom/class/${cl.id}`}
+                href={`/learn/class/${cl.id}`}
                 className={`rounded-full border px-4 py-2 text-sm hover:border-brand hover:text-brand-text ${
                   classLevelIdFilter === cl.id
                     ? "border-brand text-brand-text"
@@ -253,7 +234,7 @@ export default async function EduComPage({
             {subjects.map((subject) => (
               <Link
                 key={subject.id}
-                href={`/educom?subjectId=${subject.id}`}
+                href={`/learn?subjectId=${subject.id}`}
                 className={`rounded-full border px-4 py-2 text-sm hover:border-brand hover:text-brand-text ${
                   subjectIdFilter === subject.id
                     ? "border-brand text-brand-text"
@@ -272,8 +253,8 @@ export default async function EduComPage({
 
       {(subjectIdFilter || classLevelIdFilter) && (
         <p className="mt-6 text-sm text-text-secondary">
-          Filtered by {subjectIdFilter && classLevelIdFilter ? "subject and class level" : subjectIdFilter ? "subject" : "class level"}.{" "}
-          <Link href="/educom" className="text-brand-text hover:underline">
+          Filtered by {subjectIdFilter && classLevelIdFilter ? "subject and grade level" : subjectIdFilter ? "subject" : "grade level"}.{" "}
+          <Link href="/learn" className="text-brand-text hover:underline">
             Clear filter
           </Link>
         </p>
@@ -360,32 +341,6 @@ export default async function EduComPage({
         </section>
       )}
 
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold text-text-primary">Skills</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {skillCategories.map((category) => {
-            const categoryCourses = skillsByCategory.get(category.key) ?? [];
-            return (
-              <div key={category.key} className="rounded-xl border border-border bg-surface-raised p-5">
-                <p className="font-medium text-text-primary">{category.label}</p>
-                {categoryCourses.length === 0 ? (
-                  <p className="mt-1 text-sm text-text-muted">
-                    {search || difficultyFilter || priceFilter
-                      ? "No matches in this category."
-                      : "Courses coming soon."}
-                  </p>
-                ) : (
-                  <div className="mt-2 space-y-2">
-                    {categoryCourses.map((c) => (
-                      <CourseCardLink key={c.id} course={c} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
     </div>
   );
 }

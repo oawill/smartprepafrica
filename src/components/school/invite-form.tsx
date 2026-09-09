@@ -41,7 +41,7 @@ export function InviteForm({
             name="classId"
             className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           >
-            <option value="">No class</option>
+            <option value="">No cohort</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}

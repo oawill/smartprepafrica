@@ -210,7 +210,7 @@ export default async function StudentDashboard({
             )}
             {recommendation.lesson && (
               <Link
-                href={`/educom/${recommendation.lesson.courseId}/lessons/${recommendation.lesson.id}`}
+                href={`/learn/${recommendation.lesson.courseId}/lessons/${recommendation.lesson.id}`}
                 className="mt-3 inline-block rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 Continue Learning
@@ -286,7 +286,7 @@ export default async function StudentDashboard({
               Take a practice session →
             </Link>
             <Link
-              href="/educom"
+              href="/learn"
               className="block text-brand-text hover:underline"
             >
               Browse courses →

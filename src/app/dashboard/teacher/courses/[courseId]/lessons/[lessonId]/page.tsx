@@ -9,7 +9,7 @@ import {
   addLessonChapter,
   addCheckpoint,
 } from "@/app/dashboard/teacher/courses/actions";
-import { QuizCsvImportForm } from "@/components/educom/quiz-csv-import-form";
+import { QuizCsvImportForm } from "@/components/learn/quiz-csv-import-form";
 
 const MODERATION_STATUS_LABELS: Record<string, string> = {
   DRAFT: "Draft — not submitted for review yet",

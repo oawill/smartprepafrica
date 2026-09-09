@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recordTopicAttempt } from "@/lib/ai/mastery-service";
 import { recordCrossoverAttempts, type PrepDrillSuggestion } from "@/lib/learning/prep-crossover";
-import { markLessonComplete } from "@/app/educom/actions";
+import { markLessonComplete } from "@/app/learn/actions";
 
 const AUTO_COMPLETE_PERCENT = 90;
 

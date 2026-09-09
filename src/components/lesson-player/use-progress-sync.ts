@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { syncLessonProgress } from "@/app/educom/lesson-player-actions";
+import { syncLessonProgress } from "@/app/learn/lesson-player-actions";
 
 const SYNC_INTERVAL_MS = 15000;
 
