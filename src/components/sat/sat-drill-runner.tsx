@@ -227,6 +227,14 @@ export function SatDrillRunner({
 
       {current.imageUrl && (
         <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-surface-raised p-3">
+          {/* Deliberately a raw <img>, not next/image: imageUrl is an
+           * arbitrary external URL an admin pastes in during bulk CSV
+           * content import (src/app/dashboard/admin/questions/upload/
+           * actions.ts), not a fixed/known host — next/image would need
+           * either an unsafe wildcard remotePattern (lets the optimizer
+           * fetch/proxy any admin-supplied URL) or `unoptimized` mode,
+           * which still requires an explicit width/height and would risk
+           * visibly distorting a math diagram of unknown dimensions. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={current.imageUrl} alt="Question figure" className="mx-auto max-w-full" />
         </div>
