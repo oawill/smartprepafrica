@@ -2,11 +2,13 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { roleLabel, navForRole } from "@/lib/roles";
+import { navForRole } from "@/lib/roles";
 import { Logo } from "@/components/brand/logo";
 import { MobileDashboardNav } from "@/components/dashboard/mobile-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
+import { getLocale } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 export default async function DashboardLayout({
   children,
@@ -15,7 +17,10 @@ export default async function DashboardLayout({
 }) {
   const session = await auth();
   const role = session?.user.role ?? "STUDENT";
-  const navItems = navForRole(role);
+  const locale = await getLocale();
+  const t = getDictionary(locale);
+  const navItems = navForRole(role, t.dashboardNav);
+  const translatedRoleLabel = t.roleLabels[role];
 
   async function handleSignOut() {
     "use server";
@@ -44,9 +49,11 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen flex-1 flex-col sm:flex-row">
       <MobileDashboardNav
         navItems={navItems}
-        roleLabel={roleLabel[role]}
+        roleLabel={translatedRoleLabel}
         signOutAction={handleSignOut}
         otherRoles={otherRoles}
+        t={t.dashboardChrome}
+        roleLabels={t.roleLabels}
       />
 
       <aside className="hidden w-56 flex-col border-r border-border bg-surface-raised p-4 sm:flex">
@@ -69,13 +76,13 @@ export default async function DashboardLayout({
 
         <div className="mt-auto space-y-3">
           <p className="text-xs text-text-muted">
-            Signed in as{" "}
-            <span className="text-text-secondary">{roleLabel[role]}</span>
+            {t.dashboardChrome.signedInAs}{" "}
+            <span className="text-text-secondary">{translatedRoleLabel}</span>
           </p>
-          <WorkspaceSwitcher otherRoles={otherRoles} />
+          <WorkspaceSwitcher otherRoles={otherRoles} t={t.dashboardChrome} roleLabels={t.roleLabels} />
           <form action={handleSignOut}>
             <button className="w-full rounded-lg border border-border-strong py-2 text-xs text-text-secondary hover:border-text-muted">
-              Sign out
+              {t.dashboardChrome.signOut}
             </button>
           </form>
         </div>

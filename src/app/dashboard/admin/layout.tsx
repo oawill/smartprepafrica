@@ -4,18 +4,35 @@ import { signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/admin/authz";
 import { ADMIN_ROLE_LABELS } from "@/lib/admin/permissions";
-import { navForAdminRole } from "@/lib/admin/nav";
+import { navForAdminRole, type AdminNavGroup } from "@/lib/admin/nav";
 import { Logo } from "@/components/brand/logo";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { MobileDashboardNav } from "@/components/dashboard/mobile-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
+import { getLocale } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+/** Translates ADMIN_NAV's labels via a lookup keyed by the original
+ * English text, falling back to it when missing — so a nav item added
+ * later without a translation degrades safely instead of breaking.
+ * navForAdminRole's own permission-filtering logic is untouched. */
+function translateAdminNav(groups: AdminNavGroup[], labels: Record<string, string>): AdminNavGroup[] {
+  return groups.map((g) => ({
+    label: labels[g.label] ?? g.label,
+    items: g.items.map((i) => ({ ...i, label: labels[i.label] ?? i.label })),
+  }));
+}
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await requireAdminPage();
-  const groups = navForAdminRole(session.user.adminRole);
+  const locale = await getLocale();
+  const t = getDictionary(locale);
+  const groups = translateAdminNav(navForAdminRole(session.user.adminRole), t.adminNavLabels);
   const flatItems = groups.flatMap((g) => g.items);
-  const roleLabel = session.user.adminRole ? ADMIN_ROLE_LABELS[session.user.adminRole] : "Admin (no role assigned)";
+  const roleLabel = session.user.adminRole
+    ? ADMIN_ROLE_LABELS[session.user.adminRole]
+    : t.dashboardChrome.adminNoRole;
 
   // Rare — an admin who also holds a second workspace (e.g. also teaches).
   const otherRoles = (
@@ -37,6 +54,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         roleLabel={roleLabel}
         signOutAction={handleSignOut}
         otherRoles={otherRoles}
+        t={t.dashboardChrome}
+        roleLabels={t.roleLabels}
       />
 
       <aside className="hidden w-64 flex-col border-r border-border bg-surface-raised p-4 sm:flex">
@@ -49,14 +68,14 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </div>
         <div className="mt-4 space-y-3 border-t border-border pt-4">
           <p className="text-xs text-text-muted">
-            Signed in as
+            {t.dashboardChrome.signedInAs}
             <br />
             <span className="text-text-secondary">{session.user.name}</span> · {roleLabel}
           </p>
-          <WorkspaceSwitcher otherRoles={otherRoles} />
+          <WorkspaceSwitcher otherRoles={otherRoles} t={t.dashboardChrome} roleLabels={t.roleLabels} />
           <form action={handleSignOut}>
             <button className="w-full rounded-lg border border-border-strong py-2 text-xs text-text-secondary hover:border-text-muted">
-              Sign out
+              {t.dashboardChrome.signOut}
             </button>
           </form>
         </div>
@@ -65,18 +84,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <div className="flex flex-1 flex-col">
         <header className="hidden items-center justify-between border-b border-border bg-surface px-6 py-3 sm:flex">
           <div>
-            <p className="text-sm font-semibold text-text-primary">SmartPrepAfrica.com Administration</p>
+            <p className="text-sm font-semibold text-text-primary">{t.dashboardChrome.adminTitle}</p>
             <p className="text-xs text-text-muted">
               {session.user.name} · {roleLabel}
             </p>
           </div>
           <div className="flex gap-4 text-xs text-text-secondary">
             <Link href="/dashboard/admin/security/login-activity" className="hover:text-text-primary">
-              Security
+              {t.dashboardChrome.security}
             </Link>
             <form action={handleSignOut}>
               <button type="submit" className="hover:text-text-primary">
-                Sign out
+                {t.dashboardChrome.signOut}
               </button>
             </form>
           </div>
