@@ -8,34 +8,12 @@ import { isToeflEnabled } from "@/lib/toefl/config";
 import { isSatEnabled } from "@/lib/sat/config";
 import { prisma } from "@/lib/prisma";
 import { getFeaturedNigerianStates } from "@/lib/nigerian-states";
+import { getLocale } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-const exams = [
-  { code: "WAEC", desc: "West African Senior School Certificate Examination" },
-  { code: "NECO", desc: "National Examinations Council" },
-  { code: "UTME", desc: "Unified Tertiary Matriculation Examination" },
-  { code: "Post-UTME", desc: "Post-UTME screening for your target institution" },
-];
+const examCodes = ["WAEC", "NECO", "UTME", "Post-UTME"] as const;
 
 const discoverySubjects = ["Mathematics", "English Language", "Physics", "Chemistry", "Biology"];
-
-const whySmartPrep = [
-  {
-    title: "Local + International Exams",
-    body: "Prepare for WAEC, NECO, UTME/JAMB, SAT and TOEFL from one platform.",
-  },
-  {
-    title: "Practice That Builds Confidence",
-    body: "Use focused drills, mock exams, explanations and performance tracking to identify areas that need improvement.",
-  },
-  {
-    title: "AI-Powered Learning",
-    body: "Get additional study support through SmartPrepAfrica's AI learning tools.",
-  },
-  {
-    title: "Learn Anywhere",
-    body: "A mobile-friendly learning experience designed for students studying at home, school or on the go.",
-  },
-];
 
 export const metadata: Metadata = {
   description:
@@ -46,6 +24,9 @@ export default async function Home() {
   const showToefl = isToeflEnabled();
   const showSat = isSatEnabled();
   const showInternationalExams = showToefl || showSat;
+
+  const locale = await getLocale();
+  const t = getDictionary(locale).home;
 
   // Real counts only — never fabricated. Used for the Learning section below.
   const [schoolsWithCourses, publishedCourseCount, upcomingLiveClasses, discoveryStates] =
@@ -68,30 +49,23 @@ export default async function Home() {
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-6 py-20 text-center">
           <h1 className="mx-auto max-w-3xl text-display font-semibold leading-tight text-text-primary">
-            Prepare smarter. Pass better.{" "}
-            <span className="text-success">Achieve more.</span>
+            {t.heroTitlePart1}{" "}
+            <span className="text-success">{t.heroTitlePart2}</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-text-secondary">
-            SmartPrepAfrica Prep helps Nigerian students master WAEC, NECO, UTME
-            and Post-UTME with an AI study coach. SmartPrepAfrica Learning connects
-            students with live classes and courses from schools across Nigeria.
-          </p>
-          <p className="mx-auto mt-2 max-w-2xl text-xs text-text-muted">
-            Prepare Smarter. Learn Better. Succeed Anywhere. — SmartPrepAfrica helps
-            African students prepare for the exams that shape their future.
-          </p>
+          <p className="mx-auto mt-4 max-w-2xl text-text-secondary">{t.heroSubtitle}</p>
+          <p className="mx-auto mt-2 max-w-2xl text-xs text-text-muted">{t.heroTagline}</p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
               href="/register"
               className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
-              Start preparing free
+              {t.startPreparingFree}
             </Link>
             <Link
               href="/learn"
               className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
             >
-              Explore Learning
+              {t.exploreLearning}
             </Link>
           </div>
 
@@ -99,16 +73,14 @@ export default async function Home() {
             <div className="mx-auto mt-10 flex max-w-2xl flex-col items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-5 py-3 text-center sm:flex-row sm:justify-center sm:gap-3">
               <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-primary">
                 <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase text-brand-foreground">
-                  New
+                  {t.newBadge}
                 </span>
-                TOEFL &amp; SAT Prep
+                {t.toeflSatPrep}
               </span>
               <span className="hidden text-text-muted sm:inline">·</span>
-              <span className="text-sm text-text-secondary">
-                Prepare for international opportunities with SmartPrepAfrica.
-              </span>
+              <span className="text-sm text-text-secondary">{t.internationalOpportunities}</span>
               <Link href="#go-beyond-borders" className="text-sm font-medium text-brand-text hover:underline">
-                Explore International Exams →
+                {t.exploreInternationalExams}
               </Link>
             </div>
           )}
@@ -119,17 +91,15 @@ export default async function Home() {
         </section>
 
         <section className="mx-auto max-w-6xl px-6 py-12">
-          <h2 className="text-center text-h2 font-semibold text-text-primary">
-            All major exams, one place.
-          </h2>
+          <h2 className="text-center text-h2 font-semibold text-text-primary">{t.allExamsOnePlace}</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {exams.map((exam) => (
+            {examCodes.map((code) => (
               <div
-                key={exam.code}
+                key={code}
                 className="rounded-xl border border-border bg-surface-raised p-5"
               >
-                <p className="font-semibold text-brand-text">{exam.code}</p>
-                <p className="mt-2 text-sm text-text-secondary">{exam.desc}</p>
+                <p className="font-semibold text-brand-text">{code}</p>
+                <p className="mt-2 text-sm text-text-secondary">{t.examDescriptions[code]}</p>
               </div>
             ))}
           </div>
@@ -138,21 +108,18 @@ export default async function Home() {
         {showInternationalExams && (
           <section id="go-beyond-borders" className="mx-auto max-w-6xl px-6 py-16">
             <div className="rounded-2xl border border-brand/30 bg-brand/5 p-8 text-center">
-              <span className="text-xs font-medium text-brand-text">International Exams</span>
+              <span className="text-xs font-medium text-brand-text">{t.goBeyondBordersLabel}</span>
               <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
-                Go Beyond Borders
+                {t.goBeyondBordersTitle}
               </h2>
-              <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-                Preparing for university or opportunities abroad? Build your SAT and TOEFL skills
-                with structured practice, targeted drills, mock exams and performance insights.
-              </p>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">{t.goBeyondBordersBody}</p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
                 {showSat && (
                   <Link
                     href={INTERNATIONAL_EXAM_LANDING_PATH.SAT}
                     className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                   >
-                    Explore SAT Prep
+                    {t.exploreSatPrep}
                   </Link>
                 )}
                 {showToefl && (
@@ -160,7 +127,7 @@ export default async function Home() {
                     href={INTERNATIONAL_EXAM_LANDING_PATH.TOEFL}
                     className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
                   >
-                    Explore TOEFL Prep
+                    {t.exploreToeflPrep}
                   </Link>
                 )}
               </div>
@@ -170,24 +137,16 @@ export default async function Home() {
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
-            <span className="text-xs font-medium text-success">SmartPrepAfrica Learning</span>
+            <span className="text-xs font-medium text-success">{t.learningLabel}</span>
             <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
-              Learn Beyond{" "}
-              <span className="text-success">Your School.</span>
+              {t.learnBeyondPart1}{" "}
+              <span className="text-success">{t.learnBeyondPart2}</span>
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-              Great teaching shouldn&apos;t depend on where you go to school. SmartPrepAfrica
-              Learning connects secondary-school students with live classes, courses and
-              outstanding teachers from schools across Nigeria. Strengthen a subject, prepare
-              for an exam, join a masterclass, or learn from educators outside your own school.
-            </p>
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-              One platform. Many schools. More opportunities.
-            </p>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">{t.learningBody}</p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-text-muted">{t.learningTagline}</p>
             {(schoolsWithCourses > 0 || publishedCourseCount > 0) && (
               <p className="mt-3 text-xs text-text-muted">
-                {schoolsWithCourses} school{schoolsWithCourses === 1 ? "" : "s"} · {publishedCourseCount} live
-                course{publishedCourseCount === 1 ? "" : "s"} and counting
+                {t.schoolsAndCoursesCount(schoolsWithCourses, publishedCourseCount)}
               </p>
             )}
             <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -195,29 +154,29 @@ export default async function Home() {
                 href="/learn"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
-                Explore Classes
+                {t.exploreClasses}
               </Link>
               <Link
                 href="/learn/schools"
                 className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
               >
-                View Schools
+                {t.viewSchools}
               </Link>
               {upcomingLiveClasses.length > 0 && (
                 <Link
                   href="/learn"
                   className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
                 >
-                  Join a Live Class
+                  {t.joinLiveClass}
                 </Link>
               )}
             </div>
             <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-text-muted">
               <Link href="/register" className="hover:text-text-secondary">
-                Teach on SmartPrepAfrica.com →
+                {t.teachOnSmartPrep}
               </Link>
               <Link href="/register" className="hover:text-text-secondary">
-                Sponsor a Student →
+                {t.sponsorAStudent}
               </Link>
             </div>
           </div>
@@ -231,7 +190,7 @@ export default async function Home() {
                   className="rounded-xl border border-border bg-surface-raised p-4 hover:border-border-strong"
                 >
                   <span className="inline-block rounded-full bg-surface-sunken px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
-                    Upcoming
+                    {t.upcoming}
                   </span>
                   <p className="mt-2 text-sm font-medium text-text-primary">{lc.title}</p>
                   <p className="mt-1 text-xs text-text-muted">
@@ -245,11 +204,11 @@ export default async function Home() {
 
           <div className="mt-8">
             <h3 className="text-center text-sm font-medium text-text-secondary">
-              Explore learning across Nigeria
+              {t.exploreLearningAcrossNigeria}
             </h3>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-border bg-surface-raised p-5">
-                <p className="text-xs uppercase tracking-wide text-text-muted">By state</p>
+                <p className="text-xs uppercase tracking-wide text-text-muted">{t.byState}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {discoveryStates.map((state) => (
                     <Link
@@ -263,7 +222,7 @@ export default async function Home() {
                 </div>
               </div>
               <div className="rounded-xl border border-border bg-surface-raised p-5">
-                <p className="text-xs uppercase tracking-wide text-text-muted">By subject</p>
+                <p className="text-xs uppercase tracking-wide text-text-muted">{t.bySubject}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {discoverySubjects.map((subject) => (
                     <Link
@@ -282,32 +241,27 @@ export default async function Home() {
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
-            <span className="text-xs font-medium text-brand-text">AI Study Support</span>
+            <span className="text-xs font-medium text-brand-text">{t.aiSupportLabel}</span>
             <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
-              Never Get Stuck on a Question
+              {t.aiSupportTitle}
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-              SmartPrepAfrica&apos;s AI Study Coach gives instant explanations and personalized help
-              whenever you&apos;re practicing — so you understand your mistakes, not just move past them.
-            </p>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">{t.aiSupportBody}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
                 href="/register"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
-                Try AI Study Coach
+                {t.tryAiStudyCoach}
               </Link>
             </div>
           </div>
         </section>
 
         <section className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-center text-h2 font-semibold text-text-primary">Why SmartPrepAfrica?</h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-text-secondary">
-            Built for African Students
-          </p>
+          <h2 className="text-center text-h2 font-semibold text-text-primary">{t.whyTitle}</h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-text-secondary">{t.whySubtitle}</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {whySmartPrep.map((item) => (
+            {t.whyItems.map((item) => (
               <div key={item.title} className="rounded-xl border border-border bg-surface-raised p-5">
                 <p className="font-semibold text-text-primary">{item.title}</p>
                 <p className="mt-2 text-sm text-text-secondary">{item.body}</p>
@@ -318,20 +272,17 @@ export default async function Home() {
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
-            <span className="text-xs font-medium text-brand-text">SmartPrepAfrica.com Partners</span>
+            <span className="text-xs font-medium text-brand-text">{t.partnersLabel}</span>
             <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
-              Schools &amp; Institutions, Partner With Us
+              {t.partnersTitle}
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-              Bring SmartPrepAfrica to your students. Refer students and schools to
-              SmartPrepAfrica.com and get rewarded for the ones who stick around.
-            </p>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">{t.partnersBody}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
                 href="/partners"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
-                Become a Partner
+                {t.becomeAPartner}
               </Link>
             </div>
           </div>
@@ -340,23 +291,21 @@ export default async function Home() {
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
             <h2 className="mx-auto max-w-2xl text-h1 font-semibold text-text-primary">
-              Find the Right Plan for You
+              {t.findPlanTitle}
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-              Choose exam preparation and learning options designed for your goals.
-            </p>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">{t.findPlanBody}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
                 href="/pricing"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
-                View Plans &amp; Pricing
+                {t.viewPlansAndPricing}
               </Link>
               <Link
                 href="/register"
                 className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
               >
-                Start Learning
+                {t.startLearning}
               </Link>
             </div>
           </div>

@@ -4,12 +4,16 @@ import { Card } from "@/components/dashboard/card";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { PLAN_LABELS, PLAN_PRICING_KOBO, formatMoney } from "@/lib/plans";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/locale";
 import {
   createCountry,
   updateCountryStatus,
+  updateCountryLanguage,
   upsertCountryPlanPrice,
   clearCountryPlanPrice,
 } from "@/app/dashboard/admin/countries/actions";
+
+const LOCALE_LABELS: Record<string, string> = { en: "English", fr: "Français" };
 
 const PURCHASABLE_PLANS = Object.keys(PLAN_PRICING_KOBO) as SubscriptionPlan[];
 
@@ -56,6 +60,13 @@ export default async function AdminCountriesPage() {
             <input name="currencySymbol" placeholder="Symbol, e.g. ₵" required className={inputClass} />
             <input name="flag" placeholder="Flag emoji, e.g. 🇬🇭" required className={inputClass} />
             <input name="timezone" placeholder="Timezone, e.g. Africa/Accra" required className={inputClass} />
+            <select name="defaultLanguage" defaultValue="en" className={inputClass}>
+              {SUPPORTED_LOCALES.map((locale) => (
+                <option key={locale} value={locale}>
+                  {LOCALE_LABELS[locale]}
+                </option>
+              ))}
+            </select>
             <button
               type="submit"
               className="col-span-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover sm:col-span-3"
@@ -77,7 +88,8 @@ export default async function AdminCountriesPage() {
                   <th className="pb-2 pr-3">Currency</th>
                   <th className="pb-2 pr-3">Status</th>
                   <th className="pb-2 pr-3">Users</th>
-                  <th className="pb-2">Change status</th>
+                  <th className="pb-2 pr-3">Change status</th>
+                  <th className="pb-2">Language</th>
                 </tr>
               </thead>
               <tbody>
@@ -94,13 +106,31 @@ export default async function AdminCountriesPage() {
                       <Badge tone={STATUS_TONE[country.status]}>{country.status.replaceAll("_", " ")}</Badge>
                     </td>
                     <td className="py-2 pr-3 text-text-secondary">{country._count.users}</td>
-                    <td className="py-2">
+                    <td className="py-2 pr-3">
                       <form action={updateCountryStatus} className="flex gap-2">
                         <input type="hidden" name="id" value={country.id} />
                         <select name="status" defaultValue={country.status} className={inputClass}>
                           {STATUSES.map((status) => (
                             <option key={status} value={status}>
                               {status.replaceAll("_", " ")}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="submit"
+                          className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted"
+                        >
+                          Update
+                        </button>
+                      </form>
+                    </td>
+                    <td className="py-2">
+                      <form action={updateCountryLanguage} className="flex gap-2">
+                        <input type="hidden" name="id" value={country.id} />
+                        <select name="defaultLanguage" defaultValue={country.defaultLanguage} className={inputClass}>
+                          {SUPPORTED_LOCALES.map((locale) => (
+                            <option key={locale} value={locale}>
+                              {LOCALE_LABELS[locale]}
                             </option>
                           ))}
                         </select>

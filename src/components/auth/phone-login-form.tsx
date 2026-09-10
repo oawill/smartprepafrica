@@ -6,13 +6,20 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input, FieldError } from "@/components/ui/form";
 import { OtpInput } from "@/components/ui/otp-input";
+import type { Dictionary } from "@/lib/i18n/messages/en";
 
 /** Log in with an already-registered phone (Door 1 — see
  * docs/migration-plan.md Revised Phase 3). Deliberately sends no
  * name/email/agreeToTerms — the "phone-otp" provider in src/lib/auth.ts
  * only creates an account when those are present, so an unregistered
  * phone here correctly fails rather than silently signing someone up. */
-export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) {
+export function PhoneLoginForm({
+  callbackUrl,
+  t,
+}: {
+  callbackUrl: string | null;
+  t: Dictionary["login"];
+}) {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [codeSent, setCodeSent] = useState(false);
@@ -36,7 +43,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
 
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      setError(data?.error ?? "Could not send code.");
+      setError(data?.error ?? t.couldNotSendCode);
       return;
     }
 
@@ -53,7 +60,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
     setSubmitting(false);
 
     if (result?.error) {
-      setError("No account found for this phone, or the code is invalid/expired.");
+      setError(t.phoneInvalidOrExpired);
       return;
     }
 
@@ -68,7 +75,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
           <Input
             type="tel"
             required
-            placeholder="e.g. +2348012345678"
+            placeholder={t.phonePlaceholder}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
@@ -81,13 +88,13 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
           disabled={sending}
           className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
         >
-          {sending ? "Sending code…" : "Send code"}
+          {sending ? t.sendingCode : t.sendCode}
         </button>
 
         <p className="text-center text-xs text-text-secondary">
-          Lost access to this phone?{" "}
+          {t.lostAccessToPhone}{" "}
           <Link href="/forgot-password" className="text-brand-text hover:underline">
-            Recover via email
+            {t.recoverViaEmail}
           </Link>
         </p>
       </form>
@@ -98,9 +105,9 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <p className="text-sm text-text-secondary">
-          Enter the code sent to <strong>{phone}</strong>.{" "}
+          {t.enterCodeSentTo} <strong>{phone}</strong>.{" "}
           <button type="button" onClick={() => setCodeSent(false)} className="text-brand-text hover:underline">
-            Change number
+            {t.changeNumber}
           </button>
         </p>
         <div className="mt-2">
@@ -112,7 +119,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
         <FieldError>
           {error}{" "}
           <Link href="/register" className="hover:underline">
-            Sign up instead
+            {t.signUpInstead}
           </Link>
         </FieldError>
       )}
@@ -122,7 +129,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
         disabled={submitting || code.join("").length !== 6}
         className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
       >
-        {submitting ? "Signing in…" : "Sign in"}
+        {submitting ? t.signingInPhone : t.signIn}
       </button>
     </form>
   );
