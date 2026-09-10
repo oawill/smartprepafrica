@@ -83,6 +83,13 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string | null }) 
         >
           {sending ? "Sending code…" : "Send code"}
         </button>
+
+        <p className="text-center text-xs text-text-secondary">
+          Lost access to this phone?{" "}
+          <Link href="/forgot-password" className="text-brand-text hover:underline">
+            Recover via email
+          </Link>
+        </p>
       </form>
     );
   }

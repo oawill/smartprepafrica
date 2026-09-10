@@ -35,10 +35,12 @@ export async function POST(request: Request) {
 
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email },
-    select: { id: true, email: true, passwordHash: true },
+    select: { id: true, email: true },
   });
 
-  if (!user || !user.passwordHash) {
+  // Same reasoning as forgot-password/route.ts: a null passwordHash is
+  // a legitimate Door 1 phone-only account, not "no account."
+  if (!user) {
     return NextResponse.json({ message: GENERIC_MESSAGE }, { status: 200 });
   }
 
