@@ -2,8 +2,10 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/dashboard/card";
 import { requireAdminPage } from "@/lib/admin/authz";
-import { DATE_RANGE_LABELS, parseDateRange, rangeSince, type DateRangeKey } from "@/lib/admin/date-range";
+import { parseDateRange, rangeSince, type DateRangeKey } from "@/lib/admin/date-range";
 import { formatNaira } from "@/lib/plans";
+import { getLocale } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 const RANGE_KEYS: DateRangeKey[] = ["today", "week", "month", "quarter", "year", "all"];
 
@@ -13,6 +15,8 @@ export default async function AdminDashboard({
   searchParams: Promise<{ range?: string; country?: string }>;
 }) {
   await requireAdminPage();
+  const locale = await getLocale();
+  const t = getDictionary(locale).adminOverview;
 
   const { range: rangeParam, country: countryParam } = await searchParams;
   const range = parseDateRange(rangeParam);
@@ -158,10 +162,8 @@ export default async function AdminDashboard({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-h2 font-semibold text-text-primary">Platform health</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Central control center for SmartPrepAfrica.com.
-          </p>
+          <h1 className="text-h2 font-semibold text-text-primary">{t.title}</h1>
+          <p className="mt-1 text-sm text-text-secondary">{t.subtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <div className="flex gap-1 rounded-lg border border-border bg-surface-raised p-1 text-xs">
@@ -173,7 +175,7 @@ export default async function AdminDashboard({
                   range === key ? "bg-brand text-brand-foreground" : "text-text-secondary hover:text-text-primary"
                 }`}
               >
-                {DATE_RANGE_LABELS[key]}
+                {t.dateRangeLabels[key]}
               </Link>
             ))}
           </div>
@@ -184,7 +186,7 @@ export default async function AdminDashboard({
                 !selectedCountry ? "bg-brand text-brand-foreground" : "text-text-secondary hover:text-text-primary"
               }`}
             >
-              All countries
+              {t.allCountries}
             </Link>
             {countries.map((c) => (
               <Link
@@ -204,137 +206,137 @@ export default async function AdminDashboard({
       </div>
 
       <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Users{selectedCountry ? ` (${selectedCountry.name})` : ""}
+        {t.usersSectionTitle(selectedCountry?.name)}
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Total students">
+        <Card title={t.totalStudents}>
           <p className="text-3xl font-semibold">{totalStudents}</p>
         </Card>
-        <Card title="Teachers">
+        <Card title={t.teachers}>
           <p className="text-3xl font-semibold">{totalTeachers}</p>
         </Card>
-        <Card title="Parents">
+        <Card title={t.parents}>
           <p className="text-3xl font-semibold">{totalParents}</p>
         </Card>
-        <Card title="School admins">
+        <Card title={t.schoolAdmins}>
           <p className="text-3xl font-semibold">{totalSchoolAdmins}</p>
         </Card>
-        <Card title="Partners">
+        <Card title={t.partners}>
           <p className="text-3xl font-semibold">{totalPartners}</p>
         </Card>
-        <Card title="Sponsors">
+        <Card title={t.sponsors}>
           <p className="text-3xl font-semibold">{totalSponsors}</p>
         </Card>
       </div>
 
       <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Ecosystem activity ({DATE_RANGE_LABELS[range]})
+        {t.ecosystemActivityTitle(t.dateRangeLabels[range])}
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="New registrations">
+        <Card title={t.newRegistrations}>
           <p className="text-3xl font-semibold">{newRegistrations}</p>
         </Card>
-        <Card title="Active users">
+        <Card title={t.activeUsers}>
           <p className="text-3xl font-semibold">{activeUserLogins.length}</p>
-          <p className="text-xs text-text-muted">Distinct successful logins in range.</p>
+          <p className="text-xs text-text-muted">{t.distinctSuccessfulLogins}</p>
         </Card>
-        <Card title="Linked parent/student accounts">
+        <Card title={t.linkedParentStudentAccounts}>
           <p className="text-3xl font-semibold">{linkedParentStudentAccounts}</p>
         </Card>
-        <Card title="Active teachers">
+        <Card title={t.activeTeachers}>
           <p className="text-3xl font-semibold">{activeTeachers}</p>
-          <p className="text-xs text-text-muted">Have a published course or an assigned class.</p>
+          <p className="text-xs text-text-muted">{t.activeTeachersHint}</p>
         </Card>
-        <Card title="Published courses">
+        <Card title={t.publishedCourses}>
           <p className="text-3xl font-semibold">{publishedCourses}</p>
         </Card>
-        <Card title="School enrollments">
+        <Card title={t.schoolEnrollments}>
           <p className="text-3xl font-semibold">{schoolEnrollments}</p>
-          <p className="text-xs text-text-muted">Students affiliated with a school.</p>
+          <p className="text-xs text-text-muted">{t.schoolEnrollmentsHint}</p>
         </Card>
-        <Card title="Active sponsorships">
+        <Card title={t.activeSponsorships}>
           <p className="text-3xl font-semibold">{activeSponsorships}</p>
-          <p className="text-xs text-text-muted">Vouchers redeemed to a real beneficiary.</p>
+          <p className="text-xs text-text-muted">{t.activeSponsorshipsHint}</p>
         </Card>
-        <Card title="Partner conversions">
+        <Card title={t.partnerConversions}>
           <p className="text-3xl font-semibold">{partnerConversions}</p>
-          <p className="text-xs text-text-muted">Referral clicks that led to a registration.</p>
+          <p className="text-xs text-text-muted">{t.partnerConversionsHint}</p>
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Education</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">{t.educationSectionTitle}</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title={selectedCountry ? `Total questions (${selectedCountry.code})` : "Total questions"}>
+        <Card title={t.totalQuestionsTitle(selectedCountry?.code)}>
           <p className="text-3xl font-semibold">{totalQuestions}</p>
         </Card>
-        <Card title="Courses (all countries)">
+        <Card title={t.coursesAllCountries}>
           <p className="text-3xl font-semibold">{totalCourses}</p>
         </Card>
-        <Card title="Lessons (all countries)">
+        <Card title={t.lessonsAllCountries}>
           <p className="text-3xl font-semibold">{totalLessons}</p>
         </Card>
-        <Card title={selectedCountry ? `Practice sessions (${selectedCountry.code})` : "Practice sessions"}>
+        <Card title={t.practiceSessionsTitle(selectedCountry?.code)}>
           <p className="text-3xl font-semibold">{practiceSessions}</p>
         </Card>
-        <Card title={selectedCountry ? `Mock exams (${selectedCountry.code})` : "Mock exams"}>
+        <Card title={t.mockExamsTitle(selectedCountry?.code)}>
           <p className="text-3xl font-semibold">{mockExams}</p>
         </Card>
-        <Card title={selectedCountry ? `Exam attempts (${selectedCountry.code})` : "Exam attempts"}>
+        <Card title={t.examAttemptsTitle(selectedCountry?.code)}>
           <p className="text-3xl font-semibold">{examAttempts}</p>
         </Card>
       </div>
 
       <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Schools{selectedCountry ? ` (${selectedCountry.name})` : ""}
+        {t.schoolsSectionTitle(selectedCountry?.name)}
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Registered">
+        <Card title={t.registered}>
           <p className="text-3xl font-semibold">{schoolsRegistered}</p>
         </Card>
-        <Card title="Active">
+        <Card title={t.active}>
           <p className="text-3xl font-semibold">{schoolsActive}</p>
         </Card>
-        <Card title="Pending">
+        <Card title={t.pending}>
           <p className="text-3xl font-semibold">{schoolsPending}</p>
         </Card>
-        <Card title="Course providers">
+        <Card title={t.courseProviders}>
           <p className="text-3xl font-semibold">{schoolsCourseProvider}</p>
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Revenue</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">{t.revenueSectionTitle}</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title={selectedCountry ? `Paid subscribers (${selectedCountry.code})` : "Paid subscribers"}>
+        <Card title={t.paidSubscribersTitle(selectedCountry?.code)}>
           <p className="text-3xl font-semibold">{paidSubscribers}</p>
         </Card>
-        <Card title={selectedCountry ? `Subscription revenue (${selectedCountry.code})` : "Subscription revenue"}>
+        <Card title={t.subscriptionRevenueTitle(selectedCountry?.code)}>
           <p className="text-3xl font-semibold">{formatNaira(subscriptionRevenue._sum.amountKobo ?? 0)}</p>
         </Card>
-        <Card title="Partner commissions (all countries)">
+        <Card title={t.partnerCommissionsAllCountries}>
           <p className="text-3xl font-semibold">{formatNaira(partnerCommissions._sum.amountKobo ?? 0)}</p>
         </Card>
-        <Card title="Pending payouts (all countries)">
+        <Card title={t.pendingPayoutsAllCountries}>
           <p className="text-3xl font-semibold">{formatNaira(pendingPayouts._sum.amountKobo ?? 0)}</p>
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">AI</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">{t.aiSectionTitle}</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Coach users (30d)">
+        <Card title={t.coachUsers30d}>
           <p className="text-3xl font-semibold">{aiCoachUsers.length}</p>
         </Card>
-        <Card title="Requests today">
+        <Card title={t.requestsToday}>
           <p className="text-3xl font-semibold">{aiRequestsToday}</p>
         </Card>
-        <Card title="Requests this month">
+        <Card title={t.requestsThisMonth}>
           <p className="text-3xl font-semibold">{aiRequestsThisMonth}</p>
         </Card>
-        <Card title="Estimated cost (all-time)">
+        <Card title={t.estimatedCostAllTime}>
           <p className="text-3xl font-semibold">{formatNaira(aiCostTotals._sum.estimatedCostKobo ?? 0)}</p>
         </Card>
-        <Card title="Most-asked subjects">
+        <Card title={t.mostAskedSubjects}>
           {topSubjectIds.length === 0 ? (
-            <p className="text-sm text-text-muted">No AI Coach conversations yet.</p>
+            <p className="text-sm text-text-muted">{t.noAiConversationsYet}</p>
           ) : (
             <ul className="text-sm text-text-secondary">
               {topAiSubjects.map((s) => (
@@ -347,25 +349,25 @@ export default async function AdminDashboard({
         </Card>
       </div>
 
-      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">Platform</h2>
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-text-muted">{t.platformSectionTitle}</h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Open support requests">
+        <Card title={t.openSupportRequests}>
           <p className="text-3xl font-semibold">{openSupportRequests}</p>
         </Card>
-        <Card title="Pending approvals">
+        <Card title={t.pendingApprovals}>
           <p className="text-3xl font-semibold">
             {pendingPartnerApprovals + pendingSchoolApprovals + pendingCourseApprovals}
           </p>
           <p className="text-xs text-text-muted">
-            {pendingPartnerApprovals} partners · {pendingSchoolApprovals} schools · {pendingCourseApprovals} courses
+            {t.pendingApprovalsBreakdown(pendingPartnerApprovals, pendingSchoolApprovals, pendingCourseApprovals)}
           </p>
         </Card>
-        <Card title="Flagged accounts">
+        <Card title={t.flaggedAccounts}>
           <p className="text-3xl font-semibold">{flaggedAccounts}</p>
         </Card>
-        <Card title="Failed logins (range)">
+        <Card title={t.failedLoginsRange}>
           <p className="text-3xl font-semibold">{failedLoginsInRange}</p>
-          <p className="text-xs text-text-muted">Basic heuristic — flagged for manual review, not auto-blocked.</p>
+          <p className="text-xs text-text-muted">{t.failedLoginsHint}</p>
         </Card>
       </div>
     </div>

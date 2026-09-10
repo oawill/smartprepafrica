@@ -12,6 +12,8 @@ import { getExamReadiness as getExamScopedReadiness } from "@/lib/practice/readi
 import { DashboardReadinessCard } from "@/components/readiness/dashboard-readiness-card";
 import { getOrCreateLinkCode } from "@/lib/parent-links";
 import { BADGE_CATALOG } from "@/lib/gamification/badges";
+import { getLocale } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 export default async function StudentDashboard({
   searchParams,
@@ -20,6 +22,8 @@ export default async function StudentDashboard({
   const session = await auth();
   if (!session) return null;
   const userId = session.user.id;
+  const locale = await getLocale();
+  const t = getDictionary(locale).studentDashboard;
 
   const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, studentProfile, badgesEarned] =
     await Promise.all([
@@ -117,11 +121,9 @@ export default async function StudentDashboard({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">
-            Welcome back, {session.user.name?.split(" ")[0] ?? "there"}.
+            {t.welcomeBack(session.user.name?.split(" ")[0] ?? "there")}
           </h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Here&apos;s where your prep and learning progress will live.
-          </p>
+          <p className="mt-1 text-sm text-text-secondary">{t.dashboardSubtitle}</p>
         </div>
         <AiCoachPanel
           context={{}}
@@ -136,59 +138,59 @@ export default async function StudentDashboard({
 
       {payment === "success" && (
         <p className="mt-4 rounded-lg border border-success/40 bg-success-surface px-4 py-2 text-sm text-success">
-          Payment successful — your subscription is now active.
+          {t.paymentSuccessful}
         </p>
       )}
 
       <NotificationsCard notifications={notifications} path="/dashboard/student" />
 
       <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-brand-text">
-        SmartPrepAfrica Prep
+        {t.prepSectionTitle}
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Readiness score">
+        <Card title={t.readinessScore}>
           <p className="text-3xl font-semibold">
             {readinessScore !== null ? `${readinessScore}%` : "—"}
           </p>
         </Card>
-        <Card title="Study streak">
-          <p className="text-3xl font-semibold">{studentProfile?.currentStreakDays ?? 0} days</p>
+        <Card title={t.studyStreak}>
+          <p className="text-3xl font-semibold">{t.daysLabel(studentProfile?.currentStreakDays ?? 0)}</p>
         </Card>
       </div>
 
       <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Achievements
+        {t.achievementsSectionTitle}
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card title="XP">
+        <Card title={t.xp}>
           <p className="text-3xl font-semibold">{studentProfile?.xp ?? 0}</p>
           <p className="mt-1 text-xs text-text-muted">
-            Level {Math.floor((studentProfile?.xp ?? 0) / 100) + 1}
+            {t.levelLabel(Math.floor((studentProfile?.xp ?? 0) / 100) + 1)}
           </p>
         </Card>
         <Link href="/dashboard/student/badges">
-          <Card title="Badges earned">
+          <Card title={t.badgesEarned}>
             <p className="text-3xl font-semibold">
               {badgesEarned} / {BADGE_CATALOG.length}
             </p>
           </Card>
         </Link>
         <Link href="/dashboard/student/leaderboard">
-          <Card title="Leaderboard">
-            <p className="text-sm text-brand-text">View your school&apos;s leaderboard →</p>
+          <Card title={t.leaderboard}>
+            <p className="text-sm text-brand-text">{t.viewSchoolLeaderboard}</p>
           </Card>
         </Link>
       </div>
 
       <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-success">
-        SmartPrepAfrica Learning
+        {t.learningSectionTitle}
       </h2>
       <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card title="Courses in progress">
+        <Card title={t.coursesInProgress}>
           <p className="text-3xl font-semibold">{coursesInProgress}</p>
         </Card>
         <Link href="/dashboard/student/certificates">
-          <Card title="Certificates earned">
+          <Card title={t.certificatesEarned}>
             <p className="text-3xl font-semibold">{certificatesEarned}</p>
           </Card>
         </Link>
@@ -196,16 +198,14 @@ export default async function StudentDashboard({
 
       {recommendation && (
         <div className="mt-6">
-          <Card title="Your AI Study Coach">
-            <p className="text-xs uppercase tracking-wide text-brand-text">Recommended for today</p>
+          <Card title={t.yourAiStudyCoach}>
+            <p className="text-xs uppercase tracking-wide text-brand-text">{t.recommendedForToday}</p>
             <p className="mt-1 text-lg font-medium text-text-primary">{recommendation.topic}</p>
             <p className="text-xs text-text-muted">{recommendation.subjectName}</p>
-            <p className="mt-2 text-sm text-text-secondary">
-              Current mastery: {recommendation.masteryScore}%
-            </p>
+            <p className="mt-2 text-sm text-text-secondary">{t.currentMastery(recommendation.masteryScore)}</p>
             {recommendation.nextTopic && (
               <p className="mt-1 text-sm text-text-secondary">
-                Next, review: <span className="text-text-secondary">{recommendation.nextTopic}</span>
+                {t.nextReview} <span className="text-text-secondary">{recommendation.nextTopic}</span>
               </p>
             )}
             {recommendation.lesson && (
@@ -213,7 +213,7 @@ export default async function StudentDashboard({
                 href={`/learn/${recommendation.lesson.courseId}/lessons/${recommendation.lesson.id}`}
                 className="mt-3 inline-block rounded-full bg-brand px-5 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
-                Continue Learning
+                {t.continueLearning}
               </Link>
             )}
           </Card>
@@ -231,65 +231,62 @@ export default async function StudentDashboard({
       {readiness.length > 0 && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {readiness.map((r) => (
-            <Card key={r.subjectName} title={`${r.subjectName} Readiness`}>
-              <p className="text-3xl font-semibold text-brand-text">{r.readinessPct}% Ready</p>
+            <Card key={r.subjectName} title={t.readinessNamedTitle(r.subjectName)}>
+              <p className="text-3xl font-semibold text-brand-text">{t.readyPct(r.readinessPct)}</p>
               {r.strongTopics.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs font-medium text-success">Strong</p>
+                  <p className="text-xs font-medium text-success">{t.strong}</p>
                   <p className="text-sm text-text-secondary">{r.strongTopics.join(", ")}</p>
                 </div>
               )}
               {r.weakTopics.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-xs font-medium text-warning">Needs improvement</p>
+                  <p className="text-xs font-medium text-warning">{t.needsImprovement}</p>
                   <p className="text-sm text-text-secondary">{r.weakTopics.join(", ")}</p>
                 </div>
               )}
               {r.recommendedStudyMinutes > 0 && (
                 <p className="mt-3 text-xs text-text-muted">
-                  Recommended study time: {Math.floor(r.recommendedStudyMinutes / 60)}h{" "}
-                  {r.recommendedStudyMinutes % 60}min
+                  {t.recommendedStudyTime(
+                    Math.floor(r.recommendedStudyMinutes / 60),
+                    r.recommendedStudyMinutes % 60
+                  )}
                 </p>
               )}
-              <p className="mt-2 text-[11px] text-text-muted">
-                Estimated from your practice history — not a guarantee of exam results.
-              </p>
+              <p className="mt-2 text-[11px] text-text-muted">{t.estimateDisclaimer}</p>
             </Card>
           ))}
         </div>
       )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Weak topics">
+        <Card title={t.weakTopics}>
           {weakTopics.length === 0 ? (
-            <p className="text-sm text-text-secondary">
-              Complete a mock exam or Study Drill to see your weak topics
-              here.
-            </p>
+            <p className="text-sm text-text-secondary">{t.noWeakTopicsYet}</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {weakTopics.map(([topic, count]) => (
                 <li key={topic} className="flex justify-between text-text-secondary">
                   <span>{topic}</span>
-                  <span className="text-text-muted">{count} missed</span>
+                  <span className="text-text-muted">{t.missedCount(count)}</span>
                 </li>
               ))}
             </ul>
           )}
         </Card>
-        <Card title="Recommended next">
+        <Card title={t.recommendedNext}>
           <div className="space-y-2 text-sm">
             <Link
               href="/practice"
               className="block text-brand-text hover:underline"
             >
-              Take a practice session →
+              {t.takePracticeSession}
             </Link>
             <Link
               href="/learn"
               className="block text-brand-text hover:underline"
             >
-              Browse courses →
+              {t.browseCourses}
             </Link>
           </div>
         </Card>
@@ -297,14 +294,13 @@ export default async function StudentDashboard({
 
       {pendingParentRequests.length > 0 && (
         <div className="mt-6">
-          <Card title="Parent/guardian requests">
+          <Card title={t.parentGuardianRequests}>
             <ul className="space-y-3">
               {pendingParentRequests.map((req) => (
                 <li key={req.id} className="rounded-lg border border-border bg-surface-sunken p-3">
                   <p className="text-sm text-text-primary">
                     <span className="font-medium">{req.parent.name}</span>
-                    {req.relationship ? ` (${req.relationship})` : ""} wants to connect as your
-                    parent/guardian.
+                    {req.relationship ? t.relationshipSuffix(req.relationship) : ""} {t.wantsToConnectAsParent}
                   </p>
                   <p className="mt-0.5 text-xs text-text-muted">{req.parent.email}</p>
                   <div className="mt-2 flex gap-2">
@@ -314,7 +310,7 @@ export default async function StudentDashboard({
                         type="submit"
                         className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover"
                       >
-                        Approve
+                        {t.approve}
                       </button>
                     </form>
                     <form action={rejectParentLink}>
@@ -323,7 +319,7 @@ export default async function StudentDashboard({
                         type="submit"
                         className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-danger/40 hover:text-danger"
                       >
-                        Reject
+                        {t.reject}
                       </button>
                     </form>
                   </div>
@@ -336,13 +332,12 @@ export default async function StudentDashboard({
 
       {pendingSchoolInvitations.length > 0 && (
         <div className="mt-6">
-          <Card title="School invitations">
+          <Card title={t.schoolInvitations}>
             <ul className="space-y-3">
               {pendingSchoolInvitations.map((inv) => (
                 <li key={inv.id} className="rounded-lg border border-border bg-surface-sunken p-3">
                   <p className="text-sm text-text-primary">
-                    <span className="font-medium">{inv.school.name}</span> wants to add you as a
-                    student.
+                    <span className="font-medium">{inv.school.name}</span> {t.wantsToAddAsStudent}
                   </p>
                   <div className="mt-2 flex gap-2">
                     <form action={acceptSchoolInvitation}>
@@ -351,7 +346,7 @@ export default async function StudentDashboard({
                         type="submit"
                         className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover"
                       >
-                        Accept
+                        {t.accept}
                       </button>
                     </form>
                     <form action={declineSchoolInvitation}>
@@ -360,7 +355,7 @@ export default async function StudentDashboard({
                         type="submit"
                         className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-danger/40 hover:text-danger"
                       >
-                        Decline
+                        {t.decline}
                       </button>
                     </form>
                   </div>
@@ -372,12 +367,12 @@ export default async function StudentDashboard({
       )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Have a sponsor voucher code?">
+        <Card title={t.haveVoucherCode}>
           <form action={redeemVoucher} className="flex gap-2">
             <input
               type="text"
               name="code"
-              placeholder="SP-XXXXXXXX"
+              placeholder={t.voucherPlaceholder}
               required
               className="flex-1 rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm uppercase outline-none placeholder:text-text-muted focus:border-brand"
             />
@@ -385,17 +380,14 @@ export default async function StudentDashboard({
               type="submit"
               className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
-              Redeem
+              {t.redeem}
             </button>
           </form>
         </Card>
 
         {linkCode && (
-          <Card title="Your parent link code">
-            <p className="text-sm text-text-secondary">
-              Share this code with a parent or guardian so they can request to connect and
-              follow your progress.
-            </p>
+          <Card title={t.yourParentLinkCode}>
+            <p className="text-sm text-text-secondary">{t.shareParentLinkCode}</p>
             <p className="mt-3 rounded-lg border border-border-strong bg-surface-sunken px-4 py-3 text-center font-mono text-lg font-semibold tracking-wide text-brand-text">
               {linkCode}
             </p>

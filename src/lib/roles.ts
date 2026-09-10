@@ -1,6 +1,7 @@
 import type { Role } from "@prisma/client";
 import { isToeflEnabled } from "@/lib/toefl/config";
 import { isSatEnabled } from "@/lib/sat/config";
+import type { Dictionary } from "@/lib/i18n/messages/en";
 
 export const roleDashboardPath: Record<Role, string> = {
   STUDENT: "/dashboard/student",
@@ -24,42 +25,42 @@ export const roleLabel: Record<Role, string> = {
 
 export type NavItem = { label: string; href: string };
 
-const defaultNav: NavItem[] = [
-  { label: "Overview", href: "" }, // href filled in with roleDashboardPath at use-site
-  { label: "Prep", href: "/practice" },
-  { label: "Learning", href: "/learn" },
-  { label: "Plans & billing", href: "/pricing" },
+const defaultNav = (t: Dictionary["dashboardNav"]): NavItem[] => [
+  { label: t.overview, href: "" }, // href filled in with roleDashboardPath at use-site
+  { label: t.prep, href: "/practice" },
+  { label: t.learning, href: "/learn" },
+  { label: t.plansAndBilling, href: "/pricing" },
 ];
 
 // Students get the Prep -> Learning -> Review flow; other roles keep the
 // general dashboard nav for now.
-const studentNav: NavItem[] = [
-  { label: "Home", href: "" },
-  { label: "Prep", href: "/practice" },
-  { label: "Learning", href: "/learn" },
-  { label: "Review", href: "/practice/history" },
-  { label: "Plans & billing", href: "/pricing" },
+const studentNav = (t: Dictionary["dashboardNav"]): NavItem[] => [
+  { label: t.home, href: "" },
+  { label: t.prep, href: "/practice" },
+  { label: t.learning, href: "/learn" },
+  { label: t.review, href: "/practice/history" },
+  { label: t.plansAndBilling, href: "/pricing" },
 ];
 
-const partnerNav: NavItem[] = [
-  { label: "Dashboard", href: "" },
-  { label: "My Students", href: "/dashboard/partner/students" },
-  { label: "Campaigns", href: "/dashboard/partner/campaigns" },
-  { label: "Marketing", href: "/dashboard/partner/marketing" },
-  { label: "Earnings", href: "/dashboard/partner/earnings" },
-  { label: "Payouts", href: "/dashboard/partner/payouts" },
-  { label: "Leaderboard", href: "/dashboard/partner/leaderboard" },
-  { label: "Profile", href: "/dashboard/partner/profile" },
+const partnerNav = (t: Dictionary["dashboardNav"]): NavItem[] => [
+  { label: t.dashboard, href: "" },
+  { label: t.myStudents, href: "/dashboard/partner/students" },
+  { label: t.campaigns, href: "/dashboard/partner/campaigns" },
+  { label: t.marketing, href: "/dashboard/partner/marketing" },
+  { label: t.earnings, href: "/dashboard/partner/earnings" },
+  { label: t.payouts, href: "/dashboard/partner/payouts" },
+  { label: t.leaderboard, href: "/dashboard/partner/leaderboard" },
+  { label: t.profile, href: "/dashboard/partner/profile" },
 ];
 
-export function navForRole(role: Role): NavItem[] {
-  const base = role === "STUDENT" ? studentNav : role === "PARTNER" ? partnerNav : defaultNav;
+export function navForRole(role: Role, t: Dictionary["dashboardNav"]): NavItem[] {
+  const base = role === "STUDENT" ? studentNav(t) : role === "PARTNER" ? partnerNav(t) : defaultNav(t);
   let items = base;
   if (role === "STUDENT" && isToeflEnabled()) {
-    items = [...items, { label: "TOEFL", href: "/international-exams/toefl" }];
+    items = [...items, { label: t.toefl, href: "/international-exams/toefl" }];
   }
   if (role === "STUDENT" && isSatEnabled()) {
-    items = [...items, { label: "SAT", href: "/international-exams/sat" }];
+    items = [...items, { label: t.sat, href: "/international-exams/sat" }];
   }
   return items.map((item) =>
     item.href === "" ? { ...item, href: roleDashboardPath[role] } : item
