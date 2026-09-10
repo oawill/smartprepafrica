@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { OfflineBanner } from "@/components/offline-banner";
+import { getLocale } from "@/lib/i18n/locale";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,10 +33,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const cookieStore = await cookies();
   const explicitTheme = cookieStore.get("sp-theme")?.value;
   const dataTheme = explicitTheme === "light" || explicitTheme === "dark" ? explicitTheme : undefined;
+  const locale = await getLocale();
 
   return (
     <html
-      lang="en"
+      lang={locale}
       data-theme={dataTheme}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >

@@ -5,6 +5,7 @@ import type { CountryStatus, SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireActionPermission } from "@/lib/admin/authz";
 import { logAudit } from "@/lib/admin/audit";
+import { isLocale, DEFAULT_LOCALE } from "@/lib/i18n/locale";
 
 export async function createCountry(formData: FormData) {
   const session = await requireActionPermission("countries.manage");
@@ -15,12 +16,14 @@ export async function createCountry(formData: FormData) {
   const currencySymbol = (formData.get("currencySymbol") as string)?.trim();
   const flag = (formData.get("flag") as string)?.trim();
   const timezone = (formData.get("timezone") as string)?.trim();
+  const defaultLanguageInput = formData.get("defaultLanguage") as string;
+  const defaultLanguage = isLocale(defaultLanguageInput) ? defaultLanguageInput : DEFAULT_LOCALE;
   if (!name || !code || !currency || !currencySymbol || !flag || !timezone) {
     throw new Error("Name, code, currency, currency symbol, flag, and timezone are all required.");
   }
 
   const country = await prisma.country.create({
-    data: { name, code, currency, currencySymbol, flag, timezone },
+    data: { name, code, currency, currencySymbol, flag, timezone, defaultLanguage },
   });
 
   await logAudit({
@@ -30,7 +33,35 @@ export async function createCountry(formData: FormData) {
     resourceType: "Country",
     resourceId: country.id,
     result: "SUCCESS",
-    after: { name, code, currency, status: country.status },
+    after: { name, code, currency, status: country.status, defaultLanguage },
+  });
+  revalidatePath("/dashboard/admin/countries");
+}
+
+/** Restricted to SUPPORTED_LOCALES (only en/fr have dictionaries so
+ * far) — picking anything else would silently fall back to English in
+ * getLocale(), so it isn't offered as an option. */
+export async function updateCountryLanguage(formData: FormData) {
+  const session = await requireActionPermission("countries.manage");
+
+  const id = formData.get("id") as string;
+  const defaultLanguageInput = formData.get("defaultLanguage") as string;
+  if (!id || !isLocale(defaultLanguageInput)) {
+    throw new Error("Country and a supported language are required.");
+  }
+
+  const before = await prisma.country.findUniqueOrThrow({ where: { id } });
+  await prisma.country.update({ where: { id }, data: { defaultLanguage: defaultLanguageInput } });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "COUNTRY_LANGUAGE_CHANGED",
+    resourceType: "Country",
+    resourceId: id,
+    result: "SUCCESS",
+    before: { defaultLanguage: before.defaultLanguage },
+    after: { defaultLanguage: defaultLanguageInput },
   });
   revalidatePath("/dashboard/admin/countries");
 }

@@ -64,8 +64,8 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
 export const PRO_UNLIMITED_FOOTNOTE =
   "Unlimited AI Tutor sessions are subject to reasonable fair-use, abuse-prevention, and platform security controls.";
 
-export function formatNaira(kobo: number): string {
-  return new Intl.NumberFormat("en-NG", {
+export function formatNaira(kobo: number, locale: string = "en-NG"): string {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "NGN",
     maximumFractionDigits: 0,
@@ -107,9 +107,9 @@ export function annualSavingsKobo(plan: SubscriptionPlan): number | null {
   return pricing.monthly * 12 - pricing.annual;
 }
 
-export function formatMoney(amountMinor: number, currency: string): string {
-  if (currency === "NGN") return formatNaira(amountMinor);
-  return new Intl.NumberFormat("en", {
+export function formatMoney(amountMinor: number, currency: string, locale: string = "en"): string {
+  if (currency === "NGN") return formatNaira(amountMinor, locale === "en" ? "en-NG" : locale);
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
