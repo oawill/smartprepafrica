@@ -50,7 +50,7 @@ function LoginForm() {
 
         {resetSuccess && (
           <p className="mt-4 rounded-lg border border-success/40 bg-success-surface px-3 py-2 text-sm text-success">
-            Password reset successful. You can now sign in with your new password.
+            Password set. You can now sign in with your new password.
           </p>
         )}
 

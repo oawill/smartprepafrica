@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
     return (
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm rounded-2xl border border-border bg-surface-raised p-8 text-center">
-          <h1 className="text-h2 font-semibold text-text-primary">Password reset successful</h1>
+          <h1 className="text-h2 font-semibold text-text-primary">Password set</h1>
           <p className="mt-2 text-sm text-text-secondary">
             You can now sign in with your new password.
           </p>
@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-surface-raised p-8">
-        <h1 className="text-h2 font-semibold text-text-primary">Reset your password</h1>
+        <h1 className="text-h2 font-semibold text-text-primary">Set a new password</h1>
         <p className="mt-1 text-sm text-text-secondary">Choose a new password for your account.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
             disabled={loading}
             className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
           >
-            {loading ? "Resetting…" : "Reset Password"}
+            {loading ? "Saving…" : "Set Password"}
           </button>
         </form>
       </div>

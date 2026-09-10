@@ -40,10 +40,14 @@ export async function POST(request: Request) {
 
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email },
-    select: { id: true, email: true, passwordHash: true },
+    select: { id: true, email: true },
   });
 
-  if (!user || !user.passwordHash) {
+  // A null passwordHash is a legitimate state, not "no account" — a
+  // Door 1 phone-only account (src/lib/auth.ts's "phone-otp" provider)
+  // has none until it sets its first one through this exact flow. Only
+  // "no user with this email" short-circuits here.
+  if (!user) {
     return NextResponse.json({ message: GENERIC_MESSAGE }, { status: 200 });
   }
 
