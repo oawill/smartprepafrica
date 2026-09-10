@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.ggpht.com" },
     ],
   },
+  experimental: {
+    useOffline: true,
+  },
 };
 
 export default nextConfig;
