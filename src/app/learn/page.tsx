@@ -60,7 +60,7 @@ export default async function LearnPage({
 
   const now = new Date();
 
-  const [courses, upcomingLiveClasses, courseCountsBySubject, subjects, classLevels] = await Promise.all([
+  const [courses, upcomingLiveClasses, courseCountsBySubject, subjects, classLevels, programmes] = await Promise.all([
     prisma.course.findMany({
       where: {
         published: true,
@@ -107,6 +107,12 @@ export default async function LearnPage({
       where: { isActive: true },
       orderBy: { order: "asc" },
       include: { curriculum: { select: { name: true } }, _count: { select: { courses: true } } },
+    }),
+    prisma.programme.findMany({
+      where: { published: true },
+      include: { _count: { select: { courses: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 6,
     }),
   ]);
 
@@ -158,6 +164,12 @@ export default async function LearnPage({
           className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
         >
           Popular this week →
+        </Link>
+        <Link
+          href="/learn/programmes"
+          className="inline-block rounded-full border border-border-strong px-4 py-2 text-sm text-text-primary hover:border-text-muted"
+        >
+          Programmes →
         </Link>
         <Link
           href="/practice"
@@ -303,6 +315,32 @@ export default async function LearnPage({
         <p className="mt-8 text-sm text-text-secondary">
           No courses match your search. Try clearing the filters.
         </p>
+      )}
+
+      {programmes.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold text-text-primary">Programmes</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            Bundles of courses that lead to their own certificate once you complete every course inside.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {programmes.map((p) => (
+              <Link
+                key={p.id}
+                href={`/learn/programmes/${p.id}`}
+                className="block rounded-xl border border-border bg-surface-raised p-4 hover:border-border-strong"
+              >
+                <p className="font-medium text-text-primary">{p.title}</p>
+                {p.description && (
+                  <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{p.description}</p>
+                )}
+                <p className="mt-2 text-xs text-text-muted">
+                  {p._count.courses} course{p._count.courses === 1 ? "" : "s"}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {coreSecondary.length > 0 && (

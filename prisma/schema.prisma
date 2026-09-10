@@ -99,6 +99,7 @@ model User {
   enrollments               CourseEnrollment[]
   examAttempts              ExamAttempt[]
   certificates              Certificate[]
+  programmeCertificates     ProgrammeCertificate[]
   badges                    UserBadge[]
   subscriptions             Subscription[]
   purchasedSubscriptions    Subscription[]             @relation("PurchasedSubscriptions")
@@ -1245,6 +1246,7 @@ model Course {
 
   aiConversations  AiConversation[]
   classAssignments ClassCourseAssignment[]
+  programmeCourses ProgrammeCourse[]
 }
 
 model CourseReview {
@@ -1558,6 +1560,51 @@ model Certificate {
   verificationCode String? @unique
 
   @@unique([userId, courseId])
+}
+
+// A curated bundle of existing Courses. Deliberately not modeled as an
+// extension of Certificate/enrollment on Course — a Programme's
+// completion state is always derived by reading each member course's
+// own CourseEnrollment (see checkProgrammeCompletions in
+// src/app/learn/actions.ts), so no parallel enrollment-state table
+// exists here to drift out of sync with the real per-course truth.
+model Programme {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  coverImageUrl String?
+  published     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  courses      ProgrammeCourse[]
+  certificates ProgrammeCertificate[]
+}
+
+model ProgrammeCourse {
+  id          String    @id @default(cuid())
+  programme   Programme @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  programmeId String
+  course      Course    @relation(fields: [courseId], references: [id])
+  courseId    String
+  order       Int       @default(0)
+
+  @@unique([programmeId, courseId])
+}
+
+// Separate from Certificate (rather than a nullable courseId +
+// nullable programmeId on that model) so every existing query that
+// assumes certificate.course is non-null stays untouched.
+model ProgrammeCertificate {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  programme   Programme @relation(fields: [programmeId], references: [id])
+  programmeId String
+  issuedAt    DateTime  @default(now())
+  // Same random-not-sequential reasoning as Certificate.verificationCode.
+  verificationCode String? @unique
+
+  @@unique([userId, programmeId])
 }
 
 model Badge {

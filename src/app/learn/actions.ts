@@ -32,29 +32,32 @@ export async function toggleFollowTeacher(teacherId: string) {
   revalidatePath(`/learn/teachers/${teacherId}`);
 }
 
-export async function enrollInCourse(courseId: string) {
-  const session = await auth();
-  if (!session) redirect("/login");
-
+/** Shared by enrollInCourse and enrollInProgramme's "enroll in all"
+ * loop — subscription gate + idempotent CourseEnrollment upsert +
+ * best-effort commission award. Returns silently (no redirect) when
+ * the plan doesn't cover this course, since a Programme's "enroll in
+ * all" needs to keep enrolling the learner's other member courses
+ * rather than bailing out on the first gated one. */
+async function enrollUserInCourse(userId: string, courseId: string): Promise<{ enrolled: boolean }> {
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     select: { requiresSubscription: true },
   });
   if (!course) notFound();
 
-  const plan = await getUserPlan(session.user.id);
+  const plan = await getUserPlan(userId);
   if (!canEnrollInCourse(plan, course.requiresSubscription)) {
-    redirect("/pricing?reason=course_subscription_required");
+    return { enrolled: false };
   }
 
   const existingEnrollment = await prisma.courseEnrollment.findUnique({
-    where: { userId_courseId: { userId: session.user.id, courseId } },
+    where: { userId_courseId: { userId, courseId } },
   });
 
   await prisma.courseEnrollment.upsert({
-    where: { userId_courseId: { userId: session.user.id, courseId } },
+    where: { userId_courseId: { userId, courseId } },
     update: {},
-    create: { userId: session.user.id, courseId },
+    create: { userId, courseId },
   });
 
   // A commission failure must never block the student's actual
@@ -62,13 +65,41 @@ export async function enrollInCourse(courseId: string) {
   // uses around its own commission-creation hook.
   if (!existingEnrollment && plan !== "FREE") {
     try {
-      await awardEnrollmentCommission(courseId, session.user.id);
+      await awardEnrollmentCommission(courseId, userId);
     } catch (error) {
       console.error("Failed to award teacher enrollment commission:", error);
     }
   }
 
+  return { enrolled: true };
+}
+
+export async function enrollInCourse(courseId: string) {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  const { enrolled } = await enrollUserInCourse(session.user.id, courseId);
+  if (!enrolled) {
+    redirect("/pricing?reason=course_subscription_required");
+  }
+
   revalidatePath(`/learn/${courseId}`);
+}
+
+export async function enrollInProgramme(programmeId: string) {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  const memberCourses = await prisma.programmeCourse.findMany({
+    where: { programmeId, course: { archived: false } },
+    select: { courseId: true },
+  });
+
+  for (const { courseId } of memberCourses) {
+    await enrollUserInCourse(session.user.id, courseId);
+  }
+
+  revalidatePath(`/learn/programmes/${programmeId}`);
 }
 
 async function checkCourseCompletion(userId: string, enrollmentId: string, courseId: string) {
@@ -97,6 +128,38 @@ async function checkCourseCompletion(userId: string, enrollmentId: string, cours
     });
 
     await awardXp(userId, "COURSE_COMPLETE", courseId);
+    await checkProgrammeCompletions(userId, courseId);
+  }
+}
+
+/** Called after a course flips to COMPLETED — checks every published
+ * Programme that includes this course and issues a ProgrammeCertificate
+ * once every one of that Programme's member courses is COMPLETED for
+ * this user. No separate "programme enrollment" state exists: this
+ * always re-derives completion from each member course's own
+ * CourseEnrollment, so it can never drift out of sync with it. */
+async function checkProgrammeCompletions(userId: string, courseId: string) {
+  const memberships = await prisma.programmeCourse.findMany({
+    where: { courseId, programme: { published: true } },
+    select: { programmeId: true },
+  });
+
+  for (const { programmeId } of memberships) {
+    const memberCourseIds = (
+      await prisma.programmeCourse.findMany({ where: { programmeId }, select: { courseId: true } })
+    ).map((c) => c.courseId);
+
+    const completedCount = await prisma.courseEnrollment.count({
+      where: { userId, courseId: { in: memberCourseIds }, status: "COMPLETED" },
+    });
+
+    if (completedCount === memberCourseIds.length) {
+      await prisma.programmeCertificate.upsert({
+        where: { userId_programmeId: { userId, programmeId } },
+        update: {},
+        create: { userId, programmeId, verificationCode: generateCertificateVerificationCode("PROG") },
+      });
+    }
   }
 }
 
