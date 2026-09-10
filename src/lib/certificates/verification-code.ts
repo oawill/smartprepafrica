@@ -4,9 +4,11 @@ import { prisma } from "@/lib/prisma";
 /** Same shape as generateVoucherCode/generateJoinCode — random, not
  * sequential, since this code is used for lookup (see
  * src/app/certificates/verify/[code]/page.tsx) and a sequential one
- * would let anyone enumerate every issued certificate. */
-export function generateCertificateVerificationCode(): string {
-  return `CERT-${randomBytes(4).toString("hex").toUpperCase()}`;
+ * would let anyone enumerate every issued certificate. `prefix`
+ * distinguishes a course certificate ("CERT-...") from a Programme
+ * certificate ("PROG-...", see ProgrammeCertificate). */
+export function generateCertificateVerificationCode(prefix: string = "CERT"): string {
+  return `${prefix}-${randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
 /** Returns a certificate's verificationCode, generating and persisting

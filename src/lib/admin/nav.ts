@@ -45,6 +45,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { label: "Schools", href: "/dashboard/admin/schools", permission: "schools.view" },
       { label: "Courses", href: "/dashboard/admin/courses", permission: "courses.view" },
+      { label: "Programmes", href: "/dashboard/admin/programmes", permission: "programmes.view" },
       { label: "Tutor escalations", href: "/dashboard/admin/discussions", permission: "discussions.manage" },
       { label: "Teacher payouts", href: "/dashboard/admin/teacher-payouts", permission: "teachers.payout" },
     ],

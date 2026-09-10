@@ -7,11 +7,31 @@ export default async function StudentCertificatesPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const certificates = await prisma.certificate.findMany({
-    where: { userId: session.user.id },
-    include: { course: { select: { title: true } } },
-    orderBy: { issuedAt: "desc" },
-  });
+  const [courseCertificates, programmeCertificates] = await Promise.all([
+    prisma.certificate.findMany({
+      where: { userId: session.user.id },
+      include: { course: { select: { title: true } } },
+    }),
+    prisma.programmeCertificate.findMany({
+      where: { userId: session.user.id },
+      include: { programme: { select: { title: true } } },
+    }),
+  ]);
+
+  const certificates = [
+    ...courseCertificates.map((c) => ({
+      id: c.id,
+      title: c.course.title,
+      issuedAt: c.issuedAt,
+      href: `/certificates/${c.id}`,
+    })),
+    ...programmeCertificates.map((c) => ({
+      id: c.id,
+      title: `${c.programme.title} (Programme)`,
+      issuedAt: c.issuedAt,
+      href: `/certificates/programme/${c.id}`,
+    })),
+  ].sort((a, b) => b.issuedAt.getTime() - a.issuedAt.getTime());
 
   return (
     <div>
@@ -29,11 +49,11 @@ export default async function StudentCertificatesPage() {
           {certificates.map((cert) => (
             <Link
               key={cert.id}
-              href={`/certificates/${cert.id}`}
+              href={cert.href}
               target="_blank"
               className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm hover:border-border-strong"
             >
-              <span className="text-text-primary">{cert.course.title}</span>
+              <span className="text-text-primary">{cert.title}</span>
               <span className="text-xs text-text-muted">
                 {cert.issuedAt.toLocaleDateString()}
               </span>
