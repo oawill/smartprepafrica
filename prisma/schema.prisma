@@ -162,6 +162,7 @@ model User {
   satSkillMastery            SatSkillMastery[]
   internationalExamPurchases InternationalExamPurchase[]
   passwordResetTokens        PasswordResetToken[]
+  whatsappAccount            WhatsAppAccount?
 
   // The user's country preference, set at registration. Nullable/backfilled
   // to Nigeria for pre-existing accounts — see scripts/backfill-country-refs.ts.
@@ -358,15 +359,15 @@ enum SchoolStatus {
 }
 
 model TeacherProfile {
-  id              String  @id @default(cuid())
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String  @unique
-  school          School? @relation(fields: [schoolId], references: [id])
-  schoolId        String?
-  bio             String?
-  photoUrl        String?
-  qualifications  String?
-  yearsExperience Int?
+  id                String                   @id @default(cuid())
+  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String                   @unique
+  school            School?                  @relation(fields: [schoolId], references: [id])
+  schoolId          String?
+  bio               String?
+  photoUrl          String?
+  qualifications    String?
+  yearsExperience   Int?
   // Self-registered teachers start PENDING and must be approved before
   // they can create/edit any content (enforced in requireTeacherProfile,
   // src/lib/authz.ts). School-invited teachers are created APPROVED
@@ -381,7 +382,7 @@ model TeacherProfile {
   bankAccountName        String?
   bankAccountNumber      String?
 
-  classes     Class[]              @relation("TeacherClasses")
+  classes     Class[]             @relation("TeacherClasses")
   courses     Course[]
   followers   TeacherFollow[]
   commissions TeacherCommission[]
@@ -1094,6 +1095,10 @@ model ExamAttempt {
   submittedAt DateTime?
   score       Float?
   totalItems  Int         @default(0)
+  // Null means "web" (the original, only channel). Set to "whatsapp"
+  // for attempts started via the WhatsApp integration, so admin
+  // reporting can distinguish them without a parallel tracking system.
+  channel     String?
 
   responses QuestionResponse[]
 }
@@ -1200,21 +1205,21 @@ model Course {
   moderatedAt      DateTime?
   featured         Boolean                @default(false)
 
-  instructorName     String?
-  difficulty         Difficulty?
-  estimatedMinutes   Int?
-  learningObjectives String[]
+  instructorName       String?
+  difficulty           Difficulty?
+  estimatedMinutes     Int?
+  learningObjectives   String[]
   // In kobo; null or 0 means free. No longer the real access gate (see
   // requiresSubscription below) — left in place rather than dropped since
   // nothing charges against it today.
-  priceKobo          Int?
+  priceKobo            Int?
   // Whether enrolling requires an active BASIC/PREMIUM/PRO subscription
   // (checked via getUserPlan in src/lib/ai/limits.ts, same function AI
   // Coach limits use). Defaults true so new courses are gated by default;
   // set false for an intentionally open/free preview course. Only gates
   // NEW enrollments — an existing CourseEnrollment row keeps access
   // regardless of the student's current plan.
-  requiresSubscription Boolean @default(true)
+  requiresSubscription Boolean     @default(true)
 
   // Set when this course belongs to the "Core Secondary School" or "Exam
   // Preparation" catalog sections rather than the general "Skills" one.
@@ -1353,23 +1358,23 @@ enum LessonType {
 }
 
 model Lesson {
-  id       String     @id @default(cuid())
-  module   Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  moduleId String
-  title    String
-  type     LessonType
-  content  String?
-  videoUrl String?
+  id           String     @id @default(cuid())
+  module       Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId     String
+  title        String
+  type         LessonType
+  content      String?
+  videoUrl     String?
   // Plain-URL PDF lesson content, same convention as videoUrl. pdfSizeBytes
   // lets the lesson page show "~2.4 MB" before the student downloads it.
   pdfUrl       String?
   pdfSizeBytes Int?
-  order    Int
+  order        Int
   // Matches Question.topic for the same subject, letting this lesson link
   // to SmartPrepAfrica practice questions on the same concept. NEVER
   // repurposed for the CourseTopic hierarchy below - StudentTopicMastery
   // and the practice cross-link both key off this exact string.
-  topic    String?
+  topic        String?
 
   // Optional curriculum-browse grouping (see CourseTopic above).
   courseTopic   CourseTopic? @relation(fields: [courseTopicId], references: [id])
@@ -1545,19 +1550,19 @@ model AssignmentSubmission {
 }
 
 model Certificate {
-  id       String   @id @default(cuid())
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  course   Course   @relation(fields: [courseId], references: [id])
-  courseId String
-  issuedAt DateTime @default(now())
-  certUrl  String?
+  id               String   @id @default(cuid())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  course           Course   @relation(fields: [courseId], references: [id])
+  courseId         String
+  issuedAt         DateTime @default(now())
+  certUrl          String?
   // Short, human-typeable alternative to the cuid `id` in the certificate
   // URL — meant to be read off a printed certificate and typed in, unlike
   // the id (meant for a clicked/pasted link). Random, not sequential
   // (see src/lib/certificates/verification-code.ts) — sequential would
   // let anyone enumerate every issued certificate via /verify/[code].
-  verificationCode String? @unique
+  verificationCode String?  @unique
 
   @@unique([userId, courseId])
 }
@@ -1595,14 +1600,14 @@ model ProgrammeCourse {
 // nullable programmeId on that model) so every existing query that
 // assumes certificate.course is non-null stays untouched.
 model ProgrammeCertificate {
-  id          String    @id @default(cuid())
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  programme   Programme @relation(fields: [programmeId], references: [id])
-  programmeId String
-  issuedAt    DateTime  @default(now())
+  id               String    @id @default(cuid())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  programme        Programme @relation(fields: [programmeId], references: [id])
+  programmeId      String
+  issuedAt         DateTime  @default(now())
   // Same random-not-sequential reasoning as Certificate.verificationCode.
-  verificationCode String? @unique
+  verificationCode String?   @unique
 
   @@unique([userId, programmeId])
 }
@@ -1633,9 +1638,9 @@ model UserBadge {
 // retried form submission, never double-awards. See
 // src/lib/gamification/xp-service.ts.
 model XpEvent {
-  id     String @id @default(cuid())
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
   // "LESSON_COMPLETE" | "COURSE_COMPLETE" | "EXAM_ATTEMPT" |
   // "DISCUSSION_POST" | "DISCUSSION_REPLY" — plain string rather than an
   // enum so a new award type never needs a migration, matching
@@ -1760,23 +1765,23 @@ model SponsorshipProgram {
 }
 
 model Voucher {
-  id         String                 @id @default(cuid())
-  code       String                 @unique
-  sponsor    SponsorProfile?        @relation(fields: [sponsorId], references: [id])
-  sponsorId  String?
-  program    SponsorshipProgram?    @relation(fields: [programId], references: [id])
-  programId  String?
+  id                      String                 @id @default(cuid())
+  code                    String                 @unique
+  sponsor                 SponsorProfile?        @relation(fields: [sponsorId], references: [id])
+  sponsorId               String?
+  program                 SponsorshipProgram?    @relation(fields: [programId], references: [id])
+  programId               String?
   // Set instead of `program` for a school-purchased (paid) seat batch —
   // see SchoolLicensePurchase. A voucher belongs to at most one batch,
   // sponsor or school, same nullable-optional-parent shape as `program`.
   schoolLicensePurchase   SchoolLicensePurchase? @relation(fields: [schoolLicensePurchaseId], references: [id])
   schoolLicensePurchaseId String?
-  issuedBy   User                   @relation("VoucherIssuer", fields: [issuedById], references: [id])
-  issuedById String
-  plan       SubscriptionPlan
-  status     VoucherStatus          @default(ACTIVE)
-  expiresAt  DateTime?
-  createdAt  DateTime               @default(now())
+  issuedBy                User                   @relation("VoucherIssuer", fields: [issuedById], references: [id])
+  issuedById              String
+  plan                    SubscriptionPlan
+  status                  VoucherStatus          @default(ACTIVE)
+  expiresAt               DateTime?
+  createdAt               DateTime               @default(now())
 
   redemption VoucherRedemption?
 }
@@ -1797,20 +1802,20 @@ model VoucherRedemption {
 // InternationalExamPurchase — this keeps activateSubscriptionForReference
 // from ever mistaking this reference for a personal-subscription charge.
 model SchoolLicensePurchase {
-  id            String        @id @default(cuid())
-  school        School        @relation(fields: [schoolId], references: [id])
+  id            String           @id @default(cuid())
+  school        School           @relation(fields: [schoolId], references: [id])
   schoolId      String
-  purchasedBy   User          @relation(fields: [purchasedById], references: [id])
+  purchasedBy   User             @relation(fields: [purchasedById], references: [id])
   purchasedById String
   plan          SubscriptionPlan // always SCHOOL today; stored for clarity/future flexibility
   seatCount     Int
   durationDays  Int
   amountKobo    Int
-  currency      String        @default("NGN")
-  provider      String        @default("paystack")
-  reference     String        @unique
-  status        PaymentStatus @default(PENDING)
-  createdAt     DateTime      @default(now())
+  currency      String           @default("NGN")
+  provider      String           @default("paystack")
+  reference     String           @unique
+  status        PaymentStatus    @default(PENDING)
+  createdAt     DateTime         @default(now())
   paidAt        DateTime?
 
   vouchers Voucher[]
@@ -2592,6 +2597,83 @@ model PhoneOtp {
   @@index([expiresAt])
 }
 
+// A WhatsApp number is never trusted on its own to authenticate a
+// student — this row only exists once the student has authenticated
+// normally on the real website and explicitly confirmed the link (see
+// WhatsAppLinkToken below), never from a WhatsApp-side OTP.
+model WhatsAppAccount {
+  id              String    @id @default(cuid())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String    @unique
+  phoneNumber     String    @unique // E.164, same format as User.phone
+  whatsappEnabled Boolean   @default(true)
+  verifiedAt      DateTime?
+  optInAt         DateTime?
+  optOutAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  conversationState WhatsAppConversationState?
+
+  @@index([phoneNumber])
+}
+
+// Short-lived, single-use token sent to a not-yet-linked WhatsApp
+// number. Proof of identity comes from the student authenticating on
+// the real website with their existing credentials and confirming —
+// this token only carries "which phone number is asking," never an
+// authentication claim by itself.
+model WhatsAppLinkToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  phoneNumber String
+  userId      String?
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([phoneNumber])
+}
+
+enum WhatsAppFlowState {
+  MAIN_MENU
+  AWAITING_EXAM
+  AWAITING_SUBJECT
+  IN_PRACTICE
+}
+
+// WhatsApp is stateless per-message — this is the only "session" a
+// conversation has between messages. One row per linked account.
+model WhatsAppConversationState {
+  id                String            @id @default(cuid())
+  whatsappAccount   WhatsAppAccount   @relation(fields: [whatsappAccountId], references: [id], onDelete: Cascade)
+  whatsappAccountId String            @unique
+  state             WhatsAppFlowState @default(MAIN_MENU)
+  context           Json?
+  updatedAt         DateTime          @updatedAt
+}
+
+enum WhatsAppMessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+// Minimal log backing the admin metrics page (messages sent/received/
+// failed) — deliberately not a full conversation transcript, per the
+// least-privilege requirement on the admin dashboard.
+model WhatsAppMessageLog {
+  id                String                   @id @default(cuid())
+  phoneNumber       String
+  direction         WhatsAppMessageDirection
+  whatsappAccountId String?
+  providerMessageId String?
+  status            String // "sent" | "delivered" | "failed" | "received"
+  createdAt         DateTime                 @default(now())
+
+  @@index([phoneNumber])
+  @@index([createdAt])
+}
+
 model PartnerAuditLog {
   id          String  @id @default(cuid())
   actor       User?   @relation("AuditActor", fields: [actorUserId], references: [id])
@@ -2719,15 +2801,15 @@ model TeacherCommission {
 }
 
 model TeacherPayout {
-  id                  String       @id @default(cuid())
-  payoutNumber        String       @unique
+  id                  String         @id @default(cuid())
+  payoutNumber        String         @unique
   teacher             TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   teacherId           String
   amountKobo          Int
   method              String
   destinationSnapshot Json?
-  status              PayoutStatus @default(REQUESTED)
-  requestedAt         DateTime     @default(now())
+  status              PayoutStatus   @default(REQUESTED)
+  requestedAt         DateTime       @default(now())
   approvedAt          DateTime?
   approvedById        String?
   paidAt              DateTime?
