@@ -101,6 +101,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [{ label: "Usage & costs", href: "/dashboard/admin/ai", permission: "analytics.view" }],
   },
   {
+    label: "WhatsApp",
+    items: [{ label: "Overview", href: "/dashboard/admin/whatsapp", permission: "whatsapp.view" }],
+  },
+  {
     label: "Readiness & Drills",
     items: [
       { label: "Settings", href: "/dashboard/admin/readiness/settings", permission: "readiness.manage" },

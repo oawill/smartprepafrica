@@ -59,7 +59,8 @@ export type Permission =
   | "discussions.manage"
   | "teachers.payout"
   | "programmes.view"
-  | "programmes.manage";
+  | "programmes.manage"
+  | "whatsapp.view";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -121,6 +122,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "teachers.payout",
   "programmes.view",
   "programmes.manage",
+  "whatsapp.view",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -182,7 +184,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "sat.archive",
   ],
   SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "teachers.approve", "users.view", "courses.view", "courses.approve"],
-  USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke", "discussions.manage"],
+  USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke", "discussions.manage", "whatsapp.view"],
   FINANCE_ADMIN: ["payments.view", "payments.refund", "partners.payout", "teachers.payout", "analytics.view"],
   PARTNER_ADMIN: ["partners.view", "partners.approve", "partners.payout", "analytics.view"],
   SECURITY_ADMIN: ["security.view", "sessions.revoke", "audit.view", "audit.export", "users.view", "users.suspend"],
@@ -196,6 +198,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "toefl.view",
     "sat.view",
     "readiness.view",
+    "whatsapp.view",
   ],
 };
 
