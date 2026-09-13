@@ -21,7 +21,8 @@ const columns = [
     heading: "Partnerships",
     links: [
       { label: "Become a Partner", href: "/partners" },
-      { label: "Become a Sponsor", href: "/register" },
+      { label: "Become a Sponsor", href: "/education-access" },
+      { label: "Education Access Initiative", href: "/education-access" },
     ],
   },
   {
@@ -71,7 +72,7 @@ export async function Footer() {
               </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {column.links.map((link) => (
-                  <li key={link.href}>
+                  <li key={link.label}>
                     <Link href={link.href} className="text-text-secondary hover:text-text-primary">
                       {link.label}
                     </Link>

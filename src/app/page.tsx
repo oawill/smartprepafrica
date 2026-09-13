@@ -290,6 +290,30 @@ export default async function Home() {
 
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
+            <span className="text-xs font-medium text-brand-text">{t.educationAccessLabel}</span>
+            <h2 className="mx-auto mt-2 max-w-2xl text-h1 font-semibold text-text-primary">
+              {t.educationAccessTitle}
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">{t.educationAccessBody}</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/education-access"
+                className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                {t.sponsorStudents}
+              </Link>
+              <Link
+                href="/education-access"
+                className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
+              >
+                {t.exploreInitiative}
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 py-16">
+          <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
             <h2 className="mx-auto max-w-2xl text-h1 font-semibold text-text-primary">
               {t.findPlanTitle}
             </h2>

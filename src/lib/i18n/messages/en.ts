@@ -65,6 +65,11 @@ export const en: {
     findPlanBody: string;
     viewPlansAndPricing: string;
     startLearning: string;
+    educationAccessLabel: string;
+    educationAccessTitle: string;
+    educationAccessBody: string;
+    sponsorStudents: string;
+    exploreInitiative: string;
   };
   login: Record<
     | "welcomeBack"
@@ -330,6 +335,12 @@ export const en: {
     findPlanBody: "Choose exam preparation and learning options designed for your goals.",
     viewPlansAndPricing: "View Plans & Pricing",
     startLearning: "Start Learning",
+    educationAccessLabel: "Education Access Initiative",
+    educationAccessTitle: "Help a Student Learn. Help a Community Grow.",
+    educationAccessBody:
+      "Through the SmartPrepAfrica Education Access Initiative, individuals and organizations can sponsor access to exam preparation, digital lessons, and AI-powered learning for students who need it most.",
+    sponsorStudents: "Sponsor Students",
+    exploreInitiative: "Explore the Initiative",
   },
   login: {
     welcomeBack: "Welcome back",
