@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
 import { EducationAccessInquiryForm } from "@/components/education-access/inquiry-form";
+import { SPONSOR_PACKAGES } from "@/lib/education-access/packages";
 
 export const metadata: Metadata = {
   title: "Education Access Initiative | SmartPrepAfrica",
@@ -99,9 +100,9 @@ const impactMetrics = [
 export default async function EducationAccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ interest?: string }>;
+  searchParams: Promise<{ interest?: string; package?: string }>;
 }) {
-  const { interest } = await searchParams;
+  const { interest, package: packageId } = await searchParams;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -174,6 +175,34 @@ export default async function EducationAccessPage({
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Sponsorship packages */}
+        <section className="mx-auto max-w-6xl px-6 py-12">
+          <h2 className="text-center text-h2 font-semibold text-text-primary">Sponsorship Packages</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-text-secondary">
+            Suggested giving levels to help you decide where to start — every package can be
+            adjusted to fit your organization&apos;s goals.
+          </p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {SPONSOR_PACKAGES.map((pkg) => (
+              <div key={pkg.id} className="flex flex-col rounded-2xl border border-border bg-surface-raised p-6">
+                <p className="font-semibold text-text-primary">{pkg.name}</p>
+                <p className="mt-1 text-lg font-semibold text-brand-text">{pkg.suggestedAmount}</p>
+                <p className="mt-2 flex-1 text-sm text-text-secondary">{pkg.body}</p>
+                <Link
+                  href={`/education-access?package=${pkg.id}&interest=${pkg.interest}#sponsor-form`}
+                  className="mt-5 inline-block rounded-full bg-brand px-5 py-2 text-center text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+                >
+                  Select This Package
+                </Link>
+              </div>
+            ))}
+          </div>
+          <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-text-muted">
+            Amounts shown are suggested starting points, not fixed prices — final scope and
+            terms are confirmed directly with your organization.
+          </p>
         </section>
 
         {/* Flagship program */}
@@ -278,7 +307,7 @@ export default async function EducationAccessPage({
             will follow up.
           </p>
           <div className="mt-6">
-            <EducationAccessInquiryForm defaultInterest={interest} />
+            <EducationAccessInquiryForm defaultInterest={interest} defaultPackage={packageId} />
           </div>
         </section>
       </main>

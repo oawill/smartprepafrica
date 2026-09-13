@@ -38,6 +38,15 @@ const INTEREST_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+const PACKAGE_LABELS: Record<string, string> = {
+  STUDENT_SPONSOR: "Student Sponsor",
+  CLASSROOM_SPONSOR: "Classroom Sponsor",
+  SCHOOL_PARTNER: "School Partner",
+  COMMUNITY_CHAMPION: "Community Champion",
+  FLAGSHIP_AI_TUTOR: "Flagship Partner",
+  CUSTOM: "Custom Package",
+};
+
 export default async function AdminEducationAccessPage({
   searchParams,
 }: {
@@ -127,6 +136,7 @@ export default async function AdminEducationAccessPage({
               </div>
               <p className="mt-1 text-xs text-text-muted">
                 {ORG_TYPE_LABELS[inquiry.organizationType]} · {INTEREST_LABELS[inquiry.sponsorshipInterest]}
+                {inquiry.packageInterest ? ` · ${PACKAGE_LABELS[inquiry.packageInterest]}` : ""}
                 {inquiry.estimatedStudents ? ` · ~${inquiry.estimatedStudents} students` : ""}
               </p>
               <p className="mt-2 text-sm text-text-secondary">{inquiry.message}</p>

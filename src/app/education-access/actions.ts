@@ -31,6 +31,15 @@ const interests = [
   "OTHER",
 ] as const;
 
+const packages = [
+  "STUDENT_SPONSOR",
+  "CLASSROOM_SPONSOR",
+  "SCHOOL_PARTNER",
+  "COMMUNITY_CHAMPION",
+  "FLAGSHIP_AI_TUTOR",
+  "CUSTOM",
+] as const;
+
 const inquirySchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required.").max(150),
   organization: z.string().trim().max(200).optional(),
@@ -39,6 +48,7 @@ const inquirySchema = z.object({
   country: z.string().trim().max(100).optional(),
   organizationType: z.enum(orgTypes),
   sponsorshipInterest: z.enum(interests),
+  packageInterest: z.enum(packages).optional().or(z.literal("").transform(() => undefined)),
   estimatedStudents: z.coerce.number().int().positive().optional().or(z.literal("").transform(() => undefined)),
   message: z.string().trim().min(10, "Message must be at least 10 characters.").max(5000),
 });
@@ -86,6 +96,7 @@ export async function submitEducationAccessInquiry(
       country: data.country || undefined,
       organizationType: data.organizationType,
       sponsorshipInterest: data.sponsorshipInterest,
+      packageInterest: data.packageInterest,
       estimatedStudents: data.estimatedStudents,
       message: data.message,
       userId: session?.user.id,
