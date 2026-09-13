@@ -91,6 +91,12 @@ export const fr: Dictionary = {
     findPlanBody: "Choisissez des options de préparation aux examens et d'apprentissage adaptées à vos objectifs.",
     viewPlansAndPricing: "Voir les formules et tarifs",
     startLearning: "Commencer à apprendre",
+    educationAccessLabel: "Initiative d'accès à l'éducation",
+    educationAccessTitle: "Aidez un élève à apprendre. Aidez une communauté à grandir.",
+    educationAccessBody:
+      "Grâce à l'Initiative d'accès à l'éducation de SmartPrepAfrica, particuliers et organisations peuvent parrainer l'accès à la préparation aux examens, aux cours numériques et à l'apprentissage par IA pour les élèves qui en ont le plus besoin.",
+    sponsorStudents: "Parrainer des élèves",
+    exploreInitiative: "Découvrir l'initiative",
   },
   login: {
     welcomeBack: "Content de vous revoir",
