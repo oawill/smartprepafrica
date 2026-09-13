@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { submitEducationAccessInquiry, type EducationAccessResult } from "@/app/education-access/actions";
+import { findSponsorPackage } from "@/lib/education-access/packages";
 
 const orgTypeOptions = [
   { value: "INDIVIDUAL", label: "Individual" },
@@ -33,8 +34,15 @@ const inputClass =
   "mt-1 w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
 const labelClass = "block text-sm text-text-secondary";
 
-export function EducationAccessInquiryForm({ defaultInterest }: { defaultInterest?: string }) {
+export function EducationAccessInquiryForm({
+  defaultInterest,
+  defaultPackage,
+}: {
+  defaultInterest?: string;
+  defaultPackage?: string;
+}) {
   const [state, formAction, isPending] = useActionState(submitEducationAccessInquiry, initialState);
+  const selectedPackage = findSponsorPackage(defaultPackage);
 
   if (state.success) {
     return (
@@ -52,6 +60,13 @@ export function EducationAccessInquiryForm({ defaultInterest }: { defaultInteres
 
   return (
     <form action={formAction} className="space-y-4">
+      {selectedPackage && (
+        <div className="rounded-lg border border-brand/30 bg-brand/5 px-4 py-3 text-sm text-text-secondary">
+          Selected package: <strong className="text-text-primary">{selectedPackage.name}</strong>{" "}
+          ({selectedPackage.suggestedAmount})
+        </div>
+      )}
+      {selectedPackage && <input type="hidden" name="packageInterest" value={selectedPackage.id} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="fullName">
@@ -93,7 +108,14 @@ export function EducationAccessInquiryForm({ defaultInterest }: { defaultInteres
           <label className={labelClass} htmlFor="estimatedStudents">
             Estimated Number of Students to Support (optional)
           </label>
-          <input id="estimatedStudents" name="estimatedStudents" type="number" min={1} className={inputClass} />
+          <input
+            id="estimatedStudents"
+            name="estimatedStudents"
+            type="number"
+            min={1}
+            defaultValue={selectedPackage?.estimatedStudents}
+            className={inputClass}
+          />
         </div>
       </div>
 

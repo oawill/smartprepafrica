@@ -2971,6 +2971,20 @@ enum EducationAccessInterest {
   OTHER
 }
 
+// A suggested giving tier selected on the public page (see
+// src/lib/education-access/packages.ts) — informational only, never a
+// price actually charged on-platform (sponsor funding happens off-platform,
+// same as SchoolLicensePurchase's note on Voucher). Optional: a plain
+// enquiry with no package selected is still valid.
+enum EducationAccessPackage {
+  STUDENT_SPONSOR
+  CLASSROOM_SPONSOR
+  SCHOOL_PARTNER
+  COMMUNITY_CHAMPION
+  FLAGSHIP_AI_TUTOR
+  CUSTOM
+}
+
 // Deliberately distinct from ContactStatus — this is a sponsorship/
 // partnership pipeline (CONTACTED -> PARTNER_CONFIRMED -> SPONSORED),
 // not a general support-ticket lifecycle, so it gets its own model
@@ -2998,6 +3012,7 @@ model EducationAccessInquiry {
   country             String?
   organizationType    EducationAccessOrgType
   sponsorshipInterest EducationAccessInterest
+  packageInterest     EducationAccessPackage?
   estimatedStudents   Int?
   message             String
 
