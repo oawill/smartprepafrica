@@ -4,6 +4,8 @@ import { PublicHeader } from "@/components/brand/public-header";
 import { Footer } from "@/components/brand/footer";
 import { EducationAccessInquiryForm } from "@/components/education-access/inquiry-form";
 import { SPONSOR_PACKAGES } from "@/lib/education-access/packages";
+import { getEducationAccessImpact } from "@/lib/education-access/impact";
+import { getPlatformSettings } from "@/lib/legal/settings";
 
 export const metadata: Metadata = {
   title: "Education Access Initiative | SmartPrepAfrica",
@@ -88,13 +90,10 @@ const howItWorks = [
   { step: "4", title: "Track the Impact", body: "Sponsors receive appropriate impact reporting based on the sponsored program." },
 ] as const;
 
-const impactMetrics = [
-  "Students Sponsored",
-  "Schools Reached",
-  "Communities Supported",
-  "Learning Sessions",
-  "Exam Preparation Sessions",
-  "Sponsor-Funded Accounts",
+const establishedFacts = [
+  "Exam preparation for WAEC, NECO, UTME, and Post-UTME with an AI-assisted study coach, practice questions, and mock exams.",
+  "Live and recorded classes from independent schools, teachers, and organizations across academics, career development, technology, and life skills.",
+  "An existing sponsorship system already used to fund student access — the same system that powers the packages on this page.",
 ] as const;
 
 export default async function EducationAccessPage({
@@ -103,6 +102,17 @@ export default async function EducationAccessPage({
   searchParams: Promise<{ interest?: string; package?: string }>;
 }) {
   const { interest, package: packageId } = await searchParams;
+  const [impact, settings] = await Promise.all([getEducationAccessImpact(), getPlatformSettings()]);
+  const legalName = settings.companyLegalName || "Cicerah Technologies Limited";
+
+  const impactMetrics = [
+    { label: "Students Sponsored", value: impact.studentsSponsored },
+    { label: "Schools with Active Sponsorship Programs", value: impact.schoolsReached },
+    { label: "States Reached", value: impact.statesReached },
+    { label: "Lessons Completed by Sponsored Students", value: impact.lessonsCompleted },
+    { label: "Exam Attempts by Sponsored Students", value: impact.examAttempts },
+    { label: "Certificates Earned by Sponsored Students", value: impact.certificates },
+  ];
 
   return (
     <div className="flex flex-1 flex-col">
@@ -149,6 +159,20 @@ export default async function EducationAccessPage({
             otherwise be excluded because of affordability, limited educational resources, or
             geographic location.
           </p>
+        </section>
+
+        {/* Foundation credibility */}
+        <section className="mx-auto max-w-3xl px-6 py-12">
+          <h2 className="text-h2 font-semibold text-text-primary">An Established Platform, Not a Pilot</h2>
+          <p className="mt-3 text-text-secondary">
+            SmartPrepAfrica is operated by {legalName}. The Education Access Initiative runs on
+            top of a platform already in real use, including:
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-text-secondary">
+            {establishedFacts.map((fact) => (
+              <li key={fact}>· {fact}</li>
+            ))}
+          </ul>
         </section>
 
         {/* How Sponsors Can Help */}
@@ -263,20 +287,38 @@ export default async function EducationAccessPage({
           </div>
         </section>
 
-        {/* Impact placeholder */}
+        {/* Impact dashboard — real, platform-wide figures */}
         <section id="impact" className="mx-auto max-w-6xl px-6 py-12">
           <h2 className="text-center text-h2 font-semibold text-text-primary">Our Impact</h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-sm text-text-secondary">
-            Impact reporting coming soon.
+            Live figures from students who have redeemed a sponsor-funded seat on SmartPrepAfrica.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {impactMetrics.map((metric) => (
-              <div key={metric} className="rounded-xl border border-border bg-surface-raised p-5 text-center">
-                <p className="text-xs uppercase tracking-wide text-text-muted">{metric}</p>
-                <p className="mt-2 text-2xl font-semibold text-text-muted">—</p>
+              <div key={metric.label} className="rounded-xl border border-border bg-surface-raised p-5 text-center">
+                <p className="text-xs uppercase tracking-wide text-text-muted">{metric.label}</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">
+                  {metric.value.toLocaleString("en-US")}
+                </p>
               </div>
             ))}
           </div>
+        </section>
+
+        {/* How your support is used */}
+        <section className="mx-auto max-w-3xl px-6 py-12">
+          <h2 className="text-h2 font-semibold text-text-primary">How Your Support Is Used</h2>
+          <p className="mt-3 text-text-secondary">
+            Sponsorships and partnerships here are arranged directly with the SmartPrepAfrica team
+            rather than through an online checkout — so no card-processing or platform fee is
+            deducted from your gift before it funds student access.
+          </p>
+          <p className="mt-3 text-text-secondary">
+            {legalName} is a private company, not a registered nonprofit — sponsorships through
+            the Education Access Initiative are programmatic partnerships, not tax-deductible
+            charitable donations. We want that clear up front, especially for organizations doing
+            their own compliance review.
+          </p>
         </section>
 
         {/* Partner with us */}
