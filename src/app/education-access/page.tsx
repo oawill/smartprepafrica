@@ -6,6 +6,7 @@ import { EducationAccessInquiryForm } from "@/components/education-access/inquir
 import { SPONSOR_PACKAGES } from "@/lib/education-access/packages";
 import { getEducationAccessImpact } from "@/lib/education-access/impact";
 import { getPlatformSettings } from "@/lib/legal/settings";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Education Access Initiative | SmartPrepAfrica",
@@ -90,6 +91,25 @@ const howItWorks = [
   { step: "4", title: "Track the Impact", body: "Sponsors receive appropriate impact reporting based on the sponsored program." },
 ] as const;
 
+const partnershipCategories = [
+  {
+    title: "Corporate CSR",
+    body: "Support student cohorts, schools, or communities through corporate education initiatives.",
+  },
+  {
+    title: "Foundations",
+    body: "Support measurable education-access programs aligned with learning, digital inclusion, examination readiness, and youth development.",
+  },
+  {
+    title: "NGOs and Development Organizations",
+    body: "Integrate SmartPrepAfrica into education, youth-development, and digital-learning programs.",
+  },
+  {
+    title: "Diaspora and Alumni Organizations",
+    body: "Support schools, communities, and students in Nigeria and across Africa.",
+  },
+] as const;
+
 const establishedFacts = [
   "Exam preparation for WAEC, NECO, UTME, and Post-UTME with an AI-assisted study coach, practice questions, and mock exams.",
   "Live and recorded classes from independent schools, teachers, and organizations across academics, career development, technology, and life skills.",
@@ -102,7 +122,11 @@ export default async function EducationAccessPage({
   searchParams: Promise<{ interest?: string; package?: string }>;
 }) {
   const { interest, package: packageId } = await searchParams;
-  const [impact, settings] = await Promise.all([getEducationAccessImpact(), getPlatformSettings()]);
+  const [impact, settings, schools] = await Promise.all([
+    getEducationAccessImpact(),
+    getPlatformSettings(),
+    prisma.school.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+  ]);
   const legalName = settings.companyLegalName || "Cicerah Technologies Limited";
 
   const impactMetrics = [
@@ -113,6 +137,7 @@ export default async function EducationAccessPage({
     { label: "Exam Attempts by Sponsored Students", value: impact.examAttempts },
     { label: "Certificates Earned by Sponsored Students", value: impact.certificates },
   ];
+  const hasRealImpactData = impactMetrics.some((m) => m.value > 0);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -201,32 +226,34 @@ export default async function EducationAccessPage({
           </div>
         </section>
 
-        {/* Sponsorship packages */}
-        <section className="mx-auto max-w-6xl px-6 py-12">
-          <h2 className="text-center text-h2 font-semibold text-text-primary">Sponsorship Packages</h2>
+        {/* Choose Your Impact */}
+        <section id="choose-your-impact" className="mx-auto max-w-6xl px-6 py-12">
+          <h2 className="text-center text-h2 font-semibold text-text-primary">Choose Your Impact</h2>
           <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-text-secondary">
-            Suggested giving levels to help you decide where to start — every package can be
-            adjusted to fit your organization&apos;s goals.
+            Every sponsorship level can be adjusted to fit your organization&apos;s goals — pricing
+            is confirmed directly with your organization, not fixed on this page.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {SPONSOR_PACKAGES.map((pkg) => (
               <div key={pkg.id} className="flex flex-col rounded-2xl border border-border bg-surface-raised p-6">
                 <p className="font-semibold text-text-primary">{pkg.name}</p>
-                <p className="mt-1 text-lg font-semibold text-brand-text">{pkg.suggestedAmount}</p>
-                <p className="mt-2 flex-1 text-sm text-text-secondary">{pkg.body}</p>
+                <p className="mt-2 text-sm text-text-secondary">{pkg.body}</p>
+                {pkg.items.length > 0 && (
+                  <ul className="mt-4 flex-1 space-y-1 text-sm text-text-secondary">
+                    {pkg.items.map((item) => (
+                      <li key={item}>· {item}</li>
+                    ))}
+                  </ul>
+                )}
                 <Link
-                  href={`/education-access?package=${pkg.id}&interest=${pkg.interest}#sponsor-form`}
+                  href={`/education-access/sponsor?package=${pkg.id}&interest=${pkg.interest}`}
                   className="mt-5 inline-block rounded-full bg-brand px-5 py-2 text-center text-sm font-medium text-brand-foreground hover:bg-brand-hover"
                 >
-                  Select This Package
+                  {pkg.cta}
                 </Link>
               </div>
             ))}
           </div>
-          <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-text-muted">
-            Amounts shown are suggested starting points, not fixed prices — final scope and
-            terms are confirmed directly with your organization.
-          </p>
         </section>
 
         {/* Flagship program */}
@@ -249,12 +276,20 @@ export default async function EducationAccessPage({
               <li>· Partner with schools and community organizations</li>
               <li>· Measure student participation and learning engagement</li>
             </ul>
-            <Link
-              href="/education-access?interest=AI_TUTOR_10K#sponsor-form"
-              className="mt-6 inline-block rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
-            >
-              Support the 10,000 Students Initiative
-            </Link>
+            <div className="mt-6 flex flex-wrap justify-center gap-4">
+              <Link
+                href="/education-access/10000-students"
+                className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              >
+                Support the 10,000 Students Initiative
+              </Link>
+              <Link
+                href="/education-access/10000-students"
+                className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
+              >
+                Learn More
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -291,7 +326,9 @@ export default async function EducationAccessPage({
         <section id="impact" className="mx-auto max-w-6xl px-6 py-12">
           <h2 className="text-center text-h2 font-semibold text-text-primary">Our Impact</h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-sm text-text-secondary">
-            Live figures from students who have redeemed a sponsor-funded seat on SmartPrepAfrica.
+            {hasRealImpactData
+              ? "Live figures from students who have redeemed a sponsor-funded seat on SmartPrepAfrica."
+              : "Our first Education Access partnerships are being developed. Impact reporting will be published as programs launch."}
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {impactMetrics.map((metric) => (
@@ -303,6 +340,11 @@ export default async function EducationAccessPage({
               </div>
             ))}
           </div>
+          <p className="mt-6 text-center">
+            <Link href="/education-access/impact" className="text-sm text-brand-text hover:underline">
+              View Full Impact Report →
+            </Link>
+          </p>
         </section>
 
         {/* How your support is used */}
@@ -322,22 +364,37 @@ export default async function EducationAccessPage({
         </section>
 
         {/* Partner with us */}
-        <section id="partner" className="mx-auto max-w-4xl px-6 py-12">
+        <section id="partner" className="mx-auto max-w-6xl px-6 py-12">
           <div className="rounded-2xl border border-border bg-surface-raised p-8 text-center">
-            <h2 className="text-h1 font-semibold text-text-primary">Partner With Us to Expand Education Access</h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">
-              SmartPrepAfrica welcomes partnerships with organizations committed to improving
-              access to quality education and digital learning across Africa — foundations,
-              corporate CSR programs, NGOs, international development organizations, diaspora
-              associations, alumni associations, faith-based organizations, schools, and
-              education-focused philanthropists.
+            <h2 className="text-h1 font-semibold text-text-primary">
+              Partner With SmartPrepAfrica to Expand Education Access
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm text-text-secondary">
+              SmartPrepAfrica works with foundations, corporations, NGOs, diaspora organizations,
+              and education partners to provide students with access to digital learning, exam
+              preparation, and AI-supported education.
             </p>
+            <div className="mx-auto mt-8 grid max-w-4xl gap-4 text-left sm:grid-cols-2">
+              {partnershipCategories.map((cat) => (
+                <div key={cat.title} className="rounded-xl border border-border bg-surface p-5">
+                  <p className="font-semibold text-text-primary">{cat.title}</p>
+                  <p className="mt-2 text-sm text-text-secondary">{cat.body}</p>
+                </div>
+              ))}
+            </div>
             <Link
               href="/education-access?interest=FOUNDATION_PARTNERSHIP#sponsor-form"
-              className="mt-6 inline-block rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
+              className="mt-8 inline-block rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
             >
-              Become an Education Access Partner
+              Request Partnership Information
             </Link>
+            <p className="mx-auto mt-4 max-w-xl text-xs text-text-muted">
+              Read the full{" "}
+              <Link href="/education-access/partners" className="text-brand-text hover:underline">
+                partnership overview for foundations and institutional funders
+              </Link>
+              .
+            </p>
           </div>
         </section>
 
@@ -349,7 +406,7 @@ export default async function EducationAccessPage({
             will follow up.
           </p>
           <div className="mt-6">
-            <EducationAccessInquiryForm defaultInterest={interest} defaultPackage={packageId} />
+            <EducationAccessInquiryForm defaultInterest={interest} defaultPackage={packageId} schools={schools} />
           </div>
         </section>
       </main>

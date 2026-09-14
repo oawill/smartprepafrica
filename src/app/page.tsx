@@ -297,18 +297,21 @@ export default async function Home() {
             <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary">{t.educationAccessBody}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
-                href="/education-access"
+                href="/education-access#choose-your-impact"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
               >
                 {t.sponsorStudents}
               </Link>
               <Link
-                href="/education-access"
+                href="/education-access#partner"
                 className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-text-primary hover:border-text-muted"
               >
                 {t.exploreInitiative}
               </Link>
             </div>
+            <Link href="/education-access" className="mt-4 inline-block text-sm text-brand-text hover:underline">
+              {t.viewEducationAccessInitiative}
+            </Link>
           </div>
         </section>
 

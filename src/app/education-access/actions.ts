@@ -50,7 +50,14 @@ const inquirySchema = z.object({
   sponsorshipInterest: z.enum(interests),
   packageInterest: z.enum(packages).optional().or(z.literal("").transform(() => undefined)),
   estimatedStudents: z.coerce.number().int().positive().optional().or(z.literal("").transform(() => undefined)),
+  preferredLocation: z.string().trim().max(200).optional(),
+  preferredSchoolId: z.string().trim().min(1).optional().or(z.literal("").transform(() => undefined)),
   message: z.string().trim().min(10, "Message must be at least 10 characters.").max(5000),
+  consentGiven: z
+    .string()
+    .optional()
+    .transform((v) => v === "on")
+    .refine((v) => v, { message: "Please confirm you consent to being contacted." }),
 });
 
 export type EducationAccessResult = { error: string | null; success: boolean };
@@ -98,10 +105,13 @@ export async function submitEducationAccessInquiry(
       sponsorshipInterest: data.sponsorshipInterest,
       packageInterest: data.packageInterest,
       estimatedStudents: data.estimatedStudents,
+      preferredLocation: data.preferredLocation || undefined,
+      preferredSchoolId: data.preferredSchoolId,
+      consentGiven: data.consentGiven,
       message: data.message,
       userId: session?.user.id,
       ipHash: ipHash ?? undefined,
-      status: "NEW",
+      status: "INQUIRY",
     },
   });
 

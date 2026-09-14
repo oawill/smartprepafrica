@@ -3,60 +3,93 @@ import type { EducationAccessInterest, EducationAccessPackage } from "@prisma/cl
 export type SponsorPackage = {
   id: EducationAccessPackage;
   name: string;
-  suggestedAmount: string;
   body: string;
+  items: string[];
   interest: EducationAccessInterest;
   estimatedStudents?: number;
+  cta: string;
 };
 
-// Suggested giving tiers shown on /education-access — informational only,
-// never charged on-platform (sponsor funding happens off-platform). Shared
-// by the public page and the inquiry form so copy and enum values can't
+// "Choose Your Impact" — count-based sponsorship tiers shown on
+// /education-access. Deliberately no pricing: sponsorship amounts are
+// agreed directly with each sponsor, not fixed on-platform. Shared by the
+// public page and the sponsorship form so copy and enum values can't
 // drift apart.
 export const SPONSOR_PACKAGES: SponsorPackage[] = [
   {
     id: "STUDENT_SPONSOR",
-    name: "Student Sponsor",
-    suggestedAmount: "$60 / student / term",
-    body: "Full SmartPrepAfrica access — exam prep, AI Study Coach, digital lessons — for one student for one academic term.",
+    name: "Sponsor 1 Student",
+    body: "Fund SmartPrepAfrica access for one individual student.",
+    items: [
+      "SmartPrepAfrica learning access",
+      "Exam preparation",
+      "Practice questions and drills",
+      "Study guides",
+      "AI-supported learning access where applicable",
+    ],
     interest: "SPONSOR_STUDENT",
+    estimatedStudents: 1,
+    cta: "Sponsor 1 Student",
   },
   {
     id: "CLASSROOM_SPONSOR",
-    name: "Classroom Sponsor",
-    suggestedAmount: "$500",
-    body: "Covers a full classroom of approximately 10 students for one term.",
+    name: "Sponsor 10 Students",
+    body: "For families, small businesses, alumni groups, and community organizations ready to support a small group of students.",
+    items: [
+      "SmartPrepAfrica learning access for 10 students",
+      "Exam preparation",
+      "Practice questions and drills",
+      "Study guides",
+      "AI-supported learning access where applicable",
+    ],
     interest: "SPONSOR_STUDENT",
     estimatedStudents: 10,
+    cta: "Sponsor 10 Students",
   },
   {
     id: "SCHOOL_PARTNER",
-    name: "School Partner",
-    suggestedAmount: "$2,500 / year",
-    body: "Covers a full partner school — roughly 50 students — for a full academic year, plus school-level reporting.",
-    interest: "SPONSOR_SCHOOL",
+    name: "Sponsor 50 Students",
+    body: "For companies, NGOs, diaspora associations, and community groups ready to support a larger cohort of students.",
+    items: [
+      "SmartPrepAfrica learning access for 50 students",
+      "Exam preparation",
+      "Practice questions and drills",
+      "Study guides",
+      "AI-supported learning access where applicable",
+    ],
+    interest: "SPONSOR_STUDENT",
     estimatedStudents: 50,
+    cta: "Sponsor 50 Students",
   },
   {
     id: "COMMUNITY_CHAMPION",
-    name: "Community Champion",
-    suggestedAmount: "$10,000+",
-    body: "Supports students across a community, LGA, or targeted region — scope confirmed together based on your goals.",
-    interest: "SPONSOR_COMMUNITY",
+    name: "Sponsor a Classroom",
+    body: "Sponsor a defined classroom or student cohort — the number of students is confirmed together based on the group you want to support.",
+    items: ["SmartPrepAfrica learning access for the classroom", "Exam preparation", "Digital learning resources"],
+    interest: "SPONSOR_STUDENT",
+    cta: "Sponsor a Classroom",
   },
   {
     id: "FLAGSHIP_AI_TUTOR",
-    name: "Flagship Partner",
-    suggestedAmount: "Major gift",
-    body: "Become a named partner on the AI Tutor for 10,000 Students flagship program.",
-    interest: "AI_TUTOR_10K",
+    name: "Sponsor a School",
+    body: "A larger institutional partnership supporting a full partner school.",
+    items: [
+      "Student access",
+      "Teacher participation where applicable",
+      "Exam-preparation resources",
+      "Digital learning resources",
+      "Impact reporting",
+    ],
+    interest: "SPONSOR_SCHOOL",
+    cta: "Sponsor a School",
   },
   {
     id: "CUSTOM",
-    name: "Design a Custom Package",
-    suggestedAmount: "Let's talk",
-    body: "Every organization's giving goals are different — tell us what you'd like to achieve and we'll design a package together.",
-    interest: "OTHER",
+    name: "Custom Partnership",
+    body: "For foundations, corporations, governments, NGOs, and large institutional sponsors with their own program goals.",
+    items: [],
+    interest: "FOUNDATION_PARTNERSHIP",
+    cta: "Discuss a Partnership",
   },
 ];
 
