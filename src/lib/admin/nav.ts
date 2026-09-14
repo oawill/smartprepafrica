@@ -113,6 +113,16 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         href: "/dashboard/admin/education-access/partners",
         permission: "education_access.partners_manage",
       },
+      {
+        label: "Grants",
+        href: "/dashboard/admin/education-access/grants",
+        permission: "education_access.grants_manage",
+      },
+      {
+        label: "Funder Reports",
+        href: "/dashboard/admin/education-access/reports",
+        permission: "education_access.grants_manage",
+      },
     ],
   },
   {
