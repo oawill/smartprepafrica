@@ -120,6 +120,7 @@ model User {
   examProfiles            StudentExamProfile[]
   aiInsights              AiLearningInsight[]
   aiUsageLogs             AiUsageLog[]
+  studyPlans              StudyPlan[]
 
   referralsSent    Referral[] @relation("Referrer")
   referralReceived Referral?  @relation("Referred")
@@ -206,6 +207,23 @@ enum AcademicTrack {
   UNDECIDED
 }
 
+enum StudyDayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum StudyPeriod {
+  MORNING
+  AFTERNOON
+  EVENING
+  NO_PREFERENCE
+}
+
 model StudentProfile {
   id             String     @id @default(cuid())
   user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -226,14 +244,24 @@ model StudentProfile {
   // a real "Not sure yet" answer. Drives subject/dashboard/AI-coach
   // personalization; never blocks access when absent.
   academicTrack       AcademicTrack?
-  onboardingCompleted Boolean             @default(false)
-  weakSubjects        Subject[]           @relation("StudentWeakSubjects")
+  onboardingCompleted Boolean        @default(false)
+  weakSubjects        Subject[]      @relation("StudentWeakSubjects")
   studyGoal           String?
+
+  // Weekly Study Plan availability preferences — collected as onboarding's
+  // 7th step (or, for already-onboarded students, from /study-plan's
+  // "Create My Study Plan" empty state). null dailyStudyMinutes means no
+  // plan can be generated yet; studyDays defaults to empty (nothing
+  // scheduled) rather than guessing which days the student is free.
+  dailyStudyMinutes    Int?
+  studyDays            StudyDayOfWeek[] @default([])
+  preferredStudyPeriod StudyPeriod?
+
   // Non-sequential (unlike User.studentNumber), shown to the student to share
   // with a parent/guardian — deliberately not enumerable since it grants
   // access to this student's academic data once linked.
-  linkCode            String?             @unique
-  parentLinks         ParentStudentLink[] @relation("StudentLinks")
+  linkCode    String?             @unique
+  parentLinks ParentStudentLink[] @relation("StudentLinks")
 
   // Gamification — see src/lib/gamification/xp-service.ts for the award
   // logic. xp is a denormalized total kept in sync with the XpEvent
@@ -975,6 +1003,7 @@ model Subject {
   examProfiles     StudentExamProfile[]      @relation("StudentExamProfileSubjects")
   aiInsights       AiLearningInsight[]
   weakForStudents  StudentProfile[]          @relation("StudentWeakSubjects")
+  studyPlanItems   StudyPlanItem[]
 
   // Admin-controlled (Admin -> Subjects) academic-track mapping driving
   // /onboarding's subject suggestions. Empty = General/All — shown as a
@@ -2002,10 +2031,94 @@ model StudentExamProfile {
   subjects      Subject[] @relation("StudentExamProfileSubjects")
   institutionId String?
   courseId      String?
+  // Optional, student-entered sitting date for this exam (mirrors
+  // SatScoreGoal.testDate) — drives the Study Plan's exam countdown and
+  // its intensity ramp as the date approaches. No admin-managed global
+  // exam-cycle date exists; this is purely per-student.
+  examDate      DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@unique([userId, exam])
+}
+
+enum StudyPlanStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  STALE
+}
+
+enum StudyActivityType {
+  LESSON
+  PRACTICE_DRILL
+  MOCK_EXAM
+  AI_COACH_SESSION
+  REVIEW_MISTAKES
+}
+
+enum StudyPlanItemStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  MISSED
+  RESCHEDULED
+}
+
+// One row per (student, week). See src/lib/study-plan/regenerate.ts —
+// inputFingerprint is a hash of coarse/banded inputs (never raw scores) so
+// regeneration can cheaply no-op when nothing that matters has changed.
+// subjectMasterySnapshot captures each subject's average mastery at
+// generation time, purely so the following week's summary can show a real
+// before/after delta without a separate trend table.
+model StudyPlan {
+  id                     String          @id @default(cuid())
+  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                 String
+  weekStart              DateTime
+  status                 StudyPlanStatus @default(ACTIVE)
+  generatedAt            DateTime        @default(now())
+  lastRegeneratedAt      DateTime        @default(now())
+  regenerationReason     String?
+  inputFingerprint       String
+  subjectMasterySnapshot Json?
+  items                  StudyPlanItem[]
+
+  @@unique([userId, weekStart])
+}
+
+// One recommended activity on one day of a StudyPlan. The unique constraint
+// on the natural key (date, subject, topic, activityType) is the structural
+// duplicate-prevention backstop under races — see regenerate.ts's diff-and-
+// merge strategy, which relies on a colliding insert being a safe no-op.
+model StudyPlanItem {
+  id                   String              @id @default(cuid())
+  studyPlan            StudyPlan           @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  studyPlanId          String
+  date                 DateTime
+  subject              Subject             @relation(fields: [subjectId], references: [id])
+  subjectId            String
+  // Matches Question.topic / Lesson.topic / StudentTopicMastery.topic — the
+  // same plain-string convention used across the codebase for a topic.
+  topic                String
+  activityType         StudyActivityType
+  // e.g. a Lesson id — resolved into a real deep link at render time, never
+  // stored as a URL so a route rename can't silently orphan old links.
+  activityReference    String?
+  recommendedMinutes   Int
+  priority             Int                 @default(0)
+  status               StudyPlanItemStatus @default(PENDING)
+  recommendationReason String
+  completedAt          DateTime?
+  order                Int                 @default(0)
+  // A student-added personal session (brief's "Add personal study
+  // sessions") — always excluded from regeneration's recompute, exactly
+  // like a COMPLETED/IN_PROGRESS item, so it's never silently removed.
+  isCustom             Boolean             @default(false)
+
+  @@unique([studyPlanId, date, subjectId, topic, activityType])
+  @@index([studyPlanId, date])
 }
 
 // One row per (student, exam, day) — captures the readiness % at most once

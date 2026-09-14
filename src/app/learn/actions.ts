@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { recordTopicAttempts, refreshTopicInsights } from "@/lib/ai/mastery-service";
 import { recordCrossoverAttempts } from "@/lib/learning/prep-crossover";
 import { awardXp } from "@/lib/gamification/xp-service";
+import { recordLessonActivityCompletion } from "@/lib/study-plan/regenerate";
 import { awardEnrollmentCommission } from "@/lib/teachers/compensation";
 import { notifyUser } from "@/lib/notify";
 import { getUserPlan } from "@/lib/ai/limits";
@@ -187,6 +188,7 @@ export async function markLessonComplete(lessonId: string) {
   });
 
   await awardXp(session.user.id, "LESSON_COMPLETE", lessonId);
+  await recordLessonActivityCompletion(session.user.id, lessonId);
   await checkCourseCompletion(session.user.id, enrollment.id, courseId);
 
   revalidatePath(`/learn/${courseId}`);
@@ -228,6 +230,7 @@ export async function submitQuiz(lessonId: string, formData: FormData) {
   });
 
   await awardXp(session.user.id, "LESSON_COMPLETE", lessonId);
+  await recordLessonActivityCompletion(session.user.id, lessonId);
 
   const subjectId = lesson.module.course.subjectId;
   if (subjectId && lesson.topic && total > 0) {

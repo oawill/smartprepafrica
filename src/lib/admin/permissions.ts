@@ -65,7 +65,8 @@ export type Permission =
   | "education_access.manage"
   | "education_access.partners_manage"
   | "funding_center.view"
-  | "funding_center.manage";
+  | "funding_center.manage"
+  | "study_plan.view";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -133,6 +134,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "education_access.partners_manage",
   "funding_center.view",
   "funding_center.manage",
+  "study_plan.view",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -151,6 +153,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "subjects.manage",
     "readiness.view",
     "readiness.manage",
+    "study_plan.view",
     "courses.view",
     "curriculum.manage",
     "lessons.view",
@@ -208,6 +211,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "toefl.view",
     "sat.view",
     "readiness.view",
+    "study_plan.view",
     "whatsapp.view",
   ],
 };

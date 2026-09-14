@@ -6,6 +6,7 @@ import { buildSelectionUnits, selectContiguousUnits } from "@/lib/practice/attem
 import { examLabels } from "@/lib/exam-slugs";
 import { notifyUser } from "@/lib/notify";
 import { awardXp } from "@/lib/gamification/xp-service";
+import { recordDrillActivityCompletion } from "@/lib/study-plan/regenerate";
 
 /** Core of src/app/practice/actions.ts's startAttempt/saveAnswer/
  * submitAttempt, extracted into plain-argument, non-redirecting
@@ -197,6 +198,7 @@ export async function submitAttemptForUser(userId: string, attemptId: string) {
     // readiness stays distinct even for a shared subject/topic.
     await recordExamTopicAttempts(userId, attempt.exam, topicAttempts);
     await recordReadinessSnapshot(userId, attempt.exam);
+    await recordDrillActivityCompletion(userId, [...new Set(topicAttempts.map((t) => t.subjectId))]);
   }
 
   return { score, correctCount, totalItems: attempt.totalItems };

@@ -8,6 +8,9 @@ import { approveParentLink, rejectParentLink } from "@/app/dashboard/student/par
 import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { PersonalizeProfileCard } from "@/components/dashboard/personalize-profile-card";
+import { StudyPlanCard } from "@/components/dashboard/study-plan-card";
+import { getStudyPlanView, getTodayItems, getNextActivity } from "@/lib/study-plan/view";
+import { weekStartFor } from "@/lib/study-plan/regenerate";
 import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-service";
 import { getExamReadiness as getExamScopedReadiness } from "@/lib/practice/readiness-service";
 import { DashboardReadinessCard } from "@/components/readiness/dashboard-readiness-card";
@@ -37,10 +40,17 @@ export default async function StudentDashboard({
       xp: true,
       currentStreakDays: true,
       onboardingCompleted: true,
+      dailyStudyMinutes: true,
       weakSubjects: { select: { id: true, name: true } },
       targetSubjects: { select: { id: true, name: true } },
     },
   });
+
+  const studyPlanView = studentProfile?.dailyStudyMinutes
+    ? await getStudyPlanView(userId, weekStartFor(new Date()))
+    : null;
+  const todayItems = studyPlanView ? getTodayItems(studyPlanView) : [];
+  const nextActivity = studyPlanView ? getNextActivity(studyPlanView) : null;
   const preferredSubjectIds = [
     ...(studentProfile?.weakSubjects.map((s) => s.id) ?? []),
     ...(studentProfile?.targetSubjects.map((s) => s.id) ?? []),
@@ -176,6 +186,17 @@ export default async function StudentDashboard({
           title={t.personalizeCardTitle}
           body={t.personalizeCardBody}
           buttonLabel={t.personalizeCardButton}
+        />
+      )}
+
+      {(studentProfile?.onboardingCompleted || studentProfile?.dailyStudyMinutes) && (
+        <StudyPlanCard
+          hasPreferences={!!studentProfile?.dailyStudyMinutes}
+          todayItems={todayItems}
+          totalMinutesToday={todayItems.reduce((sum, i) => sum + i.recommendedMinutes, 0)}
+          weeklyCompletionPct={studyPlanView?.weeklyCompletionPct ?? null}
+          nextActivity={nextActivity}
+          currentStreakDays={studentProfile?.currentStreakDays ?? 0}
         />
       )}
 

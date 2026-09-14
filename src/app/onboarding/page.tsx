@@ -5,7 +5,7 @@ import { ensureStudentProfile } from "@/app/onboarding/actions";
 import { OnboardingWizard, type OnboardingStep } from "@/app/onboarding/onboarding-wizard";
 import { EXAM_CODE_TO_EXAM_TYPE, EXAM_TYPE_TO_EXAM_CODE } from "@/lib/exam-type-mapping";
 
-const STEP_ORDER: OnboardingStep[] = ["class", "track", "subjects", "exams", "weak-subjects", "goal"];
+const STEP_ORDER: OnboardingStep[] = ["class", "track", "subjects", "exams", "weak-subjects", "goal", "availability"];
 
 export default async function OnboardingPage({
   searchParams,
@@ -27,6 +27,9 @@ export default async function OnboardingPage({
       targetSubjects: { select: { id: true } },
       weakSubjects: { select: { id: true } },
       studyGoal: true,
+      dailyStudyMinutes: true,
+      studyDays: true,
+      preferredStudyPeriod: true,
       onboardingCompleted: true,
       user: { select: { countryId: true } },
     },
@@ -56,7 +59,8 @@ export default async function OnboardingPage({
   else if (profile.targetSubjects.length === 0) resumeStep = "subjects";
   else if (profile.targetExams.length === 0) resumeStep = "exams";
   else if (profile.weakSubjects.length === 0) resumeStep = "weak-subjects";
-  else resumeStep = "goal";
+  else if (!profile.studyGoal) resumeStep = "goal";
+  else resumeStep = "availability";
 
   const step = requestedStep && STEP_ORDER.includes(requestedStep) ? requestedStep : resumeStep;
 
@@ -85,6 +89,9 @@ export default async function OnboardingPage({
         examCodes: profile.targetExams.map((e) => EXAM_TYPE_TO_EXAM_CODE[e]),
         weakSubjectIds: profile.weakSubjects.map((s) => s.id),
         studyGoal: profile.studyGoal,
+        dailyStudyMinutes: profile.dailyStudyMinutes,
+        studyDays: profile.studyDays,
+        preferredStudyPeriod: profile.preferredStudyPeriod,
       }}
     />
   );
