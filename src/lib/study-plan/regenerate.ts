@@ -256,18 +256,27 @@ export async function regenerateStudyPlan(
     include: { items: true },
   });
 
-  if (existingPlan && !options.force && existingPlan.inputFingerprint === fingerprint) {
-    return { changed: false, itemsUnchanged: existingPlan.items.length, planId: existingPlan.id };
-  }
-
   // Bookkeeping pass: past-dated PENDING items always flip to MISSED,
-  // independent of the fingerprint check — this must never be skipped.
+  // independent of the fingerprint check below — this must never be
+  // skipped, or a quiet day (no other trigger event) would leave
+  // yesterday's unfinished items sitting as PENDING forever instead of
+  // MISSED, breaking the "welcome back, you missed N activities"
+  // experience (Today's Study depends on this running every time this
+  // function is called, including the cheap/no-op path).
   const today = startOfDay(now);
   const missedIds = (existingPlan?.items ?? [])
     .filter((i) => i.status === "PENDING" && startOfDay(i.date) < today)
     .map((i) => i.id);
   if (missedIds.length > 0) {
     await prisma.studyPlanItem.updateMany({ where: { id: { in: missedIds } }, data: { status: "MISSED" } });
+  }
+
+  if (existingPlan && !options.force && existingPlan.inputFingerprint === fingerprint) {
+    return {
+      changed: false,
+      itemsUnchanged: existingPlan.items.length - missedIds.length,
+      planId: existingPlan.id,
+    };
   }
 
   const protectedItems = (existingPlan?.items ?? []).filter(

@@ -9,6 +9,8 @@ import { AnswerOption, type AnswerOptionState } from "@/components/exam/answer-o
 import { Badge } from "@/components/ui/badge";
 import { DrillResults, type TopicBucket } from "@/components/readiness/drill-results";
 import { getRecommendedDrillAfterAttempt } from "@/lib/practice/readiness-service";
+import { getStudyPlanView, getCurrentActivity } from "@/lib/study-plan/view";
+import { weekStartFor } from "@/lib/study-plan/regenerate";
 
 export default async function ResultsPage({
   params,
@@ -69,12 +71,26 @@ export default async function ResultsPage({
     recommendedDrill = await getRecommendedDrillAfterAttempt(attemptId);
   }
 
+  // If this attempt completed a Today's Study activity, there's likely a
+  // next one waiting — surface a direct way back instead of requiring a
+  // manual return to the dashboard (brief's "return-to-study" behavior).
+  const studyPlanView = await getStudyPlanView(session.user.id, weekStartFor(new Date()));
+  const nextTodayActivity = studyPlanView ? getCurrentActivity(studyPlanView) : null;
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
       <div className="flex items-center justify-between gap-4">
         <Link href="/practice" className="text-sm text-text-secondary hover:text-text-primary">
           ← Back to exams
         </Link>
+        {nextTodayActivity && (
+          <Link
+            href="/study/today"
+            className="text-sm font-medium text-brand-text hover:underline"
+          >
+            Continue Today&apos;s Study →
+          </Link>
+        )}
         <AiCoachPanel
           context={{}}
           defaultMode="EXAM_PREP"
