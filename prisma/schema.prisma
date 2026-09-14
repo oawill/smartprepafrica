@@ -127,13 +127,18 @@ model User {
   createdVouchers  Voucher[]           @relation("VoucherIssuer")
   redeemedVouchers VoucherRedemption[]
 
-  legalAcceptances           LegalAcceptance[]
-  contactSubmissions         ContactSubmission[]          @relation("ContactSubmitter")
-  assignedContactSubmissions ContactSubmission[]          @relation("ContactAssignee")
-  educationAccessInquiries   EducationAccessInquiry[]     @relation("EducationAccessSubmitter")
-  educationAccessAssigned    EducationAccessInquiry[]     @relation("EducationAccessAssignee")
-  educationAccessBeneficiary EducationAccessBeneficiary[]
-  educationAccessGrantsOwned EducationAccessGrant[]
+  legalAcceptances                  LegalAcceptance[]
+  contactSubmissions                ContactSubmission[]                  @relation("ContactSubmitter")
+  assignedContactSubmissions        ContactSubmission[]                  @relation("ContactAssignee")
+  educationAccessInquiries          EducationAccessInquiry[]             @relation("EducationAccessSubmitter")
+  educationAccessAssigned           EducationAccessInquiry[]             @relation("EducationAccessAssignee")
+  educationAccessBeneficiary        EducationAccessBeneficiary[]
+  educationAccessOpportunitiesOwned EducationAccessFundingOpportunity[]
+  educationAccessQuestionsUpdated   EducationAccessApplicationQuestion[]
+  educationAccessOutreachOwned      EducationAccessOutreach[]
+  educationAccessTasksOwned         EducationAccessTask[]
+  educationAccessSavedSearches      EducationAccessSavedSearch[]
+  educationAccessKnowledgeApproved  EducationAccessKnowledgeEntry[]
 
   notifications Notification[]
 
@@ -2868,6 +2873,12 @@ model PlatformSettings {
   costPerStudentCurrency    String?
   costPerStudentApproved    Boolean @default(false)
 
+  // Phase 4 — Grant & Funding Center config (brief §20/§23/§28).
+  staleOpportunityThresholdDays      Int     @default(90)
+  aiTutorFundingGoalMinor            Int?
+  aiTutorFundingGoalCurrency         String?
+  aiTutorFundingGoalPublicVisibility Boolean @default(false)
+
   updatedAt DateTime @updatedAt
 }
 
@@ -3149,70 +3160,185 @@ model EducationAccessPartner {
   @@index([publicVisibility])
 }
 
-// ---------- Phase 3: grant pipeline (admin-only, never public) ----------
-// A funding opportunity from first research through application, decision,
-// and active reporting — one merged model rather than a separate
-// "opportunities being researched" table and a "grants applied for" table,
-// since a real record just moves further along one combined pipeline.
-enum EducationAccessGrantStatus {
-  PROSPECT
-  RESEARCHING
-  QUALIFIED
-  NOT_QUALIFIED
-  PREPARING
-  SUBMITTED
-  UNDER_REVIEW
-  AWARDED
-  DECLINED
-  ACTIVE
-  REPORTING
-  COMPLETED
-  CLOSED
-}
-
+// ---------- Phase 4: Grant & Funding Center (admin-only, never public) ----------
+// Replaces Phase 3's flat EducationAccessGrant (zero real rows anywhere,
+// never applied to production) with a normalized funder/opportunity model —
+// a funder is researched once and can have many opportunities and contacts
+// over time, which a flat table couldn't represent.
 enum GrantPriority {
   HIGH
   MEDIUM
   LOW
 }
 
-model EducationAccessGrant {
-  id                   String                     @id @default(cuid())
-  funderName           String
-  programName          String?
-  grantType            String?
+enum FunderOrgType {
+  PRIVATE_FOUNDATION
+  CORPORATE_FOUNDATION
+  CORPORATE_CSR
+  FAMILY_FOUNDATION
+  COMMUNITY_FOUNDATION
+  NGO
+  DEVELOPMENT_ORGANIZATION
+  MULTILATERAL_ORGANIZATION
+  GOVERNMENT_PROGRAM
+  PHILANTHROPIC_NETWORK
+  OTHER
+}
+
+model EducationAccessFunder {
+  id                          String        @id @default(cuid())
+  organizationName            String
+  organizationType            FunderOrgType
+  website                     String?
+  country                     String?
+  headquarters                String?
+  geographicFocus             String?
+  fundingFocus                String?
+  educationFocus              Boolean       @default(false)
+  technologyFocus             Boolean       @default(false)
+  youthFocus                  Boolean       @default(false)
+  africaFocus                 Boolean       @default(false)
+  nigeriaFocus                Boolean       @default(false)
+  typicalMinGrantMinor        Int?
+  typicalMaxGrantMinor        Int?
+  currency                    String?
+  applicationMethod           String?
+  acceptsUnsolicitedProposals Boolean?
+  notes                       String?
+  sourceUrl                   String?
+  lastVerifiedAt              DateTime?
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
+
+  contacts      EducationAccessFunderContact[]
+  opportunities EducationAccessFundingOpportunity[]
+  outreach      EducationAccessOutreach[]
+}
+
+enum RelationshipStrength {
+  NO_RELATIONSHIP
+  IDENTIFIED
+  INTRODUCED
+  INITIAL_CONTACT
+  CONVERSATION_STARTED
+  ACTIVE_RELATIONSHIP
+  EXISTING_PARTNER
+}
+
+model EducationAccessFunderContact {
+  id                   String                @id @default(cuid())
+  funder               EducationAccessFunder @relation(fields: [funderId], references: [id], onDelete: Cascade)
+  funderId             String
+  firstName            String
+  lastName             String?
+  title                String?
+  email                String?
+  phone                String?
+  linkedinUrl          String?
+  relationshipStrength RelationshipStrength  @default(NO_RELATIONSHIP)
+  notes                String?
+  lastContactedAt      DateTime?
+  nextFollowUp         DateTime?
+  createdAt            DateTime              @default(now())
+
+  outreach EducationAccessOutreach[]
+
+  @@index([funderId])
+}
+
+enum OpportunityStatus {
+  RESEARCH
+  QUALIFIED
+  PREPARING_LOI
+  LOI_SUBMITTED
+  INVITED_TO_APPLY
+  PROPOSAL_DRAFTING
+  SUBMITTED
+  UNDER_REVIEW
+  AWARDED
+  DECLINED
+  CLOSED
+}
+
+// Which Education Access program this opportunity is earmarked for —
+// GENERAL by default; AI_TUTOR_10K powers the flagship funding campaign
+// aggregates (brief §27).
+enum OpportunityProgramTag {
+  GENERAL
+  AI_TUTOR_10K
+}
+
+model EducationAccessFundingOpportunity {
+  id                   String                @id @default(cuid())
+  funder               EducationAccessFunder @relation(fields: [funderId], references: [id], onDelete: Cascade)
+  funderId             String
+  opportunityName      String
+  description          String?
+  opportunityUrl       String?
   country              String?
-  website              String?
-  contactName          String?
-  contactEmail         String?
-  fundingArea          String?
   geographicFocus      String?
-  // Editorial text, not a parsed amount — same treatment as
-  // EducationAccessInquiry.estimatedFundingRange.
-  typicalGrantSize     String?
+  fundingFocus         String?
+  eligibleCountries    String?
+  eligibleOrgTypes     String?
+  minimumAwardMinor    Int?
+  maximumAwardMinor    Int?
+  currency             String?
+  applicationOpenDate  DateTime?
   deadline             DateTime?
-  eligibility          String?
+  rollingDeadline      Boolean               @default(false)
+  applicationMethod    String?
+  loiRequired          Boolean               @default(false)
+  matchFundingRequired Boolean               @default(false)
+  eligibilityNotes     String?
+  programNotes         String?
+  status               OpportunityStatus     @default(RESEARCH)
+  priority             GrantPriority         @default(MEDIUM)
+  programTag           OpportunityProgramTag @default(GENERAL)
+
+  // Scoring (brief §5) — six named categories summing to 100, stored so
+  // the reasoning is auditable, not just a live-computed number. Recomputed
+  // server-side (src/lib/education-access/funding-center/scoring.ts) on
+  // every save so totalScore never drifts from the subscores.
+  missionScore     Int? // 0-25
+  geographicScore  Int? // 0-20
+  programScore     Int? // 0-20
+  eligibilityScore Int? // 0-20
+  fundingScore     Int? // 0-10
+  timingScore      Int? // 0-5
+  totalScore       Int?
+
+  // Eligibility gate (brief §7) — a fixed checklist, stored as JSON keyed
+  // by requirement name -> "CONFIRMED" | "NOT_CONFIRMED" |
+  // "NOT_APPLICABLE" | "DISQUALIFIED". Eligibility is computed live from
+  // this (any DISQUALIFIED -> not eligible) rather than cached, so the
+  // "Not Eligible" flag can never drift from the checklist or be
+  // bypassed by a high score.
+  eligibilityChecklist Json?
+
   amountRequestedMinor Int?
   amountAwardedMinor   Int?
-  currency             String?
-  applicationDate      DateTime?
-  decisionDate         DateTime?
-  startDate            DateTime?
-  endDate              DateTime?
-  status               EducationAccessGrantStatus @default(PROSPECT)
-  priority             GrantPriority              @default(MEDIUM)
-  reportingFrequency   String? // "MONTHLY" | "QUARTERLY" | "SEMIANNUAL" | "ANNUAL" | "CUSTOM"
-  nextReportDue        DateTime?
-  nextAction           String?
-  internalOwner        User?                      @relation(fields: [internalOwnerId], references: [id], onDelete: SetNull)
-  internalOwnerId      String?
-  notes                String?
-  createdAt            DateTime                   @default(now())
-  updatedAt            DateTime                   @updatedAt
+
+  sourceUrl      String?
+  sourceName     String?
+  retrievedDate  DateTime?
+  lastVerifiedAt DateTime?
+
+  assignedTo     User?     @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedToId   String?
+  nextAction     String?
+  nextActionDate DateTime?
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   budgetLineItems EducationAccessBudgetLineItem[]
+  outreach        EducationAccessOutreach[]
+  tasks           EducationAccessTask[]
+  applications    EducationAccessApplication[]
 
   @@index([status, priority])
+  @@index([deadline])
 }
 
 // Future-ready (phase 3, brief §14) — schema only, no admin UI to populate
@@ -3230,9 +3356,9 @@ enum BudgetCategory {
 }
 
 model EducationAccessBudgetLineItem {
-  id             String                @id @default(cuid())
-  grant          EducationAccessGrant? @relation(fields: [grantId], references: [id], onDelete: SetNull)
-  grantId        String?
+  id             String                             @id @default(cuid())
+  opportunity    EducationAccessFundingOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  opportunityId  String?
   category       BudgetCategory
   label          String
   quantity       Float?
@@ -3240,7 +3366,126 @@ model EducationAccessBudgetLineItem {
   totalCostMinor Int?
   currency       String?
   fundingSource  String?
-  createdAt      DateTime              @default(now())
+  createdAt      DateTime                           @default(now())
+}
+
+model EducationAccessApplication {
+  id                    String                            @id @default(cuid())
+  opportunity           EducationAccessFundingOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  opportunityId         String
+  status                String                            @default("DRAFTING") // DRAFTING | IN_REVIEW | SUBMITTED | WITHDRAWN
+  requiredDocumentsNote String?
+  budgetNarrative       String?
+  teamNotes             String?
+  timelineNotes         String?
+  submissionNotes       String?
+  followUpNotes         String?
+  submittedAt           DateTime?
+  createdAt             DateTime                          @default(now())
+  updatedAt             DateTime                          @updatedAt
+
+  questions EducationAccessApplicationQuestion[]
+
+  @@index([opportunityId])
+}
+
+model EducationAccessApplicationQuestion {
+  id              String                     @id @default(cuid())
+  application     EducationAccessApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId   String
+  question        String
+  response        String?
+  wordLimit       Int?
+  characterLimit  Int?
+  status          String                     @default("NOT_STARTED") // NOT_STARTED | DRAFT | REVIEW | APPROVED
+  internalNotes   String?
+  lastUpdatedBy   User?                      @relation(fields: [lastUpdatedById], references: [id], onDelete: SetNull)
+  lastUpdatedById String?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  @@index([applicationId])
+}
+
+enum OutreachType {
+  EMAIL
+  PHONE
+  MEETING
+  INTRODUCTION
+  CONFERENCE
+  LINKEDIN
+  REFERRAL
+  OTHER
+}
+
+model EducationAccessOutreach {
+  id            String                             @id @default(cuid())
+  funder        EducationAccessFunder              @relation(fields: [funderId], references: [id], onDelete: Cascade)
+  funderId      String
+  contact       EducationAccessFunderContact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactId     String?
+  opportunity   EducationAccessFundingOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  opportunityId String?
+  type          OutreachType
+  date          DateTime                           @default(now())
+  owner         User?                              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId       String?
+  subject       String?
+  notes         String?
+  response      String?
+  followUpDate  DateTime?
+  createdAt     DateTime                           @default(now())
+
+  @@index([funderId])
+  @@index([opportunityId])
+}
+
+model EducationAccessTask {
+  id            String                             @id @default(cuid())
+  task          String
+  opportunity   EducationAccessFundingOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  opportunityId String?
+  owner         User?                              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId       String?
+  dueDate       DateTime?
+  priority      GrantPriority                      @default(MEDIUM)
+  status        String                             @default("OPEN") // OPEN | IN_PROGRESS | WAITING | COMPLETED
+  notes         String?
+  createdAt     DateTime                           @default(now())
+  updatedAt     DateTime                           @updatedAt
+
+  @@index([status, dueDate])
+}
+
+model EducationAccessSavedSearch {
+  id        String   @id @default(cuid())
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId   String
+  name      String
+  filters   Json
+  createdAt DateTime @default(now())
+}
+
+// Future-ready (brief §14) — schema only, no admin UI this pass. AI
+// drafting (§13) and the LOI generator (§15) are designed to prefer
+// APPROVED entries here once wired up; today nothing reads or writes it.
+enum KnowledgeEntryStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
+model EducationAccessKnowledgeEntry {
+  id              String               @id @default(cuid())
+  title           String
+  category        String
+  approvedContent String
+  status          KnowledgeEntryStatus @default(DRAFT)
+  approvedBy      User?                @relation(fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedById    String?
+  approvedAt      DateTime?
+  updatedAt       DateTime             @updatedAt
+  createdAt       DateTime             @default(now())
 }
 
 // ---------- International Exams: TOEFL ----------
