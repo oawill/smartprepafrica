@@ -23,6 +23,8 @@ const columns = [
       { label: "Become a Partner", href: "/partners" },
       { label: "Become a Sponsor", href: "/education-access" },
       { label: "Education Access Initiative", href: "/education-access" },
+      { label: "AI Tutor for 10,000 Students", href: "/education-access/10000-students" },
+      { label: "Funding & Partnerships", href: "/education-access/funding" },
     ],
   },
   {
