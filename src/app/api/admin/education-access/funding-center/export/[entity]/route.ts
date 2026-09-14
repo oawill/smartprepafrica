@@ -22,8 +22,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   if (entity === "opportunities") {
     const data = await prisma.educationAccessFundingOpportunity.findMany({ include: { funder: true } });
-    header = ["Opportunity", "Funder", "Status", "Priority", "Deadline", "Total Score", "Amount Requested", "Amount Awarded", "Assigned", "Notes"];
-    rows = data.map((o) => [o.opportunityName, o.funder.organizationName, o.status, o.priority, o.deadline?.toISOString() ?? "", o.totalScore ?? "", o.amountRequestedMinor ?? "", o.amountAwardedMinor ?? "", o.assignedToId ?? "", o.notes ?? ""]);
+    header = ["Opportunity", "Funder", "Type", "Status", "Priority", "Deadline", "Total Score", "Amount Requested", "Amount Awarded", "Assigned", "Notes"];
+    rows = data.map((o) => [o.opportunityName, o.funder.organizationName, o.opportunityType, o.status, o.priority, o.deadline?.toISOString() ?? "", o.totalScore ?? "", o.amountRequestedMinor ?? "", o.amountAwardedMinor ?? "", o.assignedToId ?? "", o.notes ?? ""]);
   } else if (entity === "funders") {
     const data = await prisma.educationAccessFunder.findMany();
     header = ["Organization", "Type", "Country", "Website", "Geographic Focus", "Funding Focus", "Notes"];

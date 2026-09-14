@@ -138,3 +138,55 @@ export async function updateContactRelationship(formData: FormData) {
 
   revalidatePath(`/dashboard/admin/education-access/funding-center/funders/${funderId}`);
 }
+
+// Phase 5 — funder-level eligibility-barrier facts (brief §7) and
+// intelligence-profile fields (brief §20). Every permits* flag defaults
+// to unknown (null) unless explicitly researched — never assumed true.
+export async function updateFunderIntelligence(formData: FormData) {
+  await requireActionPermission("funding_center.manage");
+  const funderId = formData.get("funderId") as string;
+
+  await prisma.educationAccessFunder.update({
+    where: { id: funderId },
+    data: {
+      overview: (formData.get("overview") as string) || null,
+      knownPrograms: (formData.get("knownPrograms") as string) || null,
+      researchNotes: (formData.get("researchNotes") as string) || null,
+      permitsFiscalSponsorship: formData.get("permitsFiscalSponsorship") === "on",
+      permitsInternationalOrgs: formData.get("permitsInternationalOrgs") === "on",
+      permitsForProfitSocialEnterprise: formData.get("permitsForProfitSocialEnterprise") === "on",
+      permitsCorporatePartnership: formData.get("permitsCorporatePartnership") === "on",
+      permitsProgramRelatedInvestment: formData.get("permitsProgramRelatedInvestment") === "on",
+      permitsDirectInternationalGrants: formData.get("permitsDirectInternationalGrants") === "on",
+    },
+  });
+
+  revalidatePath(`/dashboard/admin/education-access/funding-center/funders/${funderId}`);
+}
+
+const watchlistReasons = [
+  "Strong Strategic Fit",
+  "No Current Opportunity",
+  "Relationship Development",
+  "Future Funding Cycle",
+  "Invitation Only",
+  "CSR Prospect",
+  "Potential Strategic Partner",
+] as const;
+
+export async function updateWatchlist(formData: FormData) {
+  await requireActionPermission("funding_center.manage");
+  const funderId = formData.get("funderId") as string;
+  const watchlisted = formData.get("watchlisted") === "on";
+
+  await prisma.educationAccessFunder.update({
+    where: { id: funderId },
+    data: {
+      watchlisted,
+      watchlistReason: watchlisted ? (formData.get("watchlistReason") as (typeof watchlistReasons)[number]) : null,
+      watchlistNotes: watchlisted ? (formData.get("watchlistNotes") as string) || null : null,
+    },
+  });
+
+  revalidatePath(`/dashboard/admin/education-access/funding-center/funders/${funderId}`);
+}

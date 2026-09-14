@@ -127,18 +127,19 @@ model User {
   createdVouchers  Voucher[]           @relation("VoucherIssuer")
   redeemedVouchers VoucherRedemption[]
 
-  legalAcceptances                  LegalAcceptance[]
-  contactSubmissions                ContactSubmission[]                  @relation("ContactSubmitter")
-  assignedContactSubmissions        ContactSubmission[]                  @relation("ContactAssignee")
-  educationAccessInquiries          EducationAccessInquiry[]             @relation("EducationAccessSubmitter")
-  educationAccessAssigned           EducationAccessInquiry[]             @relation("EducationAccessAssignee")
-  educationAccessBeneficiary        EducationAccessBeneficiary[]
-  educationAccessOpportunitiesOwned EducationAccessFundingOpportunity[]
-  educationAccessQuestionsUpdated   EducationAccessApplicationQuestion[]
-  educationAccessOutreachOwned      EducationAccessOutreach[]
-  educationAccessTasksOwned         EducationAccessTask[]
-  educationAccessSavedSearches      EducationAccessSavedSearch[]
-  educationAccessKnowledgeApproved  EducationAccessKnowledgeEntry[]
+  legalAcceptances                    LegalAcceptance[]
+  contactSubmissions                  ContactSubmission[]                  @relation("ContactSubmitter")
+  assignedContactSubmissions          ContactSubmission[]                  @relation("ContactAssignee")
+  educationAccessInquiries            EducationAccessInquiry[]             @relation("EducationAccessSubmitter")
+  educationAccessAssigned             EducationAccessInquiry[]             @relation("EducationAccessAssignee")
+  educationAccessBeneficiary          EducationAccessBeneficiary[]
+  educationAccessOpportunitiesOwned   EducationAccessFundingOpportunity[]
+  educationAccessQuestionsUpdated     EducationAccessApplicationQuestion[]
+  educationAccessOutreachOwned        EducationAccessOutreach[]
+  educationAccessTasksOwned           EducationAccessTask[]
+  educationAccessSavedSearches        EducationAccessSavedSearch[]
+  educationAccessKnowledgeApproved    EducationAccessKnowledgeEntry[]
+  educationAccessDiscoveriesDismissed EducationAccessGrantDiscovery[]
 
   notifications Notification[]
 
@@ -2879,6 +2880,9 @@ model PlatformSettings {
   aiTutorFundingGoalCurrency         String?
   aiTutorFundingGoalPublicVisibility Boolean @default(false)
 
+  // Phase 5 — Grant Intelligence config (brief §10).
+  recommendedFitScoreThreshold Int @default(70)
+
   updatedAt DateTime @updatedAt
 }
 
@@ -3207,8 +3211,31 @@ model EducationAccessFunder {
   notes                       String?
   sourceUrl                   String?
   lastVerifiedAt              DateTime?
-  createdAt                   DateTime      @default(now())
-  updatedAt                   DateTime      @updatedAt
+
+  // Phase 5 — eligibility-barrier facts about the FUNDER (brief §7):
+  // whether it permits routes around a nonprofit/501(c)(3) requirement.
+  // Null means unknown/unresearched — never assumed true.
+  permitsFiscalSponsorship         Boolean?
+  permitsInternationalOrgs         Boolean?
+  permitsForProfitSocialEnterprise Boolean?
+  permitsCorporatePartnership      Boolean?
+  permitsProgramRelatedInvestment  Boolean?
+  permitsDirectInternationalGrants Boolean?
+
+  // Phase 5 — funder intelligence profile (brief §20), real admin-entered
+  // research only, never fabricated.
+  overview      String?
+  knownPrograms String?
+  researchNotes String?
+
+  // Phase 5 — watchlist (brief §22): funders worth developing a
+  // relationship with even with no current live opportunity.
+  watchlisted     Boolean @default(false)
+  watchlistReason String?
+  watchlistNotes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   contacts      EducationAccessFunderContact[]
   opportunities EducationAccessFundingOpportunity[]
@@ -3268,6 +3295,25 @@ enum OpportunityProgramTag {
   AI_TUTOR_10K
 }
 
+// Phase 5 §29/§30 — not every opportunity is a traditional grant; some
+// companies are better suited as CSR partners or in-kind strategic
+// partners than grantmakers.
+enum OpportunityType {
+  GRANT
+  CSR_PARTNERSHIP
+  STRATEGIC_PARTNERSHIP
+}
+
+// Phase 5 §28 — internal planning only; never claim a fiscal sponsor
+// exists until CONFIRMED.
+enum FiscalSponsorshipStatus {
+  NOT_REQUIRED
+  MAY_BE_REQUIRED
+  REQUIRED
+  IDENTIFIED
+  CONFIRMED
+}
+
 model EducationAccessFundingOpportunity {
   id                   String                @id @default(cuid())
   funder               EducationAccessFunder @relation(fields: [funderId], references: [id], onDelete: Cascade)
@@ -3294,18 +3340,30 @@ model EducationAccessFundingOpportunity {
   status               OpportunityStatus     @default(RESEARCH)
   priority             GrantPriority         @default(MEDIUM)
   programTag           OpportunityProgramTag @default(GENERAL)
+  opportunityType      OpportunityType       @default(GRANT)
 
-  // Scoring (brief §5) — six named categories summing to 100, stored so
-  // the reasoning is auditable, not just a live-computed number. Recomputed
-  // server-side (src/lib/education-access/funding-center/scoring.ts) on
-  // every save so totalScore never drifts from the subscores.
-  missionScore     Int? // 0-25
-  geographicScore  Int? // 0-20
-  programScore     Int? // 0-20
-  eligibilityScore Int? // 0-20
-  fundingScore     Int? // 0-10
-  timingScore      Int? // 0-5
-  totalScore       Int?
+  // Strategic/in-kind partnerships (brief §30) track an estimated value
+  // separately from actual cash requested/awarded above.
+  estimatedValueMinor       Int?
+  estimatedValueDescription String?
+  fiscalSponsorshipStatus   FiscalSponsorshipStatus @default(NOT_REQUIRED)
+
+  // Scoring (phase 5, brief §9) — eight named categories summing to 100,
+  // stored so the reasoning is auditable, not just a live-computed
+  // number. Recomputed server-side
+  // (src/lib/education-access/funding-center/scoring.ts) on every save so
+  // totalScore never drifts from the subscores. Eligibility is
+  // deliberately NOT one of these categories — see eligibilityChecklist
+  // below, graded independently via computeEligibilityStatus.
+  educationScore        Int? // 0-20
+  nigeriaAfricaScore    Int? // 0-20
+  educationAccessScore  Int? // 0-15
+  digitalLearningScore  Int? // 0-15
+  aiTechScore           Int? // 0-10
+  youthScore            Int? // 0-10
+  fundingPotentialScore Int? // 0-5
+  timingScore           Int? // 0-5
+  totalScore            Int?
 
   // Eligibility gate (brief §7) — a fixed checklist, stored as JSON keyed
   // by requirement name -> "CONFIRMED" | "NOT_CONFIRMED" |
@@ -3336,6 +3394,7 @@ model EducationAccessFundingOpportunity {
   outreach        EducationAccessOutreach[]
   tasks           EducationAccessTask[]
   applications    EducationAccessApplication[]
+  discoveredFrom  EducationAccessGrantDiscovery?
 
   @@index([status, priority])
   @@index([deadline])
@@ -3458,12 +3517,16 @@ model EducationAccessTask {
 }
 
 model EducationAccessSavedSearch {
-  id        String   @id @default(cuid())
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId   String
   name      String
   filters   Json
-  createdAt DateTime @default(now())
+  // Phase 5 §17 — architecture only: no scheduled job ever reads or sets
+  // these. A future phase can add a runner without another migration.
+  schedule  String?
+  lastRunAt DateTime?
+  createdAt DateTime  @default(now())
 }
 
 // Future-ready (brief §14) — schema only, no admin UI this pass. AI
@@ -3486,6 +3549,155 @@ model EducationAccessKnowledgeEntry {
   approvedAt      DateTime?
   updatedAt       DateTime             @updatedAt
   createdAt       DateTime             @default(now())
+}
+
+// ---------- Phase 5: Grant Intelligence (admin-only, never public) ----------
+// A pre-pipeline staging/qualification layer: Discover -> Verify ->
+// Qualify -> Score -> Shortlist -> (explicit "Add to Pipeline") ->
+// EducationAccessFundingOpportunity. Nothing here is ever auto-promoted.
+enum DiscoverySourceType {
+  FOUNDATION_WEBSITE
+  CORPORATE_CSR
+  GOVERNMENT_PORTAL
+  PHILANTHROPIC_NETWORK
+  DEVELOPMENT_ORG
+  GRANT_DATABASE
+  MANUAL_URL
+  APPROVED_API
+  OTHER
+}
+
+// Never present an AI-extracted or unverified opportunity as verified —
+// UNVERIFIED is the default and stays that way until an admin actually
+// confirms the checklist below.
+enum DiscoveryVerificationStatus {
+  UNVERIFIED
+  AI_EXTRACTED
+  NEEDS_REVIEW
+  PARTIALLY_VERIFIED
+  VERIFIED
+  OUTDATED
+  INVALID
+}
+
+enum DuplicateStatus {
+  NEW
+  POSSIBLE_DUPLICATE
+  DUPLICATE
+}
+
+enum DismissalReason {
+  NOT_ELIGIBLE
+  POOR_FIT
+  DEADLINE_TOO_SOON
+  FUNDING_TOO_SMALL
+  FUNDING_RESTRICTIONS
+  GEOGRAPHIC_MISMATCH
+  PROGRAM_MISMATCH
+  DUPLICATE
+  EXPIRED
+  NOT_CURRENTLY_PURSUING
+  OTHER
+}
+
+model EducationAccessGrantDiscovery {
+  id                 String              @id @default(cuid())
+  sourceName         String
+  sourceType         DiscoverySourceType
+  // Mandatory (brief §5) — enforced in the create action, not just here,
+  // since Prisma can't express "required unless X."
+  sourceUrl          String
+  externalId         String?
+  funderName         String
+  opportunityName    String
+  opportunityUrl     String?
+  description        String?
+  fundingFocus       String?
+  fundingCategories  String[]
+  geographicFocus    String?
+  minimumAwardMinor  Int?
+  maximumAwardMinor  Int?
+  currency           String?
+  deadline           DateTime?
+  rollingDeadline    Boolean             @default(false)
+  eligibilitySummary String?
+
+  discoveredAt          DateTime                    @default(now())
+  lastCheckedAt         DateTime?
+  verificationStatus    DiscoveryVerificationStatus @default(UNVERIFIED)
+  // The 24-item Funder/Opportunity/Eligibility/Program-Fit groups from
+  // brief §6, same 4-state values as EducationAccessFundingOpportunity's
+  // eligibilityChecklist (CONFIRMED | NOT_CONFIRMED | NOT_APPLICABLE |
+  // DISQUALIFIED).
+  verificationChecklist Json?
+
+  duplicateStatus    DuplicateStatus                 @default(NEW)
+  duplicateOfId      String?
+  duplicateOf        EducationAccessGrantDiscovery?  @relation("DuplicateOf", fields: [duplicateOfId], references: [id], onDelete: SetNull)
+  possibleDuplicates EducationAccessGrantDiscovery[] @relation("DuplicateOf")
+
+  // Same 8-category model as EducationAccessFundingOpportunity, computed
+  // pre-import so the score carries over on promotion rather than being
+  // redone from scratch.
+  educationScore        Int?
+  nigeriaAfricaScore    Int?
+  educationAccessScore  Int?
+  digitalLearningScore  Int?
+  aiTechScore           Int?
+  youthScore            Int?
+  fundingPotentialScore Int?
+  timingScore           Int?
+  totalScore            Int?
+
+  importedOpportunityId String?                            @unique
+  importedOpportunity   EducationAccessFundingOpportunity? @relation(fields: [importedOpportunityId], references: [id], onDelete: SetNull)
+
+  dismissedAt     DateTime?
+  dismissedReason DismissalReason?
+  dismissedById   String?
+  dismissedBy     User?            @relation(fields: [dismissedById], references: [id], onDelete: SetNull)
+
+  watchNextCycle Boolean @default(false)
+  // Brief §37 — dev-only marker. Every production dashboard/analytics
+  // query excludes rows where this is true; admin list/detail views still
+  // show them so a QA record can actually be reviewed and cleaned up.
+  isTestData     Boolean @default(false)
+
+  rawMetadata Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([verificationStatus])
+  @@index([duplicateStatus])
+  @@index([deadline])
+}
+
+enum ReadinessCategory {
+  CORPORATE_DOCUMENTS
+  FINANCIAL
+  PROGRAM
+  POLICIES
+  IMPACT
+}
+
+enum ReadinessStatus {
+  AVAILABLE
+  DRAFT
+  NEEDS_UPDATE
+  MISSING
+}
+
+// A real, admin-managed checklist of SmartPrepAfrica's own
+// application-readiness materials (brief §27) — no rows pre-seeded; an
+// admin adds each real item.
+model EducationAccessReadinessItem {
+  id        String            @id @default(cuid())
+  category  ReadinessCategory
+  label     String
+  status    ReadinessStatus   @default(MISSING)
+  notes     String?
+  updatedAt DateTime          @updatedAt
+  createdAt DateTime          @default(now())
 }
 
 // ---------- International Exams: TOEFL ----------

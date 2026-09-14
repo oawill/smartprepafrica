@@ -124,8 +124,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: "Grant & Funding Center",
     items: [
       { label: "Dashboard", href: "/dashboard/admin/education-access/funding-center", permission: "funding_center.view" },
+      { label: "Grant Intelligence", href: "/dashboard/admin/education-access/funding-center/intelligence", permission: "funding_center.view" },
       { label: "Opportunities", href: "/dashboard/admin/education-access/funding-center/opportunities", permission: "funding_center.view" },
       { label: "Funders", href: "/dashboard/admin/education-access/funding-center/funders", permission: "funding_center.view" },
+      { label: "Readiness Library", href: "/dashboard/admin/education-access/funding-center/readiness", permission: "funding_center.view" },
       { label: "Grant Calendar", href: "/dashboard/admin/education-access/funding-center/calendar", permission: "funding_center.view" },
       { label: "Applications", href: "/dashboard/admin/education-access/funding-center/applications", permission: "funding_center.view" },
       { label: "Outreach", href: "/dashboard/admin/education-access/funding-center/outreach", permission: "funding_center.view" },

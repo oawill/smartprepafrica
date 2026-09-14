@@ -4,11 +4,12 @@ import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Card } from "@/components/dashboard/card";
 import {
   classifyOpportunity,
-  computeEligibility,
+  computeEligibilityStatus,
   deadlineUrgency,
+  isRecommended,
   isStale,
 } from "@/lib/education-access/funding-center/scoring";
-import { ClassificationBadge, DeadlineBadge, StaleBadge } from "@/components/education-access/funding-center/badges";
+import { ClassificationBadge, DeadlineBadge, StaleBadge, EligibilityStatusBadge } from "@/components/education-access/funding-center/badges";
 import { createOpportunity, saveSearch } from "@/app/dashboard/admin/education-access/funding-center/opportunities/actions";
 import { getPlatformSettings } from "@/lib/legal/settings";
 
@@ -62,7 +63,7 @@ export default async function FundingCenterOpportunitiesPage({
             }
           : {}),
       },
-      include: { funder: { select: { organizationName: true } } },
+      include: { funder: { select: { organizationName: true, permitsFiscalSponsorship: true, permitsInternationalOrgs: true, permitsForProfitSocialEnterprise: true, permitsCorporatePartnership: true, permitsProgramRelatedInvestment: true, permitsDirectInternationalGrants: true } } },
       orderBy: { createdAt: "desc" },
       take: 200,
     }),
@@ -74,13 +75,21 @@ export default async function FundingCenterOpportunitiesPage({
   let rows = opportunities.map((o) => {
     const totalScore = o.totalScore ?? 0;
     const { classification } = classifyOpportunity(totalScore);
-    const { eligible } = computeEligibility(o.eligibilityChecklist as never);
-    return { ...o, totalScore, classification, eligible };
+    const { status: eligibilityStatus } = computeEligibilityStatus(o.eligibilityChecklist as never, o.funder);
+    const recommendedFlag = isRecommended({
+      eligibilityStatus,
+      sourceUrl: o.sourceUrl ?? o.opportunityUrl,
+      deadline: o.deadline,
+      rollingDeadline: o.rollingDeadline,
+      totalScore,
+      threshold: settings.recommendedFitScoreThreshold,
+    });
+    return { ...o, totalScore, classification, eligibilityStatus, recommendedFlag };
   });
 
   if (recommended) {
     rows = rows
-      .filter((o) => o.eligible)
+      .filter((o) => o.recommendedFlag)
       .sort((a, b) => {
         if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
         const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Infinity;
@@ -141,13 +150,22 @@ export default async function FundingCenterOpportunitiesPage({
             </div>
           )}
 
-          <form action={saveSearch} className="mt-3 flex items-center gap-2">
+          <form action={saveSearch} className="mt-3 flex flex-wrap items-center gap-2">
             <input type="hidden" name="filters" value={JSON.stringify(params)} />
             <input name="name" placeholder="Save this search as…" className={inputClass + " max-w-[220px]"} />
+            <select name="schedule" defaultValue="" className={inputClass + " sm:w-auto"}>
+              <option value="">No schedule</option>
+              <option value="DAILY">Daily</option>
+              <option value="WEEKLY">Weekly</option>
+              <option value="MONTHLY">Monthly</option>
+            </select>
             <button type="submit" className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted">
               Save
             </button>
           </form>
+          <p className="mt-1 text-xs text-text-muted">
+            Schedule is saved for future use — no automated search runs yet.
+          </p>
         </Card>
       </div>
 
@@ -175,7 +193,8 @@ export default async function FundingCenterOpportunitiesPage({
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <ClassificationBadge eligible={o.eligible} classification={o.classification} totalScore={o.totalScore} />
+                    <ClassificationBadge eligible={o.eligibilityStatus !== "NOT_ELIGIBLE"} classification={o.classification} totalScore={o.totalScore} />
+                    <EligibilityStatusBadge status={o.eligibilityStatus} />
                     <DeadlineBadge urgency={deadlineUrgency(o.deadline)} />
                   </div>
                 </div>
