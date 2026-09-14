@@ -106,7 +106,14 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   },
   {
     label: "Education Access",
-    items: [{ label: "Inquiries", href: "/dashboard/admin/education-access", permission: "education_access.view" }],
+    items: [
+      { label: "Inquiries", href: "/dashboard/admin/education-access", permission: "education_access.view" },
+      {
+        label: "Partners",
+        href: "/dashboard/admin/education-access/partners",
+        permission: "education_access.partners_manage",
+      },
+    ],
   },
   {
     label: "Readiness & Drills",

@@ -62,7 +62,8 @@ export type Permission =
   | "programmes.manage"
   | "whatsapp.view"
   | "education_access.view"
-  | "education_access.manage";
+  | "education_access.manage"
+  | "education_access.partners_manage";
 
 const ALL_PERMISSIONS: Permission[] = [
   "questions.view",
@@ -127,6 +128,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "whatsapp.view",
   "education_access.view",
   "education_access.manage",
+  "education_access.partners_manage",
 ];
 
 /** Every AdminRole must appear here. A user with role=ADMIN but adminRole=null
@@ -188,9 +190,9 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "sat.archive",
   ],
   SCHOOL_SUPPORT_ADMIN: ["schools.view", "schools.approve", "teachers.approve", "users.view", "courses.view", "courses.approve"],
-  USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke", "discussions.manage", "whatsapp.view", "education_access.view", "education_access.manage"],
+  USER_SUPPORT_ADMIN: ["users.view", "users.suspend", "support.manage", "sessions.revoke", "discussions.manage", "whatsapp.view", "education_access.view", "education_access.manage", "education_access.partners_manage"],
   FINANCE_ADMIN: ["payments.view", "payments.refund", "partners.payout", "teachers.payout", "analytics.view"],
-  PARTNER_ADMIN: ["partners.view", "partners.approve", "partners.payout", "analytics.view", "education_access.view", "education_access.manage"],
+  PARTNER_ADMIN: ["partners.view", "partners.approve", "partners.payout", "analytics.view", "education_access.view", "education_access.manage", "education_access.partners_manage"],
   SECURITY_ADMIN: ["security.view", "sessions.revoke", "audit.view", "audit.export", "users.view", "users.suspend"],
   ANALYST: [
     "analytics.view",

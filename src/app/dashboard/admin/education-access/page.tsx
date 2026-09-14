@@ -2,16 +2,29 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Card } from "@/components/dashboard/card";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
-import { setInquiryStatus, assignInquiry } from "@/app/dashboard/admin/education-access/actions";
+import { setInquiryStatus, assignInquiry, updateInquiryDetails } from "@/app/dashboard/admin/education-access/actions";
 
-const statusOptions = ["NEW", "CONTACTED", "UNDER_REVIEW", "PARTNER_CONFIRMED", "SPONSORED", "CLOSED"] as const;
+const statusOptions = [
+  "INQUIRY",
+  "CONTACTED",
+  "PROPOSAL_SENT",
+  "UNDER_REVIEW",
+  "CONFIRMED",
+  "ACTIVE",
+  "COMPLETED",
+  "CLOSED",
+] as const;
+
+const paymentStatusOptions = ["NOT_REQUIRED", "PENDING", "PAID", "PARTIALLY_PAID", "REFUNDED"] as const;
 
 const STATUS_TONE: Record<string, BadgeTone> = {
-  NEW: "warning",
+  INQUIRY: "warning",
   CONTACTED: "info",
+  PROPOSAL_SENT: "info",
   UNDER_REVIEW: "warning",
-  PARTNER_CONFIRMED: "info",
-  SPONSORED: "success",
+  CONFIRMED: "info",
+  ACTIVE: "success",
+  COMPLETED: "success",
   CLOSED: "neutral",
 };
 
@@ -39,12 +52,12 @@ const INTEREST_LABELS: Record<string, string> = {
 };
 
 const PACKAGE_LABELS: Record<string, string> = {
-  STUDENT_SPONSOR: "Student Sponsor",
-  CLASSROOM_SPONSOR: "Classroom Sponsor",
-  SCHOOL_PARTNER: "School Partner",
-  COMMUNITY_CHAMPION: "Community Champion",
-  FLAGSHIP_AI_TUTOR: "Flagship Partner",
-  CUSTOM: "Custom Package",
+  STUDENT_SPONSOR: "Sponsor 1 Student",
+  CLASSROOM_SPONSOR: "Sponsor 10 Students",
+  SCHOOL_PARTNER: "Sponsor 50 Students",
+  COMMUNITY_CHAMPION: "Sponsor a Classroom",
+  FLAGSHIP_AI_TUTOR: "Sponsor a School",
+  CUSTOM: "Custom Partnership",
 };
 
 export default async function AdminEducationAccessPage({
@@ -72,12 +85,19 @@ export default async function AdminEducationAccessPage({
           }
         : {}),
     },
-    include: { assignedTo: { select: { name: true } } },
+    include: {
+      assignedTo: { select: { name: true } },
+      preferredSchool: { select: { name: true } },
+      program: { select: { name: true } },
+    },
     orderBy: { createdAt: "desc" },
     take: 100,
   });
 
-  const newCount = await prisma.educationAccessInquiry.count({ where: { status: "NEW" } });
+  const [newCount, programs] = await Promise.all([
+    prisma.educationAccessInquiry.count({ where: { status: "INQUIRY" } }),
+    prisma.sponsorshipProgram.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <div>
@@ -138,10 +158,17 @@ export default async function AdminEducationAccessPage({
                 {ORG_TYPE_LABELS[inquiry.organizationType]} · {INTEREST_LABELS[inquiry.sponsorshipInterest]}
                 {inquiry.packageInterest ? ` · ${PACKAGE_LABELS[inquiry.packageInterest]}` : ""}
                 {inquiry.estimatedStudents ? ` · ~${inquiry.estimatedStudents} students` : ""}
+                {inquiry.preferredLocation ? ` · ${inquiry.preferredLocation}` : ""}
+                {inquiry.preferredSchool ? ` · ${inquiry.preferredSchool.name}` : ""}
+                {inquiry.consentGiven ? "" : " · No contact consent recorded"}
               </p>
               <p className="mt-2 text-sm text-text-secondary">{inquiry.message}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Badge tone={STATUS_TONE[inquiry.status] ?? "neutral"}>{inquiry.status.replaceAll("_", " ")}</Badge>
+                <Badge tone={inquiry.paymentStatus === "PAID" ? "success" : "neutral"}>
+                  {inquiry.paymentStatus.replaceAll("_", " ")}
+                </Badge>
+                {inquiry.program && <span className="text-xs text-text-muted">· Program: {inquiry.program.name}</span>}
                 {inquiry.assignedTo && (
                   <span className="text-xs text-text-muted">· Assigned to {inquiry.assignedTo.name}</span>
                 )}
@@ -176,6 +203,83 @@ export default async function AdminEducationAccessPage({
                   </button>
                 </form>
               </div>
+
+              <form
+                action={updateInquiryDetails}
+                className="mt-3 grid gap-2 border-t border-border pt-3 sm:grid-cols-2 lg:grid-cols-4"
+              >
+                <input type="hidden" name="inquiryId" value={inquiry.id} />
+                <div>
+                  <label className="block text-xs text-text-muted">Amount (minor units)</label>
+                  <input
+                    type="number"
+                    name="amountMinor"
+                    defaultValue={inquiry.amountMinor ?? ""}
+                    className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted">Currency</label>
+                  <select
+                    name="currency"
+                    defaultValue={inquiry.currency ?? ""}
+                    className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-brand"
+                  >
+                    <option value="">—</option>
+                    {["NGN", "USD", "GBP", "EUR"].map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted">Payment status</label>
+                  <select
+                    name="paymentStatus"
+                    defaultValue={inquiry.paymentStatus}
+                    className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-brand"
+                  >
+                    {paymentStatusOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted">Program</label>
+                  <select
+                    name="programId"
+                    defaultValue={inquiry.programId ?? ""}
+                    className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-brand"
+                  >
+                    <option value="">None</option>
+                    {programs.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sm:col-span-2 lg:col-span-4">
+                  <label className="block text-xs text-text-muted">Internal notes (never shown publicly)</label>
+                  <textarea
+                    name="internalNotes"
+                    defaultValue={inquiry.internalNotes ?? ""}
+                    rows={2}
+                    className="mt-1 w-full rounded-lg border border-border-strong bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-text-muted"
+                  >
+                    Save details
+                  </button>
+                </div>
+              </form>
             </Card>
           ))
         )}

@@ -92,11 +92,12 @@ export const fr: Dictionary = {
     viewPlansAndPricing: "Voir les formules et tarifs",
     startLearning: "Commencer à apprendre",
     educationAccessLabel: "Initiative d'accès à l'éducation",
-    educationAccessTitle: "Aidez un élève à apprendre. Aidez une communauté à grandir.",
+    educationAccessTitle: "Aider plus d'élèves à accéder à un apprentissage de qualité",
     educationAccessBody:
-      "Grâce à l'Initiative d'accès à l'éducation de SmartPrepAfrica, particuliers et organisations peuvent parrainer l'accès à la préparation aux examens, aux cours numériques et à l'apprentissage par IA pour les élèves qui en ont le plus besoin.",
+      "SmartPrepAfrica s'associe à des particuliers, des écoles, des fondations, des entreprises, des ONG et des organisations de la diaspora pour élargir l'accès à la préparation aux examens, aux cours numériques et à l'apprentissage assisté par IA.",
     sponsorStudents: "Parrainer des élèves",
-    exploreInitiative: "Découvrir l'initiative",
+    exploreInitiative: "Devenir partenaire de SmartPrepAfrica",
+    viewEducationAccessInitiative: "Découvrir notre Initiative d'accès à l'éducation",
   },
   login: {
     welcomeBack: "Content de vous revoir",

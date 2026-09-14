@@ -37,9 +37,11 @@ const labelClass = "block text-sm text-text-secondary";
 export function EducationAccessInquiryForm({
   defaultInterest,
   defaultPackage,
+  schools = [],
 }: {
   defaultInterest?: string;
   defaultPackage?: string;
+  schools?: { id: string; name: string }[];
 }) {
   const [state, formAction, isPending] = useActionState(submitEducationAccessInquiry, initialState);
   const selectedPackage = findSponsorPackage(defaultPackage);
@@ -62,8 +64,7 @@ export function EducationAccessInquiryForm({
     <form action={formAction} className="space-y-4">
       {selectedPackage && (
         <div className="rounded-lg border border-brand/30 bg-brand/5 px-4 py-3 text-sm text-text-secondary">
-          Selected package: <strong className="text-text-primary">{selectedPackage.name}</strong>{" "}
-          ({selectedPackage.suggestedAmount})
+          You&apos;re sponsoring: <strong className="text-text-primary">{selectedPackage.name}</strong>
         </div>
       )}
       {selectedPackage && <input type="hidden" name="packageInterest" value={selectedPackage.id} />}
@@ -119,9 +120,37 @@ export function EducationAccessInquiryForm({
         </div>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelClass} htmlFor="preferredLocation">
+            Preferred Location or Community (optional)
+          </label>
+          <input
+            id="preferredLocation"
+            name="preferredLocation"
+            type="text"
+            placeholder="e.g. Lagos, a specific state, or LGA"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="preferredSchoolId">
+            Preferred School (optional)
+          </label>
+          <select id="preferredSchoolId" name="preferredSchoolId" defaultValue="" className={inputClass}>
+            <option value="">Not sure yet</option>
+            {schools.map((school) => (
+              <option key={school.id} value={school.id}>
+                {school.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div>
         <label className={labelClass} htmlFor="organizationType">
-          Type of Organization
+          Sponsor Type
         </label>
         <select id="organizationType" name="organizationType" required defaultValue="INDIVIDUAL" className={inputClass}>
           {orgTypeOptions.map((opt) => (
@@ -158,6 +187,11 @@ export function EducationAccessInquiryForm({
         <textarea id="message" name="message" required rows={5} minLength={10} className={inputClass} />
       </div>
 
+      <label className="flex items-start gap-2 text-sm text-text-secondary">
+        <input type="checkbox" name="consentGiven" required className="mt-1" />
+        I consent to being contacted about this sponsorship or partnership.
+      </label>
+
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
       <button
@@ -165,7 +199,7 @@ export function EducationAccessInquiryForm({
         disabled={isPending}
         className="w-full rounded-lg bg-brand py-2.5 text-sm font-medium text-brand-foreground transition hover:bg-brand-hover disabled:opacity-60"
       >
-        {isPending ? "Sending…" : "Submit Enquiry"}
+        {isPending ? "Sending…" : selectedPackage ? "Submit Sponsorship Interest" : "Submit Enquiry"}
       </button>
     </form>
   );

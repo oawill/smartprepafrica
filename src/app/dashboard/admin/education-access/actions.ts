@@ -8,16 +8,46 @@ export async function setInquiryStatus(formData: FormData) {
   await requireActionPermission("education_access.manage");
   const inquiryId = formData.get("inquiryId") as string;
   const status = formData.get("status") as
-    | "NEW"
+    | "INQUIRY"
     | "CONTACTED"
+    | "PROPOSAL_SENT"
     | "UNDER_REVIEW"
-    | "PARTNER_CONFIRMED"
-    | "SPONSORED"
+    | "CONFIRMED"
+    | "ACTIVE"
+    | "COMPLETED"
     | "CLOSED";
 
   await prisma.educationAccessInquiry.update({
     where: { id: inquiryId },
     data: { status },
+  });
+
+  revalidatePath("/dashboard/admin/education-access");
+}
+
+export async function updateInquiryDetails(formData: FormData) {
+  await requireActionPermission("education_access.manage");
+  const inquiryId = formData.get("inquiryId") as string;
+  const amountRaw = formData.get("amountMinor") as string;
+  const currency = formData.get("currency") as string;
+  const paymentStatus = formData.get("paymentStatus") as
+    | "NOT_REQUIRED"
+    | "PENDING"
+    | "PAID"
+    | "PARTIALLY_PAID"
+    | "REFUNDED";
+  const internalNotes = formData.get("internalNotes") as string;
+  const programId = formData.get("programId") as string;
+
+  await prisma.educationAccessInquiry.update({
+    where: { id: inquiryId },
+    data: {
+      amountMinor: amountRaw ? Number(amountRaw) : null,
+      currency: currency || null,
+      paymentStatus,
+      internalNotes: internalNotes || null,
+      programId: programId || null,
+    },
   });
 
   revalidatePath("/dashboard/admin/education-access");

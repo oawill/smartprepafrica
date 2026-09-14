@@ -70,6 +70,7 @@ export const en: {
     educationAccessBody: string;
     sponsorStudents: string;
     exploreInitiative: string;
+    viewEducationAccessInitiative: string;
   };
   login: Record<
     | "welcomeBack"
@@ -336,11 +337,12 @@ export const en: {
     viewPlansAndPricing: "View Plans & Pricing",
     startLearning: "Start Learning",
     educationAccessLabel: "Education Access Initiative",
-    educationAccessTitle: "Help a Student Learn. Help a Community Grow.",
+    educationAccessTitle: "Help More Students Access Quality Learning",
     educationAccessBody:
-      "Through the SmartPrepAfrica Education Access Initiative, individuals and organizations can sponsor access to exam preparation, digital lessons, and AI-powered learning for students who need it most.",
+      "SmartPrepAfrica partners with individuals, schools, foundations, corporations, NGOs, and diaspora organizations to expand access to exam preparation, digital lessons, and AI-supported learning.",
     sponsorStudents: "Sponsor Students",
-    exploreInitiative: "Explore the Initiative",
+    exploreInitiative: "Partner With SmartPrepAfrica",
+    viewEducationAccessInitiative: "View Our Education Access Initiative",
   },
   login: {
     welcomeBack: "Welcome back",

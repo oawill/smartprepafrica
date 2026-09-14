@@ -132,6 +132,7 @@ model User {
   assignedContactSubmissions ContactSubmission[]      @relation("ContactAssignee")
   educationAccessInquiries   EducationAccessInquiry[] @relation("EducationAccessSubmitter")
   educationAccessAssigned    EducationAccessInquiry[] @relation("EducationAccessAssignee")
+  educationAccessBeneficiary EducationAccessBeneficiary[]
 
   notifications Notification[]
 
@@ -342,6 +343,9 @@ model School {
 
   sponsorshipPrograms SponsorshipProgram[]
   licensePurchases    SchoolLicensePurchase[]
+
+  educationAccessPreferredBy   EducationAccessInquiry[]
+  educationAccessBeneficiaries EducationAccessBeneficiary[]
 
   // A school may be pursued by multiple partners before it registers; only
   // one of these leads (if any) becomes the authoritative attribution.
@@ -1764,6 +1768,7 @@ model SponsorshipProgram {
   createdAt    DateTime         @default(now())
 
   vouchers Voucher[]
+  educationAccessInquiries EducationAccessInquiry[]
 }
 
 model Voucher {
@@ -2986,16 +2991,28 @@ enum EducationAccessPackage {
 }
 
 // Deliberately distinct from ContactStatus — this is a sponsorship/
-// partnership pipeline (CONTACTED -> PARTNER_CONFIRMED -> SPONSORED),
-// not a general support-ticket lifecycle, so it gets its own model
-// rather than being bolted onto ContactSubmission.
+// partnership pipeline, not a general support-ticket lifecycle, so it
+// gets its own model rather than being bolted onto ContactSubmission.
+// Expanded (phase 2) from the original NEW/CONTACTED/UNDER_REVIEW/
+// PARTNER_CONFIRMED/SPONSORED/CLOSED to a fuller sponsorship lifecycle —
+// see the phase-2 migration for the backfill mapping of existing rows.
 enum EducationAccessStatus {
-  NEW
+  INQUIRY
   CONTACTED
+  PROPOSAL_SENT
   UNDER_REVIEW
-  PARTNER_CONFIRMED
-  SPONSORED
+  CONFIRMED
+  ACTIVE
+  COMPLETED
   CLOSED
+}
+
+enum EducationAccessPaymentStatus {
+  NOT_REQUIRED
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  REFUNDED
 }
 
 // SmartPrepAfrica Education Access Initiative — sponsorship/partnership
@@ -3016,12 +3033,41 @@ model EducationAccessInquiry {
   estimatedStudents   Int?
   message             String
 
+  // Phase 2 — sponsorship lifecycle fields. Kept on this same table
+  // rather than a separate education_access_sponsorships table: one
+  // record per sponsor from first inquiry through active sponsorship,
+  // no duplicated name/email/org data to keep in sync across two tables.
+  preferredLocation String? // free-text state/LGA/community — no formal geo hierarchy exists below Country/School.state today
+  preferredSchool   School? @relation(fields: [preferredSchoolId], references: [id], onDelete: SetNull)
+  preferredSchoolId String?
+  consentGiven      Boolean @default(false)
+
+  // Paystack/currency readiness (brief phase 2, §16/17) — structure only,
+  // no live payment or conversion behavior. Never charged automatically;
+  // admin-editable once a sponsorship is actually agreed off-platform.
+  amountMinor      Int?
+  currency         String? // "NGN" | "USD" | "GBP" | "EUR" — no conversion logic
+  paystackReference String? @unique
+  paymentStatus    EducationAccessPaymentStatus @default(NOT_REQUIRED)
+
+  // Once a sponsorship is confirmed and seats are actually issued, this
+  // links to the real SponsorshipProgram/Voucher system that fulfills it —
+  // bridges the two instead of duplicating fulfillment tracking here.
+  program   SponsorshipProgram? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  programId String?
+
+  // Admin-only — never rendered on any public page or in any API response
+  // reachable by the submitter.
+  internalNotes String?
+
   user   User?   @relation("EducationAccessSubmitter", fields: [userId], references: [id], onDelete: SetNull)
   userId String?
 
-  status       EducationAccessStatus @default(NEW)
+  status       EducationAccessStatus @default(INQUIRY)
   assignedTo   User?                 @relation("EducationAccessAssignee", fields: [assignedToId], references: [id])
   assignedToId String?
+
+  beneficiaries EducationAccessBeneficiary[]
 
   ipHash    String?
   createdAt DateTime @default(now())
@@ -3029,6 +3075,49 @@ model EducationAccessInquiry {
 
   @@index([status, createdAt])
   @@index([ipHash, createdAt])
+}
+
+// Future-ready (phase 2, brief §4) — links a confirmed sponsorship to the
+// actual students it funds. Not wired to any UI yet: real seat redemption
+// still goes entirely through the pre-existing Voucher/VoucherRedemption
+// system, untouched here. Exists so a future phase can connect the two
+// without another schema change. Never exposed on any public route.
+model EducationAccessBeneficiary {
+  id              String    @id @default(cuid())
+  sponsorship     EducationAccessInquiry @relation(fields: [sponsorshipId], references: [id], onDelete: Cascade)
+  sponsorshipId   String
+  student         User?     @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  studentId       String?
+  school          School?   @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  schoolId        String?
+  programType     String?
+  accessStartDate DateTime?
+  accessEndDate   DateTime?
+  status          String    @default("ACTIVE")
+  createdAt       DateTime  @default(now())
+
+  @@index([sponsorshipId])
+}
+
+// A named institutional partner shown publicly on /education-access/partners
+// — only ever rendered when publicVisibility is true. Never invented:
+// created by an admin from a real, confirmed relationship only.
+model EducationAccessPartner {
+  id                String                 @id @default(cuid())
+  organizationName  String
+  organizationType  EducationAccessOrgType
+  contactName       String?
+  email             String?
+  country           String?
+  website           String?
+  partnershipStatus String                 @default("ACTIVE")
+  logoUrl           String?
+  publicVisibility  Boolean                @default(false)
+  description       String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@index([publicVisibility])
 }
 
 // ---------- International Exams: TOEFL ----------
