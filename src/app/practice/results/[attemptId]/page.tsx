@@ -11,6 +11,7 @@ import { DrillResults, type TopicBucket } from "@/components/readiness/drill-res
 import { getRecommendedDrillAfterAttempt } from "@/lib/practice/readiness-service";
 import { getStudyPlanView, getCurrentActivity } from "@/lib/study-plan/view";
 import { weekStartFor } from "@/lib/study-plan/regenerate";
+import { startTopicDrill } from "@/app/practice/drills/actions";
 
 export default async function ResultsPage({
   params,
@@ -71,6 +72,45 @@ export default async function ResultsPage({
     recommendedDrill = await getRecommendedDrillAfterAttempt(attemptId);
   }
 
+  // Revision-specific completion summary (brief §24) — only real,
+  // already-computed data: which topics had a previously-wrong question
+  // answered correctly in this exact session, and the soonest real
+  // next-review date among items this session touched (never a
+  // fabricated date).
+  let revisionSummary: { topicsImproved: string[]; needsAnotherReview: number; nextReviewAt: Date | null } | null = null;
+  if (attempt.mode === "REVISION") {
+    const questionIds = attempt.responses.map((r) => r.questionId);
+    const revisionItems = await prisma.studentRevisionItem.findMany({
+      where: { userId: session.user.id, questionId: { in: questionIds } },
+      select: { questionId: true, nextReviewAt: true },
+    });
+    const nextReviewByQuestionId = new Map(revisionItems.map((i) => [i.questionId, i.nextReviewAt]));
+
+    const topicsImproved = [
+      ...new Set(
+        attempt.responses
+          .filter((r) => r.isCorrect === true && r.question.topic)
+          .map((r) => r.question.topic!)
+      ),
+    ];
+    const needsAnotherReview = attempt.responses.filter((r) => r.isCorrect === false).length;
+    const futureDates = attempt.responses
+      .map((r) => nextReviewByQuestionId.get(r.questionId))
+      .filter((d): d is Date => !!d);
+    const nextReviewAt = futureDates.length > 0 ? new Date(Math.min(...futureDates.map((d) => d.getTime()))) : null;
+
+    revisionSummary = { topicsImproved, needsAnotherReview, nextReviewAt };
+  }
+
+  // Smart Revision sessions offer a way to practice fresh questions on
+  // the same topics instead of only re-seeing the exact ones just
+  // reviewed (brief's "Practice Similar Questions" — reuses the existing
+  // topic-drill action unchanged, never the same question repeatedly).
+  const similarTopics =
+    attempt.mode === "REVISION"
+      ? [...new Map(attempt.responses.map((r) => [`${r.question.subjectId}::${r.question.topic}`, { subjectId: r.question.subjectId, topic: r.question.topic }])).values()]
+      : [];
+
   // If this attempt completed a Today's Study activity, there's likely a
   // next one waiting — surface a direct way back instead of requiring a
   // manual return to the dashboard (brief's "return-to-study" behavior).
@@ -120,6 +160,57 @@ export default async function ResultsPage({
           Retest
         </Link>
       </div>
+
+      {revisionSummary && (
+        <div className="mt-6 rounded-xl border border-border bg-surface-raised p-5">
+          <p className="text-sm font-medium text-text-primary">Revision Complete</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {attempt.totalItems} question{attempt.totalItems === 1 ? "" : "s"} reviewed
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-text-muted">Correct</p>
+              <p className="font-semibold text-success">{correctCount}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-muted">Needs another review</p>
+              <p className="font-semibold text-warning">{revisionSummary.needsAnotherReview}</p>
+            </div>
+          </div>
+          {revisionSummary.topicsImproved.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-text-muted">Topics improved</p>
+              <p className="mt-1 text-sm text-text-secondary">{revisionSummary.topicsImproved.join(", ")}</p>
+            </div>
+          )}
+          {revisionSummary.nextReviewAt && (
+            <p className="mt-3 text-xs text-text-muted">
+              Next recommended review: {revisionSummary.nextReviewAt.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+            </p>
+          )}
+        </div>
+      )}
+
+      {similarTopics.length > 0 && (
+        <div className="mt-6 rounded-xl border border-brand/40 bg-brand/10 p-5">
+          <p className="text-sm font-medium text-brand-text">Practice Similar Questions</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            Fresh questions on the same topics, not the exact ones you just reviewed.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {similarTopics.map(({ subjectId, topic }) => (
+              <form key={`${subjectId}::${topic}`} action={startTopicDrill}>
+                <input type="hidden" name="exam" value={attempt.exam} />
+                <input type="hidden" name="subjectId" value={subjectId} />
+                {topic && <input type="hidden" name="topic" value={topic} />}
+                <button type="submit" className="rounded-full bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover">
+                  {topic ?? "Practice"}
+                </button>
+              </form>
+            ))}
+          </div>
+        </div>
+      )}
 
       {attempt.mode === "STUDY_DRILL" && (
         <div className="mt-6">
