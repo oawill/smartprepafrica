@@ -12,6 +12,12 @@ export const XP_VALUES = {
   DISCUSSION_POST: 5,
   DISCUSSION_REPLY: 5,
   STUDY_PLAN_ITEM_COMPLETE: 5,
+  // Awarded once per day, the moment every planned item for the day is
+  // COMPLETED/SKIPPED — celebratory bonus on top of the per-item XP
+  // already earned above, and the thing that bumps the streak on a day
+  // the student actually finishes their plan (via awardXp's own
+  // computeStreakUpdate call — no separate streak logic needed).
+  DAILY_PLAN_COMPLETE: 20,
 } as const;
 
 export type XpEventType = keyof typeof XP_VALUES;

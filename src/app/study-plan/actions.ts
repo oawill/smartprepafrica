@@ -21,6 +21,7 @@ export async function markStudyPlanItemComplete(formData: FormData) {
   await recordActivityCompletion(session.user.id, itemId);
   revalidatePath("/study-plan");
   revalidatePath("/dashboard/student");
+  revalidatePath("/study/today");
 }
 
 const missedActions = ["DO_TODAY", "MOVE_TOMORROW", "SKIP"] as const;
@@ -38,6 +39,7 @@ export async function resolveMissedStudyPlanItem(formData: FormData) {
   }
   revalidatePath("/study-plan");
   revalidatePath("/dashboard/student");
+  revalidatePath("/study/today");
 }
 
 export async function rescheduleStudyPlanItem(formData: FormData) {
@@ -48,6 +50,7 @@ export async function rescheduleStudyPlanItem(formData: FormData) {
   await rescheduleItem(session.user.id, itemId, new Date(dateStr));
   revalidatePath("/study-plan");
   revalidatePath("/dashboard/student");
+  revalidatePath("/study/today");
 }
 
 /** force: true, so this is the one place a click can't be accidentally
@@ -60,6 +63,7 @@ export async function regenerateMyStudyPlan() {
   await regenerateStudyPlan(session.user.id, { reason: "MANUAL", force: true });
   revalidatePath("/study-plan");
   revalidatePath("/dashboard/student");
+  revalidatePath("/study/today");
 }
 
 export async function togglePauseStudyPlan(formData: FormData) {

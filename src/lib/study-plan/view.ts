@@ -110,6 +110,18 @@ export function getTodayItems(view: StudyPlanView, now: Date = new Date()): Stud
   return view.itemsByDate.get(dateKey(startOfDay(now))) ?? [];
 }
 
+const NON_TERMINAL_STATUSES: StudyPlanItemStatus[] = ["PENDING", "IN_PROGRESS", "RESCHEDULED"];
+
+/** The one activity Today's Study should show right now — the first
+ * not-yet-done item among today's, in the same `order` the scheduler
+ * already assigned (lower order = higher priority, since the scheduler
+ * fills weak/urgent topics first). Returns null once every today item is
+ * COMPLETED or SKIPPED (the "all done" state). */
+export function getCurrentActivity(view: StudyPlanView, now: Date = new Date()): StudyPlanViewItem | null {
+  const today = getTodayItems(view, now);
+  return today.find((i) => NON_TERMINAL_STATUSES.includes(i.status)) ?? null;
+}
+
 export function getNextActivity(view: StudyPlanView, now: Date = new Date()): StudyPlanViewItem | null {
   const today = startOfDay(now);
   const upcoming = view.items

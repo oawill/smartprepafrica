@@ -13,6 +13,8 @@ import { DiscussionThread } from "@/components/discussions/discussion-thread";
 import { resolveVideoSource } from "@/lib/video/resolve-video-source";
 import { Badge } from "@/components/ui/badge";
 import { hasPermission } from "@/lib/admin/permissions";
+import { getStudyPlanView, getCurrentActivity } from "@/lib/study-plan/view";
+import { weekStartFor } from "@/lib/study-plan/regenerate";
 
 function renderContent(content: string) {
   const segments = content.split("```");
@@ -119,6 +121,15 @@ export default async function LessonPage({
         })
       : null;
 
+  // If completing this lesson advanced a Today's Study activity, offer a
+  // direct way back instead of requiring a manual return to the
+  // dashboard (brief's "return-to-study" behavior).
+  let nextTodayActivity = null;
+  if (isComplete) {
+    const studyPlanView = await getStudyPlanView(session.user.id, weekStartFor(new Date()));
+    nextTodayActivity = studyPlanView ? getCurrentActivity(studyPlanView) : null;
+  }
+
   const source = lesson.type === "VIDEO" ? resolveVideoSource(lesson) : null;
   const playerChapters = lesson.chapters.map((c) => ({
     id: c.id,
@@ -138,12 +149,19 @@ export default async function LessonPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link
-        href={`/learn/${courseId}`}
-        className="text-sm text-text-secondary hover:text-text-primary"
-      >
-        ← {course.title}
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          href={`/learn/${courseId}`}
+          className="text-sm text-text-secondary hover:text-text-primary"
+        >
+          ← {course.title}
+        </Link>
+        {nextTodayActivity && (
+          <Link href="/study/today" className="text-sm font-medium text-brand-text hover:underline">
+            Continue Today&apos;s Study →
+          </Link>
+        )}
+      </div>
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>

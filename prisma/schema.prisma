@@ -2110,6 +2110,7 @@ model StudyPlanItem {
   priority             Int                 @default(0)
   status               StudyPlanItemStatus @default(PENDING)
   recommendationReason String
+  startedAt            DateTime?
   completedAt          DateTime?
   order                Int                 @default(0)
   // A student-added personal session (brief's "Add personal study
