@@ -9,6 +9,7 @@ import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { PersonalizeProfileCard } from "@/components/dashboard/personalize-profile-card";
 import { StudyPlanCard } from "@/components/dashboard/study-plan-card";
+import { LearningProfileCard } from "@/components/dashboard/learning-profile-card";
 import { getStudyPlanView, getTodayItems, getNextActivity } from "@/lib/study-plan/view";
 import { weekStartFor } from "@/lib/study-plan/regenerate";
 import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-service";
@@ -37,6 +38,7 @@ export default async function StudentDashboard({
     select: {
       id: true,
       targetExams: true,
+      academicTrack: true,
       xp: true,
       currentStreakDays: true,
       onboardingCompleted: true,
@@ -197,6 +199,14 @@ export default async function StudentDashboard({
           weeklyCompletionPct={studyPlanView?.weeklyCompletionPct ?? null}
           nextActivity={nextActivity}
           currentStreakDays={studentProfile?.currentStreakDays ?? 0}
+        />
+      )}
+
+      {studentProfile?.onboardingCompleted && (
+        <LearningProfileCard
+          academicTrack={studentProfile.academicTrack}
+          targetExams={studentProfile.targetExams}
+          subjectCount={studentProfile.targetSubjects.length}
         />
       )}
 
