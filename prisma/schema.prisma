@@ -121,6 +121,7 @@ model User {
   aiInsights              AiLearningInsight[]
   aiUsageLogs             AiUsageLog[]
   studyPlans              StudyPlan[]
+  revisionItems           StudentRevisionItem[]
 
   referralsSent    Referral[] @relation("Referrer")
   referralReceived Referral?  @relation("Referred")
@@ -1004,6 +1005,7 @@ model Subject {
   aiInsights       AiLearningInsight[]
   weakForStudents  StudentProfile[]          @relation("StudentWeakSubjects")
   studyPlanItems   StudyPlanItem[]
+  revisionItems    StudentRevisionItem[]
 
   // Admin-controlled (Admin -> Subjects) academic-track mapping driving
   // /onboarding's subject suggestions. Empty = General/All — shown as a
@@ -1067,8 +1069,9 @@ model Question {
   examTopic     ExamTopic?   @relation(fields: [examTopicId], references: [id])
   examTopicId   String?
 
-  responses   QuestionResponse[]
-  videoScenes VideoScene[]
+  responses     QuestionResponse[]
+  videoScenes   VideoScene[]
+  revisionItems StudentRevisionItem[]
 
   @@index([status])
   @@index([subjectId])
@@ -1147,6 +1150,11 @@ enum AttemptMode {
   STUDY_DRILL
   MOCK_EXAM
   CBT_PRACTICE
+  // A Smart Revision session — pulls exact previously-missed questions
+  // rather than fresh ones, kept as its own mode so revision performance
+  // never silently merges into mock/practice scores (see
+  // StudentRevisionItem's own doc comment).
+  REVISION
 }
 
 model ExamAttempt {
@@ -1181,6 +1189,55 @@ model QuestionResponse {
   flagged        Boolean     @default(false)
 
   @@unique([attemptId, questionId])
+}
+
+enum RevisionItemStatus {
+  NEW
+  LEARNING
+  IMPROVING
+  MASTERED
+}
+
+// One row per (student, question) the student has ever gotten wrong —
+// never duplicated (see @@unique below); references the existing
+// Question by id rather than copying it. subject/topic/exam are
+// denormalized from Question at write time purely so filtering/grouping/
+// priority queries never need a join — the same denormalization pattern
+// already used on StudyPlanItem — which is what keeps /revision cheap
+// even with a large historical bank. No separate "review history" table:
+// every review is a QuestionResponse row on a REVISION-mode ExamAttempt,
+// already permanent queryable history — see src/lib/revision/capture.ts.
+model StudentRevisionItem {
+  id                 String             @id @default(cuid())
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  question           Question           @relation(fields: [questionId], references: [id])
+  questionId         String
+  subject            Subject            @relation(fields: [subjectId], references: [id])
+  subjectId          String
+  topic              String?
+  exam               ExamType
+  status             RevisionItemStatus @default(NEW)
+  // Computed and stored at write time (src/lib/revision/priority.ts) —
+  // never recalculated on read, so /revision stays a cheap indexed sort.
+  priority           Int                @default(0)
+  firstMissedAt      DateTime           @default(now())
+  lastMissedAt       DateTime           @default(now())
+  lastReviewedAt     DateTime?
+  nextReviewAt       DateTime?
+  incorrectCount     Int                @default(1)
+  correctReviewCount Int                @default(0)
+  totalReviewCount   Int                @default(0)
+  // "Don't prioritize this for future revision" — never a delete, history
+  // (incorrectCount, review dates) is preserved either way.
+  archived           Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@unique([userId, questionId])
+  @@index([userId, status, archived])
+  @@index([userId, subjectId, topic])
+  @@index([userId, nextReviewAt])
 }
 
 // ---------- EduCom (learning ecosystem) ----------

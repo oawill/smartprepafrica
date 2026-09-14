@@ -10,6 +10,7 @@ import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
 import { PersonalizeProfileCard } from "@/components/dashboard/personalize-profile-card";
 import { StudyPlanCard } from "@/components/dashboard/study-plan-card";
 import { LearningProfileCard } from "@/components/dashboard/learning-profile-card";
+import { SmartRevisionCard } from "@/components/dashboard/smart-revision-card";
 import { getStudyPlanView, getTodayItems, getNextActivity } from "@/lib/study-plan/view";
 import { weekStartFor } from "@/lib/study-plan/regenerate";
 import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-service";
@@ -62,7 +63,7 @@ export default async function StudentDashboard({
     ...(studentProfile?.targetSubjects.map((s) => s.name) ?? []),
   ]);
 
-  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, badgesEarned] =
+  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, badgesEarned, revisionDueCount, weakestRevisionTopic] =
     await Promise.all([
       prisma.examAttempt.findMany({
         where: { userId, submittedAt: { not: null } },
@@ -82,6 +83,12 @@ export default async function StudentDashboard({
       getTodaysRecommendation(userId, preferredSubjectIds),
       getExamReadiness(userId),
       prisma.userBadge.count({ where: { userId } }),
+      prisma.studentRevisionItem.count({ where: { userId, archived: false, status: { not: "MASTERED" } } }),
+      prisma.studentRevisionItem.findFirst({
+        where: { userId, archived: false, status: { not: "MASTERED" } },
+        orderBy: { priority: "desc" },
+        select: { topic: true },
+      }),
     ]);
 
   // Which exams to show the compact Readiness widget for — the student's
@@ -209,6 +216,8 @@ export default async function StudentDashboard({
           subjectCount={studentProfile.targetSubjects.length}
         />
       )}
+
+      <SmartRevisionCard dueCount={revisionDueCount} weakestTopic={weakestRevisionTopic?.topic ?? null} />
 
       <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-brand-text">
         {t.prepSectionTitle}

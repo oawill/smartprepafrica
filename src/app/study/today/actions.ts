@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStudentSession } from "@/lib/exam-access";
 import { examSlugs } from "@/lib/exam-slugs";
 import { startTopicDrill, startQuickDrill } from "@/app/practice/drills/actions";
+import { startRevisionSession } from "@/app/revision/actions";
 
 /** The one genuinely new action this phase needs — everything else
  * (mark complete, skip, reschedule, regenerate) is reused directly from
@@ -44,7 +45,20 @@ export async function startTodayActivity(formData: FormData) {
     redirect("/practice");
   }
 
-  if (item.activityType === "PRACTICE_DRILL" || item.activityType === "REVIEW_MISTAKES") {
+  if (item.activityType === "REVIEW_MISTAKES") {
+    // Deep-links into the student's actual Mistake Bank for this
+    // subject/topic (Smart Revision) rather than a fresh drill — falls
+    // back to a topic drill only if no Mistake Bank entries exist yet
+    // for this exact topic, so the activity is never a dead end.
+    const revisionFormData = new FormData();
+    revisionFormData.set("subjectId", item.subjectId);
+    revisionFormData.set("topic", item.topic);
+    revisionFormData.set("fallbackExam", exam);
+    await startRevisionSession(revisionFormData); // redirects internally
+    return;
+  }
+
+  if (item.activityType === "PRACTICE_DRILL") {
     const drillFormData = new FormData();
     drillFormData.set("exam", exam);
     drillFormData.set("subjectId", item.subjectId);

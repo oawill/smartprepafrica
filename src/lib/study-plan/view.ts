@@ -29,16 +29,20 @@ export type StudyPlanView = {
 };
 
 /** Resolves a plan item into a real, existing route — never a dead link.
- * LESSON stores "courseId|lessonId"; drill/review/mock items store an
- * exam slug; AI_COACH_SESSION has no href (rendered as a "Study With AI
- * Coach" button instead, which needs no deep link at all). */
+ * LESSON stores "courseId|lessonId"; drill/mock items store an exam
+ * slug; REVIEW_MISTAKES points at Smart Revision (the Today's Study
+ * "Start Activity" flow deep-links further, straight into a real
+ * revision session — see startTodayActivity); AI_COACH_SESSION has no
+ * href (rendered as a "Study With AI Coach" button instead, which needs
+ * no deep link at all). */
 export function studyPlanItemHref(item: { activityType: StudyActivityType; activityReference: string | null }): string | null {
+  if (item.activityType === "REVIEW_MISTAKES") return "/revision";
   if (!item.activityReference) return null;
   if (item.activityType === "LESSON") {
     const [courseId, lessonId] = item.activityReference.split("|");
     return courseId && lessonId ? `/learn/${courseId}/lessons/${lessonId}` : null;
   }
-  if (item.activityType === "PRACTICE_DRILL" || item.activityType === "REVIEW_MISTAKES") {
+  if (item.activityType === "PRACTICE_DRILL") {
     return `/practice/${item.activityReference}/drills`;
   }
   if (item.activityType === "MOCK_EXAM") {

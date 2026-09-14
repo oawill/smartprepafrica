@@ -7,6 +7,7 @@ import { examLabels } from "@/lib/exam-slugs";
 import { notifyUser } from "@/lib/notify";
 import { awardXp } from "@/lib/gamification/xp-service";
 import { recordDrillActivityCompletion } from "@/lib/study-plan/regenerate";
+import { recordRevisionOutcomes } from "@/lib/revision/capture";
 
 /** Core of src/app/practice/actions.ts's startAttempt/saveAnswer/
  * submitAttempt, extracted into plain-argument, non-redirecting
@@ -199,6 +200,17 @@ export async function submitAttemptForUser(userId: string, attemptId: string) {
     await recordExamTopicAttempts(userId, attempt.exam, topicAttempts);
     await recordReadinessSnapshot(userId, attempt.exam);
     await recordDrillActivityCompletion(userId, [...new Set(topicAttempts.map((t) => t.subjectId))]);
+  }
+
+  // Mistake Bank capture — every scored response, regardless of mode
+  // (practice, drill, mock, or a revision session itself), so a wrong
+  // answer anywhere becomes revisable and a correct answer to a
+  // previously-missed question counts as a real review. Runs
+  // independently of the topic-mastery block above since it doesn't
+  // require a tagged topic.
+  const scoredResponses = attempt.responses.filter((r) => r.isCorrect !== null);
+  if (scoredResponses.length > 0) {
+    await recordRevisionOutcomes(userId, attempt.exam, scoredResponses);
   }
 
   return { score, correctCount, totalItems: attempt.totalItems };
