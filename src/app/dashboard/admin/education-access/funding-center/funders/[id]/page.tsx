@@ -4,8 +4,33 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
 import { Card } from "@/components/dashboard/card";
 import { Badge } from "@/components/ui/badge";
-import { createContact, updateContactRelationship } from "@/app/dashboard/admin/education-access/funding-center/funders/actions";
+import {
+  createContact,
+  updateContactRelationship,
+  updateFunderIntelligence,
+  updateWatchlist,
+} from "@/app/dashboard/admin/education-access/funding-center/funders/actions";
 import { recordOutreach } from "@/app/dashboard/admin/education-access/funding-center/outreach/actions";
+import { computeFunderFitScore } from "@/lib/education-access/funding-center/scoring";
+
+const watchlistReasonOptions = [
+  "Strong Strategic Fit",
+  "No Current Opportunity",
+  "Relationship Development",
+  "Future Funding Cycle",
+  "Invitation Only",
+  "CSR Prospect",
+  "Potential Strategic Partner",
+] as const;
+
+const permitFields = [
+  ["permitsFiscalSponsorship", "Permits fiscal sponsorship"],
+  ["permitsInternationalOrgs", "Permits international organizations"],
+  ["permitsForProfitSocialEnterprise", "Permits for-profit social enterprises"],
+  ["permitsCorporatePartnership", "Permits corporate partnerships"],
+  ["permitsProgramRelatedInvestment", "Permits program-related investments"],
+  ["permitsDirectInternationalGrants", "Permits direct international grants"],
+] as const;
 
 const relationshipOptions = [
   "NO_RELATIONSHIP",
@@ -38,12 +63,22 @@ export default async function FunderDetailPage({ params }: { params: Promise<{ i
 
   if (!funder) notFound();
 
+  const funderFitScore = computeFunderFitScore(funder);
+
   return (
     <div>
       <Link href="/dashboard/admin/education-access/funding-center/funders" className="text-sm text-brand-text hover:underline">
         ← All funders
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold text-text-primary">{funder.organizationName}</h1>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold text-text-primary">{funder.organizationName}</h1>
+        <div className="flex items-center gap-2">
+          <Badge tone={funderFitScore >= 70 ? "success" : funderFitScore >= 40 ? "info" : "neutral"}>
+            Funder Fit Score · {funderFitScore}
+          </Badge>
+          {funder.watchlisted && <Badge tone="brand">Watchlisted{funder.watchlistReason ? `: ${funder.watchlistReason}` : ""}</Badge>}
+        </div>
+      </div>
       <p className="text-sm text-text-secondary">
         {funder.organizationType.replaceAll("_", " ")}
         {funder.country ? ` · ${funder.country}` : ""}
@@ -57,7 +92,70 @@ export default async function FunderDetailPage({ params }: { params: Promise<{ i
         )}
       </p>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6">
+        <Card title="Watchlist">
+          <p className="text-xs text-text-muted">
+            For internal planning — funders worth developing a relationship with even when no
+            current opportunity exists.
+          </p>
+          <form action={updateWatchlist} className="mt-2 space-y-2">
+            <input type="hidden" name="funderId" value={funder.id} />
+            <label className="flex items-center gap-2 text-sm text-text-secondary">
+              <input type="checkbox" name="watchlisted" defaultChecked={funder.watchlisted} /> On watchlist
+            </label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <select name="watchlistReason" defaultValue={funder.watchlistReason ?? ""} className={inputClass}>
+                <option value="">— Reason —</option>
+                {watchlistReasonOptions.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              <input name="watchlistNotes" defaultValue={funder.watchlistNotes ?? ""} placeholder="Notes" className={inputClass} />
+            </div>
+            <button type="submit" className="rounded-lg border border-border-strong px-3 py-1.5 text-xs text-text-secondary hover:border-text-muted">
+              Save Watchlist Status
+            </button>
+          </form>
+        </Card>
+      </div>
+
+      <div className="mt-4">
+        <Card title="Funder Intelligence Profile">
+          <form action={updateFunderIntelligence} className="space-y-3">
+            <input type="hidden" name="funderId" value={funder.id} />
+            <div>
+              <label className={labelClass}>Overview</label>
+              <textarea name="overview" defaultValue={funder.overview ?? ""} rows={2} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Known Programs</label>
+              <textarea name="knownPrograms" defaultValue={funder.knownPrograms ?? ""} rows={2} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Research Notes</label>
+              <textarea name="researchNotes" defaultValue={funder.researchNotes ?? ""} rows={2} className={inputClass} />
+            </div>
+            <div>
+              <p className={labelClass}>
+                Eligibility compatibility — does this funder permit a route around a nonprofit/
+                501(c)(3) requirement? Leave unchecked if unknown.
+              </p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {permitFields.map(([name, label]) => (
+                  <label key={name} className="flex items-center gap-2 text-sm text-text-secondary">
+                    <input type="checkbox" name={name} defaultChecked={Boolean(funder[name])} /> {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <button type="submit" className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover">
+              Save Profile
+            </button>
+          </form>
+        </Card>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card title="Opportunities">
           {funder.opportunities.length === 0 ? (
             <p className="text-sm text-text-secondary">No opportunities yet.</p>

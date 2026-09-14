@@ -1,5 +1,5 @@
 import { Badge, type BadgeTone } from "@/components/ui/badge";
-import type { Classification, DeadlineUrgency } from "@/lib/education-access/funding-center/scoring";
+import type { Classification, DeadlineUrgency, EligibilityStatus, DiscoveryConfidence } from "@/lib/education-access/funding-center/scoring";
 
 const CLASSIFICATION_TONE: Record<Classification, BadgeTone> = {
   PRIORITY: "success",
@@ -61,4 +61,32 @@ export function DeadlineBadge({ urgency }: { urgency: DeadlineUrgency }) {
 export function StaleBadge({ stale }: { stale: boolean }) {
   if (!stale) return null;
   return <Badge tone="warning">Funding information may be outdated — verify before applying</Badge>;
+}
+
+const ELIGIBILITY_STATUS_TONE: Record<EligibilityStatus, BadgeTone> = {
+  ELIGIBLE: "success",
+  POTENTIALLY_ELIGIBLE: "neutral",
+  REQUIRES_CONFIRMATION: "warning",
+  NOT_ELIGIBLE: "danger",
+};
+
+const ELIGIBILITY_STATUS_LABEL: Record<EligibilityStatus, string> = {
+  ELIGIBLE: "Eligible",
+  POTENTIALLY_ELIGIBLE: "Potentially Eligible",
+  REQUIRES_CONFIRMATION: "Eligibility Requires Confirmation",
+  NOT_ELIGIBLE: "Not Eligible",
+};
+
+export function EligibilityStatusBadge({ status }: { status: EligibilityStatus }) {
+  return <Badge tone={ELIGIBILITY_STATUS_TONE[status]}>{ELIGIBILITY_STATUS_LABEL[status]}</Badge>;
+}
+
+const CONFIDENCE_TONE: Record<DiscoveryConfidence, BadgeTone> = {
+  HIGH: "success",
+  MEDIUM: "warning",
+  LOW: "neutral",
+};
+
+export function DiscoveryConfidenceBadge({ confidence }: { confidence: DiscoveryConfidence }) {
+  return <Badge tone={CONFIDENCE_TONE[confidence]}>Confidence: {confidence}</Badge>;
 }

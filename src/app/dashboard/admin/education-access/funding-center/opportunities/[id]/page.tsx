@@ -6,14 +6,16 @@ import { Card } from "@/components/dashboard/card";
 import { Badge } from "@/components/ui/badge";
 import {
   classifyOpportunity,
-  computeEligibility,
+  computeEligibilityStatus,
+  computeReadinessScore,
   deadlineUrgency,
   isStale,
   ELIGIBILITY_REQUIREMENTS,
   SCORE_CATEGORY_MAX,
+  SCORE_CATEGORY_LABELS,
   type EligibilityChecklist,
 } from "@/lib/education-access/funding-center/scoring";
-import { ClassificationBadge, DeadlineBadge, StaleBadge } from "@/components/education-access/funding-center/badges";
+import { ClassificationBadge, DeadlineBadge, StaleBadge, EligibilityStatusBadge } from "@/components/education-access/funding-center/badges";
 import {
   updateOpportunityStatus,
   updateOpportunityScores,
@@ -56,7 +58,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
   await requireAdminPagePermission("funding_center.view");
   const { id } = await params;
 
-  const [opportunity, settings, admins] = await Promise.all([
+  const [opportunity, settings, admins, readinessItems] = await Promise.all([
     prisma.educationAccessFundingOpportunity.findUnique({
       where: { id },
       include: {
@@ -69,16 +71,21 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
     }),
     getPlatformSettings(),
     prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.educationAccessReadinessItem.findMany(),
   ]);
 
   if (!opportunity) notFound();
 
   const checklist = (opportunity.eligibilityChecklist as EligibilityChecklist | null) ?? {};
-  const { eligible, disqualifyingItems } = computeEligibility(checklist);
+  const { status: eligibilityStatus, barrierWarning, reasons: eligibilityReasons } = computeEligibilityStatus(
+    checklist,
+    opportunity.funder
+  );
   const totalScore = opportunity.totalScore ?? 0;
   const { classification, reasoning } = classifyOpportunity(totalScore);
   const stale = isStale(opportunity.lastVerifiedAt, settings.staleOpportunityThresholdDays);
   const urgency = deadlineUrgency(opportunity.deadline);
+  const readiness = computeReadinessScore(readinessItems);
 
   return (
     <div>
@@ -95,16 +102,29 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ClassificationBadge eligible={eligible} classification={classification} totalScore={totalScore} />
+          <ClassificationBadge eligible={eligibilityStatus !== "NOT_ELIGIBLE"} classification={classification} totalScore={totalScore} />
+          <EligibilityStatusBadge status={eligibilityStatus} />
           <DeadlineBadge urgency={urgency} />
         </div>
       </div>
       <StaleBadge stale={stale} />
-      {!eligible && (
-        <p className="mt-2 text-sm text-danger">
-          Not eligible: {disqualifyingItems.join(", ")}
-        </p>
+      {barrierWarning && (
+        <div className="mt-2 rounded-lg border border-danger/30 bg-danger-surface p-3 text-sm text-danger">
+          <p className="font-semibold">Potential Eligibility Barrier</p>
+          <ul className="mt-1 list-disc pl-5">
+            {eligibilityReasons.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        </div>
       )}
+      {!barrierWarning && eligibilityReasons.length > 0 && (
+        <p className="mt-2 text-sm text-text-secondary">{eligibilityReasons.join("; ")}</p>
+      )}
+      <p className="mt-2 text-xs text-text-muted">
+        Org-wide application readiness: {readiness.percent}%
+        {readiness.missing.length > 0 && ` — missing: ${readiness.missing.slice(0, 3).join(", ")}${readiness.missing.length > 3 ? "…" : ""}`}
+      </p>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Opportunity Details">
@@ -159,6 +179,43 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                 <input name="amountAwardedMinor" type="number" defaultValue={opportunity.amountAwardedMinor ?? ""} className={inputClass} />
               </div>
             </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Opportunity type</label>
+                <select name="opportunityType" defaultValue={opportunity.opportunityType} className={inputClass}>
+                  <option value="GRANT">Grant</option>
+                  <option value="CSR_PARTNERSHIP">CSR Partnership</option>
+                  <option value="STRATEGIC_PARTNERSHIP">Strategic Partnership</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Fiscal sponsorship status</label>
+                <select name="fiscalSponsorshipStatus" defaultValue={opportunity.fiscalSponsorshipStatus} className={inputClass}>
+                  <option value="NOT_REQUIRED">Not Required</option>
+                  <option value="MAY_BE_REQUIRED">May Be Required</option>
+                  <option value="REQUIRED">Required</option>
+                  <option value="IDENTIFIED">Fiscal Sponsor Identified</option>
+                  <option value="CONFIRMED">Fiscal Sponsor Confirmed</option>
+                </select>
+              </div>
+            </div>
+            {opportunity.opportunityType === "STRATEGIC_PARTNERSHIP" && (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Estimated in-kind value (minor units)</label>
+                  <input name="estimatedValueMinor" type="number" defaultValue={opportunity.estimatedValueMinor ?? ""} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>What&apos;s being contributed</label>
+                  <input
+                    name="estimatedValueDescription"
+                    defaultValue={opportunity.estimatedValueDescription ?? ""}
+                    placeholder="Cloud credits, devices, connectivity…"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label className={labelClass}>Next action</label>
               <input name="nextAction" defaultValue={opportunity.nextAction ?? ""} className={inputClass} />
@@ -232,20 +289,11 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
       <div className="mt-4">
         <Card title="Qualification Score">
           <p className="text-sm text-text-secondary">{reasoning}</p>
-          <form action={updateOpportunityScores} className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <form action={updateOpportunityScores} className="mt-3 grid gap-3 sm:grid-cols-4">
             <input type="hidden" name="opportunityId" value={opportunity.id} />
-            {(
-              [
-                ["missionScore", "Mission Alignment"],
-                ["geographicScore", "Geographic Alignment"],
-                ["programScore", "Program Alignment"],
-                ["eligibilityScore", "Eligibility"],
-                ["fundingScore", "Funding Potential"],
-                ["timingScore", "Timing"],
-              ] as const
-            ).map(([key, label]) => (
+            {(Object.keys(SCORE_CATEGORY_MAX) as (keyof typeof SCORE_CATEGORY_MAX)[]).map((key) => (
               <div key={key}>
-                <label className={labelClass}>{label} (0-{SCORE_CATEGORY_MAX[key]})</label>
+                <label className={labelClass}>{SCORE_CATEGORY_LABELS[key]} (0-{SCORE_CATEGORY_MAX[key]})</label>
                 <input
                   name={key}
                   type="number"
@@ -256,7 +304,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                 />
               </div>
             ))}
-            <div className="sm:col-span-3 lg:col-span-6">
+            <div className="sm:col-span-4">
               <button type="submit" className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground hover:bg-brand-hover">
                 Save score
               </button>

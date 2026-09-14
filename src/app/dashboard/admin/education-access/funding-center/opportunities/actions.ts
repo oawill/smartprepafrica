@@ -170,11 +170,13 @@ export async function markNotPursuing(formData: FormData) {
 }
 
 const scoreSchema = z.object({
-  missionScore: z.coerce.number().int().min(0).max(25),
-  geographicScore: z.coerce.number().int().min(0).max(20),
-  programScore: z.coerce.number().int().min(0).max(20),
-  eligibilityScore: z.coerce.number().int().min(0).max(20),
-  fundingScore: z.coerce.number().int().min(0).max(10),
+  educationScore: z.coerce.number().int().min(0).max(20),
+  nigeriaAfricaScore: z.coerce.number().int().min(0).max(20),
+  educationAccessScore: z.coerce.number().int().min(0).max(15),
+  digitalLearningScore: z.coerce.number().int().min(0).max(15),
+  aiTechScore: z.coerce.number().int().min(0).max(10),
+  youthScore: z.coerce.number().int().min(0).max(10),
+  fundingPotentialScore: z.coerce.number().int().min(0).max(5),
   timingScore: z.coerce.number().int().min(0).max(5),
 });
 
@@ -246,6 +248,9 @@ export async function updateOpportunityEligibility(formData: FormData) {
   revalidatePath(`/dashboard/admin/education-access/funding-center/opportunities/${opportunityId}`);
 }
 
+const opportunityTypes = ["GRANT", "CSR_PARTNERSHIP", "STRATEGIC_PARTNERSHIP"] as const;
+const fiscalSponsorshipStatuses = ["NOT_REQUIRED", "MAY_BE_REQUIRED", "REQUIRED", "IDENTIFIED", "CONFIRMED"] as const;
+
 export async function updateOpportunityDetails(formData: FormData) {
   await requireActionPermission("funding_center.manage");
   const opportunityId = formData.get("opportunityId") as string;
@@ -260,6 +265,11 @@ export async function updateOpportunityDetails(formData: FormData) {
       amountAwardedMinor: toOptionalInt(formData.get("amountAwardedMinor")) ?? null,
       lastVerifiedAt: toOptionalDate(formData.get("lastVerifiedAt")) ?? null,
       notes: (formData.get("notes") as string) || null,
+      opportunityType: (formData.get("opportunityType") as (typeof opportunityTypes)[number]) || "GRANT",
+      fiscalSponsorshipStatus:
+        (formData.get("fiscalSponsorshipStatus") as (typeof fiscalSponsorshipStatuses)[number]) || "NOT_REQUIRED",
+      estimatedValueMinor: toOptionalInt(formData.get("estimatedValueMinor")) ?? null,
+      estimatedValueDescription: (formData.get("estimatedValueDescription") as string) || null,
     },
   });
 
@@ -270,6 +280,7 @@ export async function saveSearch(formData: FormData) {
   const session = await requireActionPermission("funding_center.manage");
   const name = formData.get("name") as string;
   const filters = formData.get("filters") as string;
+  const schedule = formData.get("schedule") as string;
   if (!name?.trim()) return;
 
   await prisma.educationAccessSavedSearch.create({
@@ -277,6 +288,8 @@ export async function saveSearch(formData: FormData) {
       ownerId: session.user.id,
       name: name.trim(),
       filters: filters ? JSON.parse(filters) : {},
+      // Architecture only (brief §17) — nothing reads this yet.
+      schedule: schedule || null,
     },
   });
 
