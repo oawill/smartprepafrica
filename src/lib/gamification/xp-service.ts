@@ -11,6 +11,7 @@ export const XP_VALUES = {
   EXAM_ATTEMPT: 15,
   DISCUSSION_POST: 5,
   DISCUSSION_REPLY: 5,
+  STUDY_PLAN_ITEM_COMPLETE: 5,
 } as const;
 
 export type XpEventType = keyof typeof XP_VALUES;

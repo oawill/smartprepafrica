@@ -1,6 +1,7 @@
 import type { AiCoachMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { CoachFocusQuestion } from "@/lib/ai/focus-question";
+import { weekStartFor, startOfDay } from "@/lib/study-plan/regenerate";
 
 const MAX_LESSON_CONTENT_CHARS = 2500;
 const MAX_CHAPTER_TRANSCRIPT_CHARS = 2000;
@@ -19,6 +20,22 @@ export type CoachContext = {
     targetSubjectNames: string[];
     weakSubjectNames: string[];
     studyGoal: string | null;
+  };
+  // Today's real Weekly Study Plan items, if one exists — lets the coach
+  // answer "what should I study today?"/"I'm behind" with actual
+  // scheduled data instead of guessing. Undefined (not an empty array)
+  // when the student has no plan at all, vs. an empty array meaning a
+  // plan exists but nothing is left today.
+  studyPlan?: {
+    weeklyCompletionPct: number;
+    todayItems: {
+      subjectName: string;
+      topic: string;
+      activityType: string;
+      recommendedMinutes: number;
+      status: string;
+      recommendationReason: string;
+    }[];
   };
   course?: {
     title: string;
@@ -85,7 +102,11 @@ export async function buildCoachContext({
   focusQuestion,
   confusionStage,
 }: BuildContextInput): Promise<CoachContext> {
-  const [user, studentProfile, recentAttemptRows, weakRows, strongRows] = await Promise.all([
+  const nowDate = new Date();
+  const weekStart = weekStartFor(nowDate);
+  const today = startOfDay(nowDate);
+
+  const [user, studentProfile, recentAttemptRows, weakRows, strongRows, studyPlanRow] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: { name: true, country: { select: { name: true } } },
@@ -119,6 +140,22 @@ export async function buildCoachContext({
       orderBy: { masteryScore: "desc" },
       take: 5,
       select: { topic: true, masteryScore: true, subject: { select: { name: true } } },
+    }),
+    prisma.studyPlan.findUnique({
+      where: { userId_weekStart: { userId, weekStart } },
+      select: {
+        items: {
+          select: {
+            subject: { select: { name: true } },
+            topic: true,
+            activityType: true,
+            recommendedMinutes: true,
+            status: true,
+            recommendationReason: true,
+            date: true,
+          },
+        },
+      },
     }),
   ]);
 
@@ -245,6 +282,25 @@ export async function buildCoachContext({
     }
   }
 
+  let studyPlan: CoachContext["studyPlan"];
+  if (studyPlanRow) {
+    const totalCount = studyPlanRow.items.length;
+    const completedCount = studyPlanRow.items.filter((i) => i.status === "COMPLETED").length;
+    studyPlan = {
+      weeklyCompletionPct: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+      todayItems: studyPlanRow.items
+        .filter((i) => startOfDay(i.date).getTime() === today.getTime())
+        .map((i) => ({
+          subjectName: i.subject.name,
+          topic: i.topic,
+          activityType: i.activityType,
+          recommendedMinutes: i.recommendedMinutes,
+          status: i.status,
+          recommendationReason: i.recommendationReason,
+        })),
+    };
+  }
+
   return {
     student: {
       name: user.name,
@@ -257,6 +313,7 @@ export async function buildCoachContext({
       weakSubjectNames: studentProfile?.weakSubjects.map((s) => s.name) ?? [],
       studyGoal: studentProfile?.studyGoal ?? null,
     },
+    studyPlan,
     course,
     lesson,
     chapter,

@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { AcademicTrack } from "@prisma/client";
+import type { AcademicTrack, StudyDayOfWeek, StudyPeriod } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireStudentSession } from "@/lib/exam-access";
 import { EXAM_CODE_TO_EXAM_TYPE } from "@/lib/exam-type-mapping";
+import { regenerateStudyPlan } from "@/lib/study-plan/regenerate";
 
 export async function saveClassLevel(formData: FormData) {
   const session = await requireStudentSession("/onboarding");
@@ -84,7 +85,7 @@ const studyGoalPresets = [
   "General learning",
 ] as const;
 
-export async function completeOnboarding(formData: FormData) {
+export async function saveStudyGoal(formData: FormData) {
   const session = await requireStudentSession("/onboarding");
   const preset = formData.get("studyGoalPreset") as string;
   const custom = (formData.get("studyGoalCustom") as string)?.trim();
@@ -92,8 +93,47 @@ export async function completeOnboarding(formData: FormData) {
 
   await prisma.studentProfile.update({
     where: { userId: session.user.id },
-    data: { studyGoal, onboardingCompleted: true },
+    data: { studyGoal },
   });
+
+  revalidatePath("/onboarding");
+  redirect("/onboarding?step=availability");
+}
+
+const studyDays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"] as const;
+const studyPeriods = ["MORNING", "AFTERNOON", "EVENING", "NO_PREFERENCE"] as const;
+
+export async function completeOnboarding(formData: FormData) {
+  const session = await requireStudentSession("/onboarding");
+
+  const minutesChoice = formData.get("dailyStudyMinutes") as string;
+  const customMinutes = Number(formData.get("customMinutes"));
+  const dailyStudyMinutes =
+    minutesChoice === "custom" ? (customMinutes > 0 ? Math.round(customMinutes) : null) : Number(minutesChoice) || null;
+
+  const selectedDays = formData
+    .getAll("studyDays")
+    .map(String)
+    .filter((d): d is StudyDayOfWeek => (studyDays as readonly string[]).includes(d));
+
+  const periodChoice = formData.get("preferredStudyPeriod") as string;
+  const preferredStudyPeriod = (studyPeriods as readonly string[]).includes(periodChoice)
+    ? (periodChoice as StudyPeriod)
+    : null;
+
+  await prisma.studentProfile.update({
+    where: { userId: session.user.id },
+    data: {
+      dailyStudyMinutes,
+      studyDays: { set: selectedDays },
+      preferredStudyPeriod,
+      onboardingCompleted: true,
+    },
+  });
+
+  if (dailyStudyMinutes && selectedDays.length > 0) {
+    await regenerateStudyPlan(session.user.id, { reason: "ONBOARDING_COMPLETED" });
+  }
 
   revalidatePath("/dashboard/student");
   redirect("/dashboard?onboarded=1");

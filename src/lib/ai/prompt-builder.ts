@@ -89,6 +89,28 @@ export function buildSystemPrompt(context: CoachContext): string {
     parts.push(`Student's stated study goal: "${s.studyGoal}".`);
   }
 
+  // Real Weekly Study Plan data (never fabricated) — lets the coach answer
+  // "what should I study today?"/"I'm behind on my plan" with the actual
+  // scheduled items instead of inventing topics or scores.
+  if (context.studyPlan) {
+    if (context.studyPlan.todayItems.length === 0) {
+      parts.push(
+        `The student has a Weekly Study Plan (${context.studyPlan.weeklyCompletionPct}% completed so far this week), but nothing is scheduled for today specifically — if asked what to study today, suggest they check /study-plan or offer to help with their weakest topics instead.`
+      );
+    } else {
+      parts.push(
+        `Today's real Weekly Study Plan (${context.studyPlan.weeklyCompletionPct}% completed so far this week):\n` +
+          context.studyPlan.todayItems
+            .map(
+              (i) =>
+                `- ${i.subjectName} — ${i.topic} (${i.activityType.toLowerCase().replace("_", " ")}, ~${i.recommendedMinutes} min, status: ${i.status.toLowerCase().replace("_", " ")}). Why: ${i.recommendationReason}`
+            )
+            .join("\n") +
+          "\nWhen the student asks what to study today/tonight, or wants to start their plan, reference these exact items — never invent a different topic, subject, or duration. If they ask to study something else instead (e.g. a different subject), that's their choice to make; support it rather than insisting on the schedule."
+      );
+    }
+  }
+
   if (context.course) {
     const c = context.course;
     parts.push(
