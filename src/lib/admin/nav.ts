@@ -114,15 +114,23 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         permission: "education_access.partners_manage",
       },
       {
-        label: "Grants",
-        href: "/dashboard/admin/education-access/grants",
-        permission: "education_access.grants_manage",
-      },
-      {
         label: "Funder Reports",
         href: "/dashboard/admin/education-access/reports",
-        permission: "education_access.grants_manage",
+        permission: "education_access.manage",
       },
+    ],
+  },
+  {
+    label: "Grant & Funding Center",
+    items: [
+      { label: "Dashboard", href: "/dashboard/admin/education-access/funding-center", permission: "funding_center.view" },
+      { label: "Opportunities", href: "/dashboard/admin/education-access/funding-center/opportunities", permission: "funding_center.view" },
+      { label: "Funders", href: "/dashboard/admin/education-access/funding-center/funders", permission: "funding_center.view" },
+      { label: "Grant Calendar", href: "/dashboard/admin/education-access/funding-center/calendar", permission: "funding_center.view" },
+      { label: "Applications", href: "/dashboard/admin/education-access/funding-center/applications", permission: "funding_center.view" },
+      { label: "Outreach", href: "/dashboard/admin/education-access/funding-center/outreach", permission: "funding_center.view" },
+      { label: "Tasks", href: "/dashboard/admin/education-access/funding-center/tasks", permission: "funding_center.view" },
+      { label: "Reports", href: "/dashboard/admin/education-access/funding-center/reports", permission: "funding_center.view" },
     ],
   },
   {

@@ -13,7 +13,7 @@ export default async function AdminFunderReportsPage({
 }: {
   searchParams: Promise<{ sponsorId?: string; schoolId?: string }>;
 }) {
-  await requireAdminPagePermission("education_access.grants_manage");
+  await requireAdminPagePermission("education_access.manage");
 
   const { sponsorId, schoolId } = await searchParams;
 
