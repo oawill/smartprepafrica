@@ -270,6 +270,10 @@ export const fr: Dictionary = {
       `Temps d'étude recommandé : ${hours}h ${minutes}min`,
     estimateDisclaimer:
       "Estimation basée sur votre historique de pratique — ne garantit pas les résultats à l'examen.",
+    personalizeCardTitle: "Personnalisez votre expérience SmartPrepAfrica",
+    personalizeCardBody:
+      "Indiquez-nous votre filière et vos matières afin que nous puissions recommander les bonnes leçons, questions de pratique et plans d'étude.",
+    personalizeCardButton: "Compléter mon profil",
   },
   adminOverview: {
     title: "Santé de la plateforme",

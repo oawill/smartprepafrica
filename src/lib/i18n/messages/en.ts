@@ -186,6 +186,9 @@ export const en: {
     needsImprovement: string;
     recommendedStudyTime: (hours: number, minutes: number) => string;
     estimateDisclaimer: string;
+    personalizeCardTitle: string;
+    personalizeCardBody: string;
+    personalizeCardButton: string;
   };
   adminOverview: {
     title: string;
@@ -513,6 +516,10 @@ export const en: {
     recommendedStudyTime: (hours: number, minutes: number) =>
       `Recommended study time: ${hours}h ${minutes}min`,
     estimateDisclaimer: "Estimated from your practice history — not a guarantee of exam results.",
+    personalizeCardTitle: "Personalize your SmartPrepAfrica experience",
+    personalizeCardBody:
+      "Tell us your academic track and subjects so we can recommend the right lessons, practice questions, and study plans.",
+    personalizeCardButton: "Complete My Profile",
   },
   adminOverview: {
     title: "Platform health",

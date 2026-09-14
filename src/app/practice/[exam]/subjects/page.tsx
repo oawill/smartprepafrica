@@ -6,6 +6,7 @@ import { requireStudentSession } from "@/lib/exam-access";
 import {
   getExamProfile,
   suggestSubjectsFromHistory,
+  suggestSubjectsFromOnboarding,
   getCompulsorySubjectNames,
 } from "@/lib/practice/exam-profile-service";
 import { SubjectSelectionForm } from "@/components/readiness/subject-selection-form";
@@ -32,7 +33,12 @@ export default async function ExamSubjectsPage({ params }: PageProps<"/practice/
   ]);
 
   const hasProfile = !!profile;
-  const suggested = hasProfile ? [] : await suggestSubjectsFromHistory(userId, exam);
+  let suggested = hasProfile ? [] : await suggestSubjectsFromHistory(userId, exam);
+  if (!hasProfile && suggested.length === 0) {
+    // No attempt history yet (brand-new student) — fall back to the
+    // subjects chosen during /onboarding instead of an empty screen.
+    suggested = await suggestSubjectsFromOnboarding(userId, exam);
+  }
   const initialSelectedIds = hasProfile ? profile.subjects.map((s) => s.id) : suggested.map((s) => s.id);
   const compulsoryNames = await getCompulsorySubjectNames(exam);
 

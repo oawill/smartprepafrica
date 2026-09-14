@@ -61,3 +61,22 @@ export async function suggestSubjectsFromHistory(
     orderBy: { name: "asc" },
   });
 }
+
+/** A brand-new student has no attempt history yet, so
+ * suggestSubjectsFromHistory alone returns nothing. Falls back to the
+ * subjects they chose during /onboarding (StudentProfile.targetSubjects),
+ * intersected with the subjects that actually have published questions
+ * for this exam — never suggests a subject with no content here. */
+export async function suggestSubjectsFromOnboarding(
+  userId: string,
+  exam: ExamType
+): Promise<{ id: string; name: string }[]> {
+  return prisma.subject.findMany({
+    where: {
+      targetedByStudents: { some: { userId } },
+      questions: { some: { exam, status: "PUBLISHED" } },
+    },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}

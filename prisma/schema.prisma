@@ -199,24 +199,41 @@ model UserRole {
   @@unique([userId, role])
 }
 
+enum AcademicTrack {
+  SCIENCE
+  ARTS
+  COMMERCIAL
+  UNDECIDED
+}
+
 model StudentProfile {
-  id             String              @id @default(cuid())
-  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String              @unique
-  school         School?             @relation(fields: [schoolId], references: [id])
+  id             String     @id @default(cuid())
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String     @unique
+  school         School?    @relation(fields: [schoolId], references: [id])
   schoolId       String?
-  class          Class?              @relation(fields: [classId], references: [id])
+  class          Class?     @relation(fields: [classId], references: [id])
   classId        String?
   gradeLevel     String?
   targetExams    ExamType[]
   // Collected at registration when the student's country offers real
   // subject content (see CountryExamSubject) — optional, never forced.
-  targetSubjects Subject[]           @relation("StudentTargetSubjects")
+  // Also the "Subjects" step of the /onboarding wizard.
+  targetSubjects Subject[]  @relation("StudentTargetSubjects")
+
+  // Academic-track onboarding (/onboarding). Null = existing student who
+  // has never been through the wizard — distinct from UNDECIDED, which is
+  // a real "Not sure yet" answer. Drives subject/dashboard/AI-coach
+  // personalization; never blocks access when absent.
+  academicTrack       AcademicTrack?
+  onboardingCompleted Boolean             @default(false)
+  weakSubjects        Subject[]           @relation("StudentWeakSubjects")
+  studyGoal           String?
   // Non-sequential (unlike User.studentNumber), shown to the student to share
   // with a parent/guardian — deliberately not enumerable since it grants
   // access to this student's academic data once linked.
-  linkCode       String?             @unique
-  parentLinks    ParentStudentLink[] @relation("StudentLinks")
+  linkCode            String?             @unique
+  parentLinks         ParentStudentLink[] @relation("StudentLinks")
 
   // Gamification — see src/lib/gamification/xp-service.ts for the award
   // logic. xp is a denormalized total kept in sync with the XpEvent
@@ -957,6 +974,12 @@ model Subject {
   examTopicMastery StudentExamTopicMastery[]
   examProfiles     StudentExamProfile[]      @relation("StudentExamProfileSubjects")
   aiInsights       AiLearningInsight[]
+  weakForStudents  StudentProfile[]          @relation("StudentWeakSubjects")
+
+  // Admin-controlled (Admin -> Subjects) academic-track mapping driving
+  // /onboarding's subject suggestions. Empty = General/All — shown as a
+  // suggestion regardless of track, not hidden from anyone.
+  academicTracks AcademicTrack[] @default([])
 }
 
 model Question {

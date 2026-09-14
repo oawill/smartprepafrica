@@ -222,7 +222,7 @@ export default function RegisterForm({
       return;
     }
 
-    router.push("/dashboard");
+    router.push(role === "STUDENT" ? "/onboarding" : "/dashboard");
   }
 
   return (

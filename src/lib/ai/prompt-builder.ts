@@ -71,6 +71,24 @@ export function buildSystemPrompt(context: CoachContext): string {
     }${s.homeSchool ? `. Home school: ${s.homeSchool}.` : "."}`
   );
 
+  // Academic-track personalization from /onboarding — every piece is
+  // optional and simply omitted when the student hasn't set it, so the
+  // coach still works normally for incomplete profiles.
+  if (s.academicTrack && s.academicTrack !== "UNDECIDED") {
+    parts.push(`Academic track: ${s.academicTrack.charAt(0) + s.academicTrack.slice(1).toLowerCase()}.`);
+  }
+  if (s.targetSubjectNames.length > 0) {
+    parts.push(`Subjects this student studies: ${s.targetSubjectNames.join(", ")}.`);
+  }
+  if (s.weakSubjectNames.length > 0) {
+    parts.push(
+      `Subjects the student says they find difficult: ${s.weakSubjectNames.join(", ")}. Prioritize these when suggesting what to study, all else being equal.`
+    );
+  }
+  if (s.studyGoal) {
+    parts.push(`Student's stated study goal: "${s.studyGoal}".`);
+  }
+
   if (context.course) {
     const c = context.course;
     parts.push(
