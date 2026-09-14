@@ -133,16 +133,29 @@ export type StudyRecommendation = {
 /** The single most useful thing to study today: the lowest-mastery topic
  * with enough data to trust, plus what to review after that. Returns null
  * rather than a fabricated recommendation when there isn't enough data yet. */
-export async function getTodaysRecommendation(userId: string): Promise<StudyRecommendation> {
+/** `preferredSubjectIds` (from the student's onboarding weak/target
+ * subjects) moves matching topics to the front of the candidate list
+ * before picking the weakest — without them (student hasn't onboarded,
+ * or none of their subjects have tracked topics yet), this is byte-for-
+ * byte the original pure-lowest-mastery-score behavior. */
+export async function getTodaysRecommendation(
+  userId: string,
+  preferredSubjectIds: string[] = []
+): Promise<StudyRecommendation> {
   const weakest = await prisma.studentTopicMastery.findMany({
     where: { userId, confidenceScore: { gt: 0.15 } },
     orderBy: { masteryScore: "asc" },
-    take: 2,
     include: { subject: { select: { name: true } } },
   });
   if (weakest.length === 0) return null;
 
-  const top = weakest[0];
+  const preferred = preferredSubjectIds.length > 0 ? weakest.filter((w) => preferredSubjectIds.includes(w.subjectId)) : [];
+  const ordered =
+    preferred.length > 0
+      ? [...preferred, ...weakest.filter((w) => !preferredSubjectIds.includes(w.subjectId))]
+      : weakest;
+
+  const top = ordered[0];
   const lesson = await prisma.lesson.findFirst({
     where: { topic: top.topic, moderationStatus: "PUBLISHED", module: { course: { published: true } } },
     select: { id: true, title: true, module: { select: { courseId: true } } },
@@ -152,7 +165,7 @@ export async function getTodaysRecommendation(userId: string): Promise<StudyReco
     topic: top.topic,
     subjectName: top.subject.name,
     masteryScore: Math.round(top.masteryScore),
-    nextTopic: weakest[1]?.topic ?? null,
+    nextTopic: ordered[1]?.topic ?? null,
     lesson: lesson ? { id: lesson.id, courseId: lesson.module.courseId, title: lesson.title } : null,
   };
 }

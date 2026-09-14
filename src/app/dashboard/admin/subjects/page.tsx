@@ -4,7 +4,9 @@ import { Card } from "@/components/dashboard/card";
 import { Badge } from "@/components/ui/badge";
 import { examLabels } from "@/lib/exam-slugs";
 import { requireAdminPagePermission } from "@/lib/admin/authz";
-import { createSubject, renameSubject, renameOrMergeTopic } from "@/app/dashboard/admin/subjects/actions";
+import { createSubject, renameSubject, renameOrMergeTopic, updateSubjectTracks } from "@/app/dashboard/admin/subjects/actions";
+
+const trackOptions = ["SCIENCE", "ARTS", "COMMERCIAL"] as const;
 
 const inputClass =
   "rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand";
@@ -144,6 +146,27 @@ export default async function AdminSubjectsPage() {
                 <input name="name" defaultValue={subject.name} required className={`flex-1 ${inputClass}`} />
                 <button type="submit" className="rounded-lg border border-border-strong px-3 py-2 text-xs text-text-secondary hover:border-text-muted">
                   Rename
+                </button>
+              </form>
+
+              <form action={updateSubjectTracks} className="mt-3 flex flex-wrap items-center gap-3">
+                <input type="hidden" name="id" value={subject.id} />
+                <span className="text-xs text-text-muted">Academic track (for onboarding suggestions):</span>
+                {trackOptions.map((track) => (
+                  <label key={track} className="flex items-center gap-1.5 text-xs text-text-secondary">
+                    <input
+                      type="checkbox"
+                      name="academicTracks"
+                      value={track}
+                      defaultChecked={subject.academicTracks.includes(track)}
+                      className="h-3.5 w-3.5 accent-brand"
+                    />
+                    {track.charAt(0) + track.slice(1).toLowerCase()}
+                  </label>
+                ))}
+                <span className="text-xs text-text-muted">(none checked = General / All)</span>
+                <button type="submit" className="rounded-lg border border-border-strong px-3 py-1 text-xs text-text-secondary hover:border-text-muted">
+                  Save
                 </button>
               </form>
 

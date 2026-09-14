@@ -12,6 +12,13 @@ export type CoachContext = {
     targetExams: string[];
     homeSchool: string | null;
     country: string | null;
+    // Set during /onboarding — all optional since existing/mid-onboarding
+    // students won't have these yet, and the coach must work normally
+    // either way.
+    academicTrack: string | null;
+    targetSubjectNames: string[];
+    weakSubjectNames: string[];
+    studyGoal: string | null;
   };
   course?: {
     title: string;
@@ -89,6 +96,10 @@ export async function buildCoachContext({
         gradeLevel: true,
         targetExams: true,
         school: { select: { name: true } },
+        academicTrack: true,
+        studyGoal: true,
+        targetSubjects: { select: { name: true } },
+        weakSubjects: { select: { name: true } },
       },
     }),
     prisma.examAttempt.findMany({
@@ -241,6 +252,10 @@ export async function buildCoachContext({
       targetExams: studentProfile?.targetExams ?? [],
       homeSchool: studentProfile?.school?.name ?? null,
       country: user.country?.name ?? null,
+      academicTrack: studentProfile?.academicTrack ?? null,
+      targetSubjectNames: studentProfile?.targetSubjects.map((s) => s.name) ?? [],
+      weakSubjectNames: studentProfile?.weakSubjects.map((s) => s.name) ?? [],
+      studyGoal: studentProfile?.studyGoal ?? null,
     },
     course,
     lesson,

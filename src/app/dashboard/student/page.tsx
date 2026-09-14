@@ -7,6 +7,7 @@ import { redeemVoucher } from "@/app/dashboard/student/actions";
 import { approveParentLink, rejectParentLink } from "@/app/dashboard/student/parent-link-actions";
 import { acceptSchoolInvitation, declineSchoolInvitation } from "@/app/dashboard/school/invitation-actions";
 import { AiCoachPanel } from "@/components/ai-coach/coach-panel";
+import { PersonalizeProfileCard } from "@/components/dashboard/personalize-profile-card";
 import { getTodaysRecommendation, getExamReadiness } from "@/lib/ai/mastery-service";
 import { getExamReadiness as getExamScopedReadiness } from "@/lib/practice/readiness-service";
 import { DashboardReadinessCard } from "@/components/readiness/dashboard-readiness-card";
@@ -25,7 +26,31 @@ export default async function StudentDashboard({
   const locale = await getLocale();
   const t = getDictionary(locale).studentDashboard;
 
-  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, studentProfile, badgesEarned] =
+  // Fetched first (not inside the Promise.all below) since
+  // getTodaysRecommendation needs the student's weak/target subject ids to
+  // prioritize its pick.
+  const studentProfile = await prisma.studentProfile.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      targetExams: true,
+      xp: true,
+      currentStreakDays: true,
+      onboardingCompleted: true,
+      weakSubjects: { select: { id: true, name: true } },
+      targetSubjects: { select: { id: true, name: true } },
+    },
+  });
+  const preferredSubjectIds = [
+    ...(studentProfile?.weakSubjects.map((s) => s.id) ?? []),
+    ...(studentProfile?.targetSubjects.map((s) => s.id) ?? []),
+  ];
+  const preferredSubjectNames = new Set([
+    ...(studentProfile?.weakSubjects.map((s) => s.name) ?? []),
+    ...(studentProfile?.targetSubjects.map((s) => s.name) ?? []),
+  ]);
+
+  const [attempts, coursesInProgress, certificatesEarned, wrongResponses, recommendation, readiness, badgesEarned] =
     await Promise.all([
       prisma.examAttempt.findMany({
         where: { userId, submittedAt: { not: null } },
@@ -42,12 +67,8 @@ export default async function StudentDashboard({
         select: { question: { select: { topic: true } } },
         take: 200,
       }),
-      getTodaysRecommendation(userId),
+      getTodaysRecommendation(userId, preferredSubjectIds),
       getExamReadiness(userId),
-      prisma.studentProfile.findUnique({
-        where: { userId },
-        select: { id: true, targetExams: true, xp: true, currentStreakDays: true },
-      }),
       prisma.userBadge.count({ where: { userId } }),
     ]);
 
@@ -106,6 +127,12 @@ export default async function StudentDashboard({
         )
       : null;
 
+  // Prioritize the student's track/target/weak subjects first without
+  // hiding anything else — a stable sort just moves matches to the front.
+  if (preferredSubjectNames.size > 0) {
+    readiness.sort((a, b) => Number(preferredSubjectNames.has(b.subjectName)) - Number(preferredSubjectNames.has(a.subjectName)));
+  }
+
   const topicCounts = new Map<string, number>();
   for (const r of wrongResponses) {
     const topic = r.question.topic;
@@ -143,6 +170,14 @@ export default async function StudentDashboard({
       )}
 
       <NotificationsCard notifications={notifications} path="/dashboard/student" />
+
+      {!studentProfile?.onboardingCompleted && (
+        <PersonalizeProfileCard
+          title={t.personalizeCardTitle}
+          body={t.personalizeCardBody}
+          buttonLabel={t.personalizeCardButton}
+        />
+      )}
 
       <h2 className="mt-8 text-xs font-semibold uppercase tracking-wide text-brand-text">
         {t.prepSectionTitle}

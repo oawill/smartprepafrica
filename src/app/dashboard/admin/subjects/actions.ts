@@ -45,6 +45,33 @@ export async function renameSubject(formData: FormData) {
   revalidatePath("/dashboard/admin/subjects");
 }
 
+const academicTracks = ["SCIENCE", "ARTS", "COMMERCIAL"] as const;
+
+/** Drives /onboarding's subject suggestions per academic track. Leaving
+ * all three unchecked means General/All — suggested regardless of track,
+ * never hidden from anyone either way (this only ever affects which
+ * boxes are pre-ticked during onboarding). */
+export async function updateSubjectTracks(formData: FormData) {
+  const session = await requireActionPermission("subjects.manage");
+  const id = formData.get("id") as string;
+  const tracks = formData.getAll("academicTracks").map(String).filter((t) => academicTracks.includes(t as never));
+
+  const before = await prisma.subject.findUniqueOrThrow({ where: { id }, select: { academicTracks: true } });
+  await prisma.subject.update({ where: { id }, data: { academicTracks: tracks as never } });
+
+  await logAudit({
+    actorUserId: session.user.id,
+    actorRole: session.user.role,
+    action: "SUBJECT_TRACKS_UPDATED",
+    resourceType: "Subject",
+    resourceId: id,
+    result: "SUCCESS",
+    before: { academicTracks: before.academicTracks },
+    after: { academicTracks: tracks },
+  });
+  revalidatePath("/dashboard/admin/subjects");
+}
+
 /** Renames every question's `topic` string within a subject from `from` to
  * `to` — the closest safe equivalent to "merge" since topics are free-text
  * rather than a foreign-keyed table (no schema migration risk to existing

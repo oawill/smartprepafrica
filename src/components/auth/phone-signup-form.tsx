@@ -84,7 +84,9 @@ export function PhoneSignupForm({
       return;
     }
 
-    router.push("/dashboard");
+    // This form is only ever rendered for STUDENT signups (see
+    // register-form.tsx), so it always routes into onboarding.
+    router.push("/onboarding");
   }
 
   if (!codeSent) {
